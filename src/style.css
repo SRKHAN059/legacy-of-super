@@ -1,0 +1,101 @@
+:root {
+  --bg: #101018;
+  --btn: #2a2a3a;
+  --btn-hi: #44445c;
+  --btn-text: #c8c8d8;
+  --face-a: #8a2030;
+  --face-b: #30408a;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  font-family: ui-monospace, Menlo, monospace;
+}
+
+#shell {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#screen-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#screen {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #000;
+  box-shadow: 0 0 0 2px #000, 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* Touch controls are only shown on coarse pointers (phones/tablets). */
+#touch { display: none; }
+
+@media (pointer: coarse) {
+  #touch {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom));
+  }
+}
+
+.cluster {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.72;
+}
+
+#touch button {
+  touch-action: none;
+  border: 0;
+  color: var(--btn-text);
+  background: var(--btn);
+  font: 700 13px ui-monospace, Menlo, monospace;
+}
+
+#touch button.pressed { background: var(--btn-hi); }
+
+.shoulder { width: 96px; height: 34px; border-radius: 10px 10px 4px 4px; }
+.small { width: 72px; height: 24px; border-radius: 12px; font-size: 10px !important; }
+
+.dpad {
+  position: relative;
+  width: 132px;
+  height: 132px;
+}
+.dpad .d { position: absolute; width: 44px; height: 44px; border-radius: 6px; background: var(--btn); }
+.dpad .up { left: 44px; top: 0; }
+.dpad .down { left: 44px; bottom: 0; }
+.dpad .left { left: 0; top: 44px; }
+.dpad .right { right: 0; top: 44px; }
+.dpad .mid { left: 44px; top: 44px; border-radius: 0; }
+
+.ab { position: relative; width: 132px; height: 110px; }
+.face { position: absolute; width: 58px; height: 58px; border-radius: 50%; }
+#touch .face.a { right: 0; top: 0; background: var(--face-a); }
+#touch .face.b { left: 0; bottom: 0; background: var(--face-b); }
+#touch .face.pressed { filter: brightness(1.4); }

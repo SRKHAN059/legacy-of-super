@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#101018" />
+    <title>Legacy of Super</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="shell">
+      <div id="screen-wrap">
+        <canvas id="screen" width="240" height="160" aria-label="Game screen"></canvas>
+      </div>
+      <div id="touch" aria-hidden="true">
+        <div class="cluster left">
+          <button class="shoulder" data-btn="L">L</button>
+          <div class="dpad">
+            <button data-btn="up" class="d up"></button>
+            <button data-btn="left" class="d left"></button>
+            <button data-btn="right" class="d right"></button>
+            <button data-btn="down" class="d down"></button>
+            <span class="d mid"></span>
+          </div>
+          <button class="small" data-btn="select">SELECT</button>
+        </div>
+        <div class="cluster right">
+          <button class="shoulder" data-btn="R">R</button>
+          <div class="ab">
+            <button data-btn="B" class="face b">B</button>
+            <button data-btn="A" class="face a">A</button>
+          </div>
+          <button class="small" data-btn="start">START</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
