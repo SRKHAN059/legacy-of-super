@@ -70,6 +70,7 @@ async function pullLever(s: ScriptApi, l: Lever): Promise<void> {
   s.sfx('explode');
   await s.narrate('A deep rumble shakes the ceiling. Somewhere upstairs, a heavy energy barrier powers down.');
   await s.say('hero', 'Moon, sun, dragon, Pilaf. Heh, thanks for the memo, Pilaf! The vault upstairs should be open now.', 'happy');
+  if (s.check('quest:c03_vault')) await s.done('c03_vault', false);
 }
 
 /** Mk-II mini-boss: the gang bursts in after the hero grabs the vault's Dragon Ball. */

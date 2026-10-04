@@ -60,6 +60,8 @@ Write dialogue in-character and **paraphrase** the anime — never copy dub/sub 
   Gate colours: Goku orange, Vegeta dark blue, Gohan light blue, Trunks purple, Piccolo green, Mr. Satan red.
 - **Enemies respawn** every time a map is entered (unless they have an `id`, which makes them one-off).
 - **Drops** (food = HP, ki orbs = EP) are automatic (ROM drop table). Breakable rocks/jars/crates give drops too.
+  A breakable with an `id` and a fixed `item` keeps that item where it fell until it is picked up (leaving the map
+  never loses it).
 - **Level cap 50, stats cap 100.** EXP per regular kill is clamped by the engine to [1/128, 1/2] of the
   player's current level span, so enemy `exp` only needs to be in the right ballpark for its tier (§6).
   Boss `exp` is paid in full (scripted reward).
@@ -149,7 +151,8 @@ transformNow/outfit/heal/exp`, `chapter(n,title,subtitle)` (title card + sets ch
 `fadeOut/fadeIn/wait/seconds/shake/flash/tint/letterbox/music/sfx/banner/toast`, `hasScript/call` (run another script inline), `pan(x,y,frames)/follow()`,
 `spawn(id,sprite,x,y,dir,name)/remove/walk/walkAll/place/face/pose/sprite/aura/show/silhouette/lift/flyTo/emote/
 powerUp/boom/blast/clash`, `spawnEnemy/waitDefeat/clearEnemies`, `fight(type,{x,y,uid,survive,loseOk})`,
-`unlockRegion(spotId)`, `worldMap(world)`, `free()/lock()`, `carry(label, onBreakScript)/drop()/carrying`
+`unlockRegion(spotId)`, `worldMap(world)` (entering any map reachable from a landing spot also sets the `world`
+flag to that map's world, so story warps between Earth, Future Earth and space need no manual `set('world')`), `free()/lock()`, `carry(label, onBreakScript)/drop()/carrying`
 (LoG2 egg-escort: no attacking while carrying, a hit breaks it), `beamStruggle(heroCastId, foeCastId, heroColor,
 foeColor, taunts[], pressure)` (unlosable mash-A clash for finales), `scouterDatabase()` (CC computer).
 Maps with `ringOut: true` (Tournament of Power) eliminate enemies knocked hard into `void` tiles (counts as a kill;

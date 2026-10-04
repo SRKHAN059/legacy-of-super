@@ -550,7 +550,12 @@ export class ScriptApi {
     }
     this.game.allowControl = true;
     const b = boss;
-    await f.until(() => b.dead || b.ended || lost || (!!opts.survive && !!f.timer && f.timer.frames <= 0) || f.player.state === 'dead');
+    this.game.fightDepth++;
+    try {
+      await f.until(() => b.dead || b.ended || lost || (!!opts.survive && !!f.timer && f.timer.frames <= 0) || f.player.state === 'dead');
+    } finally {
+      this.game.fightDepth = Math.max(0, this.game.fightDepth - 1);
+    }
     this.game.allowControl = false;
     this.game.onPlayerDown = prevDown;
     f.player.inv = 0;
@@ -619,7 +624,12 @@ export class ScriptApi {
   async clearEnemies(): Promise<void> {
     this.game.allowControl = true;
     this.field.forceHostile = true;
-    await this.field.until(() => this.field.enemies.every((e) => e.dead || e.state === 'dying' || e.def.invulnerable));
+    this.game.fightDepth++;
+    try {
+      await this.field.until(() => this.field.enemies.every((e) => e.dead || e.state === 'dying' || e.def.invulnerable));
+    } finally {
+      this.game.fightDepth = Math.max(0, this.game.fightDepth - 1);
+    }
     this.game.allowControl = false;
   }
 }

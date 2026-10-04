@@ -155,14 +155,14 @@ export class MapInstance {
         break;
       }
       case 'breakable': {
-        if (o.id && state.flag(`broke:${this.def.id}:${o.id}`)) { inst.gone = true; break; }
         const look = o.look ?? 'rock';
         const kind: PropKind = look === 'jar' ? 'jar' : look === 'crate' ? 'crate' : o.size === 3 ? 'boulder' : o.size === 2 ? 'rock' : 'smallRock';
+        const art = propArt(kind);
+        inst.rect = { x: px, y: py, w: art.bmp.width, h: art.bmp.height };
+        if (o.id && state.flag(`broke:${this.def.id}:${o.id}`)) { inst.gone = true; break; }
         inst.prop = this.addPropTagged(kind, px, py, tag);
         if (kind === 'smallRock') this.col.addRect({ x: px + 1, y: py + 2, w: 8, h: 6 }, tag);
         inst.hp = o.size;
-        const art = propArt(kind);
-        inst.rect = { x: px, y: py, w: art.bmp.width, h: art.bmp.height };
         break;
       }
       case 'bag':

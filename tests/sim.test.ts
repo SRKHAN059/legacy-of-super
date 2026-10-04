@@ -23,3 +23,39 @@ describe('headless sim', () => {
     expect(sim.errors.join('\n')).toContain('nobody');
   });
 });
+
+describe('fight sealing (engine)', () => {
+  it('blocks warps, edge exits, save discs and world signs while a scripted fight runs', async () => {
+    const { registerScripts } = await import('../src/game/script');
+    let during: { sealed: boolean; map: string } | null = null;
+    registerScripts({
+      test_sealed_fight: async (s) => {
+        const p = s.fight('devBoss', { x: 14, y: 5, uid: 'sealBoss' });
+        await s.wait(2);
+        const f = s.field;
+        // Try to walk off the west edge (dev_arena has a west exit) mid-fight.
+        f.player.x = 6; f.player.y = 5 * 16 + 14;
+        during = { sealed: f.sealed, map: f.def.id };
+        await p;
+      },
+    });
+    const sim = new Sim();
+    sim.start('dev_arena', 5, 5);
+    await sim.tick(3);
+    // Don't let the bot auto-win immediately: drive input west for a while first.
+    const started = sim.game.runScript('test_sealed_fight');
+    for (let i = 0; i < 40; i++) {
+      sim.input.inject('left', true);
+      sim.input.poll();
+      sim.game.scenes.update(sim.input);
+      await new Promise<void>((r) => setTimeout(r, 0));
+    }
+    sim.input.inject('left', false);
+    expect(during).toEqual({ sealed: true, map: 'dev_arena' });
+    expect(sim.game.field?.def.id).toBe('dev_arena');
+    await sim.tick(400);
+    await started;
+    expect(sim.game.fightDepth).toBe(0);
+    expect(sim.game.field?.sealed).toBe(false);
+  });
+});

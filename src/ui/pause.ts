@@ -172,6 +172,7 @@ export class PauseMenu implements Scene {
     } else if ('warp' in u) {
       const f = this.game.field;
       if (!f || f.def.indoor) { audio.sfx('denied'); this.message = 'It can only be used outdoors.'; return; }
+      if (f.sealed) { audio.sfx('denied'); this.message = "You can't leave in the middle of a fight!"; return; }
       this.resolve();
       void this.game.openWorldMap();
     }

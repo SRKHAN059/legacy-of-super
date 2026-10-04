@@ -121,6 +121,21 @@ export class Field implements Scene {
     return this.hostile && !this.locked && !this.carrying;
   }
 
+  /** True while a scripted fight seals the map (no leaving, saving or warping). */
+  get sealed(): boolean {
+    return this.game.fightDepth > 0;
+  }
+
+  private sealNoticeT = 0;
+
+  /** Feedback when the player tries to leave mid-fight. */
+  private sealNotice(): void {
+    if (this.tick - this.sealNoticeT < 90) return;
+    this.sealNoticeT = this.tick;
+    audio.sfx('denied');
+    this.toast(["You can't leave in the middle of a fight!"], '#f86060');
+  }
+
   /** True while a cutscene owns the controls. */
   get locked(): boolean {
     return this.game.lockDepth > 0 && !this.game.allowControl;
@@ -148,6 +163,13 @@ export class Field implements Scene {
     for (const p of this.def.pickups ?? []) {
       if (st.flag(`pickup:${p.id}`) || !st.check(p.showIf)) continue;
       this.pickups.push({ x: p.x * TILE + 8, y: p.y * TILE + 12, kind: 'item', item: p.item, qty: p.qty ?? 1, id: p.id, t: 0, hidden: p.hidden });
+    }
+    // A fixed item knocked out of a breakable waits where it fell until it is picked up, even after leaving the map.
+    for (const o of this.map.objects) {
+      const d = o.def;
+      if (d.type !== 'breakable' || !d.item || !d.id || !o.gone || st.flag(`pickup:${d.id}`)) continue;
+      const c = center(o.rect);
+      this.pickups.push({ x: c.x, y: c.y + 4, kind: 'item', item: d.item, qty: 1, id: d.id, t: 0 });
     }
   }
 
@@ -339,7 +361,7 @@ export class Field implements Scene {
     audio.sfx('blastHit');
     if (o.def.type !== 'breakable') return;
     if (o.def.id) this.state.set(`broke:${this.def.id}:${o.def.id}`);
-    if (o.def.item) this.pickups.push({ x: c.x, y: c.y + 4, kind: 'item', item: o.def.item, qty: 1, t: 0 });
+    if (o.def.item) this.pickups.push({ x: c.x, y: c.y + 4, kind: 'item', item: o.def.item, qty: 1, id: o.def.id, t: 0 });
     else this.rollDrop(c.x, c.y + 4);
   }
 
@@ -484,9 +506,14 @@ export class Field implements Scene {
       const standOn = d.type === 'flight' && overlaps(p.box(), o.rect);
       if (!standOn && !overlaps(fr, o.rect)) continue;
       switch (d.type) {
-        case 'save': void this.game.openSaveMenu(); return true;
-        case 'worldSign': void this.game.openWorldMap(); return true;
-        case 'flight': void this.game.flyTo(d.to, d.tx, d.ty); return true;
+        case 'save':
+        case 'worldSign':
+        case 'flight':
+          if (this.sealed) { this.sealNotice(); return true; }
+          if (d.type === 'save') void this.game.openSaveMenu();
+          else if (d.type === 'worldSign') void this.game.openWorldMap();
+          else void this.game.flyTo(d.to, d.tx, d.ty);
+          return true;
         case 'sign': void this.game.say([{ text: d.text }]); return true;
         case 'chest': {
           this.map.removeObject(o);
@@ -757,6 +784,7 @@ export class Field implements Scene {
         if (w.lockedScript) { this.exitCd = 60; this.runScript(w.lockedScript); this.pushBack(); }
         continue;
       }
+      if (this.sealed) { this.sealNotice(); this.pushBack(); return; }
       if (w.door) audio.sfx('door');
       void this.game.changeMap(w.to, w.tx, w.ty, w.dir ?? p.dir);
       return;
@@ -773,6 +801,7 @@ export class Field implements Scene {
       if (!hit) continue;
       const ex = this.def.exits?.[side];
       if (!ex) continue;
+      if (this.sealed) { this.sealNotice(); continue; }
       const open = this.state.check(ex.showIf) && !(ex.hideIf && this.state.check(ex.hideIf));
       if (!open) {
         if (ex.lockedScript) { this.exitCd = 60; this.runScript(ex.lockedScript); this.pushBack(); }

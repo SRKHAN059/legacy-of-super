@@ -2,6 +2,7 @@ import { CHARACTERS, type CharId } from '../content/characters';
 import { ITEMS } from '../content/items';
 import { TRACKS } from '../content/music';
 import { MAPS, resolveMap } from '../content/registry';
+import { worldOfMap } from '../content/world';
 import { audio } from '../engine/audio';
 import { TILE } from '../engine/constants';
 import type { Input } from '../engine/input';
@@ -35,6 +36,11 @@ export class Game {
   lockDepth = 0;
   /** Set by scripts to hand control back during fights. */
   allowControl = false;
+  /**
+   * >0 while a scripted fight (fight / clearEnemies) is running. The field is sealed: warps, map edges,
+   * save discs, world signs, flight circles and Whis's Charm are unavailable so the script can't be stranded.
+   */
+  fightDepth = 0;
   hideHud = false;
   /** Hook to intercept player KO (scripted losses). Return true to cancel Game Over. */
   onPlayerDown: (() => boolean) | null = null;
@@ -46,6 +52,7 @@ export class Game {
   toTitle(): void {
     this.field = null;
     this.lockDepth = 0;
+    this.fightDepth = 0;
     this.allowControl = false;
     this.scenes.replace(new TitleScene(this));
     this.playMusic('title');
@@ -56,6 +63,7 @@ export class Game {
     this.slot = slot;
     this.state = new GameState(newGame());
     this.lockDepth = 0;
+    this.fightDepth = 0;
     const boot = SCRIPTS.newGame;
     if (!boot) throw new Error('Missing "newGame" script');
     await this.runScript('newGame');
@@ -68,6 +76,7 @@ export class Game {
     this.slot = slot;
     this.state = new GameState(d);
     this.lockDepth = 0;
+    this.fightDepth = 0;
     this.allowControl = false;
     this.startField(d.map, d.x / TILE - 0.5, d.y / TILE - 0.875, d.dir);
     return true;
@@ -86,6 +95,9 @@ export class Game {
     }
     this.field = f;
     this.state.data.map = mapId;
+    // Story warps can cross worlds (Earth, Future Earth, space): keep the world map a sign opens in step.
+    const world = worldOfMap(mapId);
+    if (world) this.state.set('world', world);
     this.scenes.replace(f);
     this.playMusic(def.music);
     const prevName = this.state.get('_lastArea');
