@@ -33,7 +33,7 @@ export interface Track {
 export type Sfx =
   | 'punch' | 'hit' | 'blast' | 'blastHit' | 'charge' | 'beam' | 'explode' | 'hurt' | 'die'
   | 'levelUp' | 'item' | 'menuMove' | 'menuOk' | 'menuBack' | 'text' | 'door' | 'heal'
-  | 'powerUp' | 'denied' | 'save' | 'teleport' | 'dash' | 'block';
+  | 'powerUp' | 'denied' | 'save' | 'teleport' | 'dash' | 'block' | 'slash';
 
 const NOTE_INDEX: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
@@ -213,6 +213,7 @@ export class Audio {
       case 'save': ['E5', 'A5', 'E6'].forEach((n, i) => this.tone(b, noteFreq(n) ?? 0, t + i * 0.1, 0.15, { duty: 0.5, vol: 0.1 })); break;
       case 'teleport': this.tone(b, 2000, t, 0.25, { duty: 0.125, vol: 0.1, slideTo: 200 }); this.tone(b, 200, t + 0.25, 0.25, { duty: 0.125, vol: 0.1, slideTo: 2000 }); break;
       case 'dash': this.noise(b, t, 0.15, 0.25, 7000, 2000); break;
+      case 'slash': this.noise(b, t, 0.09, 0.35, 9000, 3000); this.tone(b, 1800, t, 0.08, { duty: 0.125, vol: 0.08, slideTo: 600 }); break;
     }
   }
 

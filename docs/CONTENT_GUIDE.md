@@ -88,7 +88,7 @@ registerMaps([{
 ```
 
 **Terrains** (`src/art/tiles.ts`): walkable — `grass darkGrass dirt path sand rock wasteland floor wood carpet tile
-arena snow ice alienGrass ruins asphalt cloud marble hellRock metal`; solid — `cliff wall roof void`;
+arena snow ice alienGrass ruins asphalt cloud marble hellRock metal`; solid — `cliff wall roof void sky` (`sky` = open air around the Lookout / high places);
 liquid (solid, beams fly over) — `water deep lava`. Higher-priority terrains blend jagged edges over lower ones
 automatically; cliffs cast a shadow on the tile below. Use `cliff` rows/blocks for mountain walls and map borders,
 `wall` + `roof` for building shells in interiors, `void` for space/tournament edges (set `backdrop`).
@@ -267,7 +267,7 @@ a kill. Also: `refillAt/refillTo` (Perfect Cell refill), `stamina` (Golden Friez
   greyBear beetle hornet scarab crab kingCrab drone greenDrone goldDrone pilafRobot mechTrooper redMech goldMech
   slime mudSlime voidSlime bandit banditBrute soldier soldierB soldierC soldierElite.
 - **Music ids** (`src/content/music.ts`): title worldmap peaceful town field battle tense sad future godly tournament
-  cave space futureWorld victory gameover.
+  cave space futureWorld frieza black jiren heroic ending victory gameover. Credits: `await s.credits([...lines])`.
 - **Items** (`src/content/items.ts`): senzu cookie fish str1/3/5 pow1/3/5 end1/3/5 delicacy whisStaff scouter
   dragonRadar db1–db7 trophyGoku trophyVegeta trophyGohan trophyTrunks trophyPiccolo. Add key items with
   `registerItems([...])` (prefix ids).

@@ -149,6 +149,7 @@ export class Player extends Actor {
 
   /** Enter scripted/locked state (cutscenes). */
   lock(on: boolean): void {
+    if (this.state === 'dead') return;
     if (on) {
       this.endBeam();
       this.kiCharge = null;
@@ -286,6 +287,7 @@ export class Player extends Actor {
     this.pose = 'idle';
     if (this.moving) {
       this.idleT = 0;
+      this.z = 0;
       // Facing: keep current facing if it is one of the pressed diagonal components.
       const cur = dirVec(this.dir);
       const keep = (cur.x !== 0 && cur.x === v.x) || (cur.y !== 0 && cur.y === v.y);
@@ -335,7 +337,7 @@ export class Player extends Actor {
     this.hitList.clear();
     this.pose = 'punch1';
     this.z = 0;
-    audio.sfx('punch');
+    audio.sfx(this.def.sword ? 'slash' : 'punch');
     void f;
   }
 
@@ -376,8 +378,8 @@ export class Player extends Actor {
         this.t = 0;
         this.queued = false;
         this.hitList.clear();
-        this.pose = this.combo === 1 ? 'punch2' : 'kick';
-        audio.sfx('punch');
+        this.pose = this.combo === 1 ? 'punch2' : this.def.sword ? 'punch1' : 'kick';
+        audio.sfx(this.def.sword ? 'slash' : 'punch');
       } else {
         this.state = 'free';
         this.pose = 'idle';

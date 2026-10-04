@@ -58,8 +58,13 @@ export class Sim {
       c.sel = this.choice;
       this.pressA = !this.pressA;
       this.input.inject('A', this.pressA);
+    } else if (/Credits/.test(top)) {
+      this.pressA = !this.pressA;
+      this.input.inject('start', this.pressA);
+      this.input.inject('A', true);
     } else {
       this.input.inject('A', false);
+      this.input.inject('start', false);
     }
     const f = g.field;
     if (f && g.allowControl) {

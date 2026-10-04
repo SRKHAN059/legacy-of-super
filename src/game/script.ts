@@ -599,6 +599,17 @@ export class ScriptApi {
     });
   }
 
+  /** Roll the ending credits (extra lines are inserted after the title; '#Heading' lines are gold). */
+  async credits(extra: string[] = []): Promise<void> {
+    await this.game.credits([
+      '#LEGACY OF SUPER', '', ...extra, '',
+      '#Based on the gameplay of', 'Dragon Ball Z: The Legacy of Goku II', 'Webfoot Technologies / Atari, 2003', '',
+      '#Story', 'Dragon Ball Super (anime, episodes 1-131)', 'Original work by Akira Toriyama', 'Toei Animation / Shueisha / Bird Studio', '',
+      '#This tribute', 'Engine, pixel art, music and script', 'written from scratch for a personal,', 'non-commercial project.', '',
+      '#Thank you for playing!', '', '', '',
+    ]);
+  }
+
   /** Open the Capsule Corp Scouter database viewer. */
   async scouterDatabase(): Promise<void> {
     await this.game.openScouterDb();

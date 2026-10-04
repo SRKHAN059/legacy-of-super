@@ -6,7 +6,7 @@ import { shade } from './color';
 export type Terrain =
   | 'grass' | 'darkGrass' | 'dirt' | 'path' | 'sand' | 'water' | 'deep' | 'cliff' | 'rock'
   | 'floor' | 'wood' | 'carpet' | 'tile' | 'wall' | 'roof' | 'void' | 'arena' | 'snow' | 'lava'
-  | 'alienGrass' | 'ruins' | 'asphalt' | 'cloud' | 'marble' | 'hellRock' | 'metal' | 'ice' | 'wasteland';
+  | 'alienGrass' | 'ruins' | 'asphalt' | 'cloud' | 'marble' | 'hellRock' | 'metal' | 'ice' | 'wasteland' | 'sky';
 
 interface TerrainDef {
   base: string;
@@ -33,13 +33,32 @@ const T: Record<Terrain, TerrainDef> = {
   cliff: {
     base: '#8c7050', speckle: ['#7c6044'], density: 0.05, priority: 9, solid: true,
     paint: (p, x, y, seed) => {
-      p.rect(x, y, TILE, TILE, '#8c7050');
-      for (let r = 0; r < 4; r++) {
-        const yy = y + r * 4;
-        p.hline(x, yy + 3, TILE, '#6c5438');
-        const off = (r + seed) % 2 ? 4 : 10;
-        p.vline(x + off, yy, 3, '#6c5438');
-        p.hline(x, yy, TILE, '#a08460');
+      // Craggy rock face: irregular stones with lit tops and shadowed undersides.
+      p.rect(x, y, TILE, TILE, '#6c5438');
+      let s = seed || 1;
+      const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 0xffffffff; };
+      for (let row = 0; row < 3; row++) {
+        let cx = x - Math.floor(rnd() * 6);
+        const ry = y + row * 5 + (row === 2 ? 1 : 0);
+        while (cx < x + TILE) {
+          const w = 5 + Math.floor(rnd() * 5);
+          const h = 4 + Math.floor(rnd() * 2);
+          const tone = rnd();
+          const body = tone < 0.33 ? '#8c7050' : tone < 0.66 ? '#967a58' : '#826848';
+          for (let j = 0; j < h; j++) {
+            for (let i = 0; i < w; i++) {
+              const px = cx + i;
+              if (px < x || px >= x + TILE || ry + j >= y + TILE) continue;
+              const corner = (i === 0 || i === w - 1) && (j === 0 || j === h - 1);
+              if (corner) continue;
+              let c = body;
+              if (j === 0) c = '#b09470';
+              else if (j === h - 1 || i === w - 1) c = '#5c4630';
+              p.px(px, ry + j, c);
+            }
+          }
+          cx += w + 1;
+        }
       }
     },
   },
@@ -92,6 +111,19 @@ const T: Record<Terrain, TerrainDef> = {
     paint: (p, x, y) => {
       p.rect(x, y, TILE, TILE, '#c85040');
       for (let r = 0; r < 4; r++) p.hline(x, y + r * 4 + 3, TILE, '#a03830');
+    },
+  },
+  sky: {
+    base: '#78b8f0', speckle: [], density: 0, priority: 0, solid: true,
+    paint: (p, x, y, seed) => {
+      p.rect(x, y, TILE, TILE, '#78b8f0');
+      // Soft drifting cloud puffs.
+      if (seed % 4 === 0) {
+        const cx = x + (seed >> 3) % 10;
+        const cy = y + (seed >> 7) % 10;
+        p.ellipse(cx, cy, 8, 4, '#c8e4f8');
+        p.ellipse(cx + 3, cy - 1, 6, 4, '#e8f4fc');
+      }
     },
   },
   void: {

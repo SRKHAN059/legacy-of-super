@@ -42,6 +42,8 @@ export interface HumanoidSpec {
   face?: 'thirdEye' | 'beard' | 'mustache' | 'shades' | 'stern' | 'gentle';
   /** Ring/halo colour (angels wear a neck ring). */
   halo?: string;
+  /** Sword carried on the back and swung on attacks (Future Trunks). */
+  sword?: boolean;
   /** Emblem on chest (gi kanji / logo). */
   emblem?: string;
 }
@@ -338,6 +340,28 @@ function drawFront(spec: HumanoidSpec, pose: Exclude<Pose, 'ko'>, back: boolean)
     p.rect(11, L.hipY + dy, 2, 3, spec.tail);
     p.rect(12, L.hipY + dy + 2, 3, 2, spec.tail);
   }
+  if (spec.sword) {
+    const swinging = P.armL === 'forward' || P.armR === 'forward';
+    if (back) {
+      // Sheath across the back, hilt over the left shoulder.
+      p.line(L.torsoX + 1, L.torsoY + dy - 2, L.torsoX + L.torsoW - 2, L.beltY + dy, '#584030');
+      p.line(L.torsoX + 2, L.torsoY + dy - 2, L.torsoX + L.torsoW - 1, L.beltY + dy, '#6c5038');
+      if (!swinging) p.rect(L.torsoX, L.torsoY + dy - 5, 2, 3, '#c8a040');
+    } else if (!swinging) {
+      // Hilt peeking over the right shoulder.
+      p.rect(L.torsoX + L.torsoW - 2, L.torsoY + dy - 4, 2, 3, '#c8a040');
+      p.px(L.torsoX + L.torsoW - 1, L.torsoY + dy - 5, '#e8d070');
+    }
+    if (swinging) {
+      // Blade held out toward the viewer (front) or away (back).
+      const fx = P.armR === 'forward' ? L.armRX - 1 : L.armLX + 2;
+      const y0 = L.torsoY + dy + 9;
+      p.vline(fx, y0, 9, '#d8e8f8');
+      p.vline(fx + 1, y0, 9, '#a8b8d0');
+      p.px(fx, y0 + 9, '#ffffff');
+      p.rect(fx - 1, y0 - 1, 4, 1, '#c8a040');
+    }
+  }
 
   p.outline(c.o);
   return p.done();
@@ -553,6 +577,22 @@ function drawSide(spec: HumanoidSpec, pose: Exclude<Pose, 'ko'>): Bitmap {
   if (spec.scouter) { p.rect(hx, hy + 3, 3, 2, spec.scouter); p.rect(hx + 3, hy + 4, 2, 1, '#606060'); }
   if (spec.halo) p.hline(hx, hy + 9, 7, spec.halo);
   stampMask(p, hair.left, 4 + dx + P.lean, hy - 4, c);
+  if (spec.sword) {
+    if (P.arm === 'punch' || P.arm === 'punchLow') {
+      const py = ty + 1 + (P.arm === 'punchLow' ? 2 : 1);
+      // Blade raised diagonally from the fist (the frame is too narrow to extend it forward).
+      const bx = Math.max(1, tx + 2 + P.lean - 8);
+      p.rect(bx - 1, py - 1, 4, 1, '#c8a040');
+      for (let i = 1; i <= 11; i++) {
+        p.px(bx + Math.floor(i / 4), py - 1 - i, '#d8e8f8');
+        p.px(bx + 1 + Math.floor(i / 4), py - 1 - i, '#a8b8d0');
+      }
+      p.px(bx + 2, py - 13, '#ffffff');
+    } else {
+      p.rect(tx + sideW - 1, ty - 4, 2, 3, '#c8a040');
+      p.line(tx + sideW, ty - 1, tx + sideW + 2, ty + 7, '#584030');
+    }
+  }
 
   p.outline(c.o);
   return p.done();

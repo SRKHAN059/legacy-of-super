@@ -15,6 +15,7 @@ import { SaveMenu } from '../ui/savemenu';
 import { ScouterScene } from '../ui/scouter';
 import { ScouterDbScene } from '../ui/scouterdb';
 import { BeamStruggleScene, type StruggleOpts } from '../ui/beamstruggle';
+import { CreditsScene } from '../ui/credits';
 import { TitleCardScene } from '../ui/titlecard';
 import { TitleScene } from '../ui/title';
 import { WorldMapScene } from '../ui/worldmap';
@@ -277,6 +278,10 @@ export class Game {
   async openScouter(): Promise<void> { await this.overlay(new ScouterScene(this)); }
   async openRegionMap(): Promise<void> { await this.overlay(new RegionMapScene(this)); }
   async openScouterDb(): Promise<void> { await this.overlay(new ScouterDbScene(this)); }
+  async credits(lines: string[]): Promise<void> {
+    this.playMusic('ending');
+    await this.overlay(new CreditsScene(lines));
+  }
   async beamStruggle(o: StruggleOpts): Promise<void> {
     this.hideHud = true;
     try { await this.overlay(new BeamStruggleScene(o)); } finally { this.hideHud = false; }
