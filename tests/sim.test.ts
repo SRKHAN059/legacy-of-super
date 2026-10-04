@@ -59,3 +59,17 @@ describe('fight sealing (engine)', () => {
     expect(sim.game.field?.sealed).toBe(false);
   });
 });
+
+describe('input latching', () => {
+  it('registers a tap that starts and ends between two polls exactly once', async () => {
+    const { Input } = await import('../src/engine/input');
+    const inp = new Input(null);
+    inp.inject('A', true);
+    inp.inject('A', false);
+    inp.poll();
+    expect(inp.pressed('A')).toBe(true);
+    inp.poll();
+    expect(inp.pressed('A')).toBe(false);
+    expect(inp.isDown('A')).toBe(false);
+  });
+});

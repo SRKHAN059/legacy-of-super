@@ -29,6 +29,8 @@ const PADMAP: Partial<Record<Button, number[]>> = {
 export class Input {
   private readonly keys = new Set<Button>();
   private readonly touch = new Set<Button>();
+  /** Buttons that went down since the last poll; a tap shorter than one frame still registers once. */
+  private readonly latched = new Set<Button>();
   private readonly down = new Set<Button>();
   private readonly prev = new Set<Button>();
   /** Ticks each button has been held, for key-repeat in menus. */
@@ -43,6 +45,7 @@ export class Input {
       if (!b) return;
       e.preventDefault();
       this.keys.add(b);
+      this.latched.add(b);
       this.gesture();
     });
     target.addEventListener('keyup', (e) => {
@@ -80,6 +83,7 @@ export class Input {
       if (on && btn) {
         active.set(e.pointerId, btn);
         this.touch.add(btn);
+        this.latched.add(btn);
         el?.classList.add('pressed');
       }
     };
@@ -98,6 +102,8 @@ export class Input {
     this.down.clear();
     for (const b of this.keys) this.down.add(b);
     for (const b of this.touch) this.down.add(b);
+    for (const b of this.latched) this.down.add(b);
+    this.latched.clear();
     const pads = typeof navigator !== 'undefined' && typeof navigator.getGamepads === 'function' ? navigator.getGamepads() : [];
     for (const p of pads) {
       if (!p) continue;
@@ -149,7 +155,7 @@ export class Input {
 
   /** Programmatically press buttons (used by automated play-tests). */
   inject(b: Button, on: boolean): void {
-    if (on) this.keys.add(b);
+    if (on) { this.keys.add(b); this.latched.add(b); }
     else this.keys.delete(b);
   }
 }
