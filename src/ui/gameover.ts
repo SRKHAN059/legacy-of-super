@@ -22,7 +22,8 @@ export class GameOverScene implements Scene {
     if (input.repeat('up') || input.repeat('down')) { this.sel ^= 1; audio.sfx('menuMove'); }
     if (input.pressed('A') || input.pressed('start')) {
       audio.sfx('menuOk');
-      if (this.sel === 0 && this.game.continueGame(this.game.slot)) return;
+      // Continue = this run's last save (or, for a run never saved, a fresh start; never another playthrough's file).
+      if (this.sel === 0 && this.game.continueAfterGameOver()) return;
       this.game.toTitle();
     }
   }

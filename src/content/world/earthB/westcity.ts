@@ -1,9 +1,9 @@
-import { registerItems } from '../../items';
+import { ITEMS, registerItems } from '../../items';
 import { registerQuests } from '../../quests';
 import { registerMaps } from '../../registry';
-import type { Expression } from '../../../art/portrait';
-import { registerScripts, type ScriptApi } from '../../../game/script';
+import { registerScripts } from '../../../game/script';
 import { GRIDS } from './grids';
+import { byChapter, heroTalk, type HeroReactions, type TalkLines } from './talk';
 
 /*
  * WEST CITY (region 'West City', safe): wc_streets ⇄ cc_yard (edge exit, avenue rows 10-16),
@@ -13,14 +13,18 @@ import { GRIDS } from './grids';
  *  - wc_streets: world sign (1,18), save (4,18), landing (2,20). Ramen door (8,20), restaurant door (13,20).
  *    Gate to Capsule Corp = east edge rows 10-16. Open plaza for overlays: avenue x 6-40 rows 10-16.
  *  - cc_yard: Capsule Corp prop at (18,2), front door warp (21,7), arrival outside (21,8).
- *    Party lawn x 6-39 rows 15-27 (kept clear), lawn centre (23,21). Front plaza x 13-28 rows 8-11.
+ *    Party lawn x 6-39 rows 15-25: no solid props, only walk-through garden (stone terrace x 18-27 rows 15-16,
+ *    round stone patio x 18-27 rows 19-23, walkways, flowerbeds), lawn centre (23,21). Bottom margin rows 25.5-27 holds solid
+ *    dressing: fountain x 8-10, parked aircar x 27-29, dinosaur pen x 32-38.4 (baby dino NPC eb_cc_dino inside).
+ *    Front plaza x 13-28 rows 8-11.
  *    Hangar pad x 29-42 rows 2-11; free space for a time machine at (31-35, 3-7).
  *  - cc_inside: entrance (9-10,13) → arrival (9,12). Computer room x 1-5 rows 8-12; the computer terminal
  *    (table+monitor) is at (1-2, 8); stand at (2,9) facing up; trigger rect {x:1,y:8,w:2,h:1} runs
  *    eb_cc_terminal: without a scouter it explains the link, with one it opens s.scouterDatabase().
  *    A chapter that wants its own terminal scene sets flag 'eb_terminal_custom' (hides the base trigger) and
  *    overlays its trigger on the same rect. Lab x 1-9 rows 2-6 (stairs to the gravity room at (4,1)), kitchen x 11-18 rows 2-6,
- *    lobby x 7-12 rows 8-12, lounge x 14-18 rows 8-12.
+ *    lobby x 7-12 rows 8-12, lounge x 14-18 rows 8-12. Mrs. Briefs (eb_cc_panchy, endless cookies) stands at (18,3) in
+ *    the kitchen, hidden in chapter 3 and during c07's lawn recruitment (both have her on cc_yard).
  *  - cc_gravity: chamber x 2-13 rows 2-9, centre (7.5,6); console at (7,4); arrival (7,9).
  */
 
@@ -40,6 +44,10 @@ registerQuests([
 ]);
 
 const CITY = { t: 'tile', a: 'asphalt', m: 'marble', '.': 'grass', ',': 'darkGrass', '=': 'path', '~': 'water', f: 'floor', '#': 'wall' } as const;
+
+/** Mrs. Briefs is home in the kitchen except while a chapter has her out on the cc_yard lawn (c03 party, c07 recruiting). */
+const PANCHY_HOME = '!chapter==3';
+const PANCHY_ON_LAWN = 'chapter==7&c07_champaDone&!c07_departed';
 
 registerMaps([
   {
@@ -145,7 +153,7 @@ registerMaps([
   },
   {
     id: 'cc_yard', name: 'Capsule Corporation', music: 'town', region: 'West City',
-    legend: { ...CITY, x: 'metal' },
+    legend: { ...CITY, x: 'metal', p: 'arena', d: 'dirt' },
     grid: GRIDS.cc_yard,
     props: [
       ['capsuleCorp', 18, 2], ['domeHouse', 13, 4], ['domeHouse', 26, 4],
@@ -167,8 +175,24 @@ registerMaps([
       ['flowers', 8, 27], ['flowers', 14, 27], ['flowers', 20, 27], ['flowers', 26, 27], ['flowers', 32, 27], ['flowers', 38, 27],
       ['tree', 1, 29.4], ['tree', 5, 29.4], ['tree', 9, 29.4], ['tree', 13, 29.4], ['tree', 17, 29.4], ['tree', 21, 29.4],
       ['tree', 25, 29.4], ['tree', 29, 29.4], ['tree', 33, 29.4], ['tree', 37, 29.4], ['tree', 41, 29.4],
+      // Party lawn garden (rows 15-25 stay walk-through for chapter scenes): flowerbeds on the dark-grass patches,
+      // planters at the corners of the round patio.
+      ['flowers', 8.2, 15.1], ['flowers', 9.8, 15.6], ['flowers', 11.4, 15.0], ['flowers', 8.9, 16.3], ['flowers', 10.7, 16.4], ['flowers', 12.1, 16.1],
+      ['flowers', 33.2, 15.4], ['flowers', 34.8, 15.0], ['flowers', 36.4, 15.5], ['flowers', 33.9, 16.4], ['flowers', 35.6, 16.3], ['flowers', 37.1, 16.2],
+      ['flowers', 10.2, 23.2], ['flowers', 11.9, 23.6], ['flowers', 13.5, 23.1], ['flowers', 10.8, 24.5], ['flowers', 12.6, 24.8], ['flowers', 14.1, 24.3], ['flowers', 11.4, 25.4],
+      ['flowers', 31.2, 23.3], ['flowers', 32.8, 23.7], ['flowers', 34.5, 23.2], ['flowers', 31.9, 24.4], ['flowers', 33.6, 24.6], ['flowers', 35.1, 24.2],
+      ['flowers', 15.2, 18.1], ['flowers', 16.1, 18.9], ['flowers', 32.1, 19.2], ['flowers', 33.1, 20.0],
+      ['flowers', 19, 19], ['flowers', 26, 19], ['flowers', 19, 23], ['flowers', 26, 23], ['flowers', 18, 20], ['flowers', 27, 20], ['flowers', 18, 22], ['flowers', 27, 22],
+      // Bottom margin (rows 25.5-27, solid props allowed): the garden fountain, Bulma's parked aircar and the dinosaur pen.
+      ['fountain', 7.9, 25.3], ['car', 27.2, 26.3],
+      ['fenceH', 32, 25], ['fenceH', 33, 25], ['fenceH', 34, 25], ['fenceH', 35, 25], ['fenceH', 36, 25], ['fenceH', 37, 25],
+      ['fenceH', 32, 27], ['fenceH', 33, 27], ['fenceH', 34, 27], ['fenceH', 35, 27], ['fenceH', 36, 27], ['fenceH', 37, 27],
+      ['fenceV', 32, 25.4], ['fenceV', 32, 26.2], ['fenceV', 32, 26.8], ['fenceV', 38, 25.4], ['fenceV', 38, 26.2], ['fenceV', 38, 26.8],
+      ['grassTuft', 33.4, 26.1], ['grassTuft', 36.6, 25.8],
+      ['grassTuft', 30.4, 19.3], ['grassTuft', 35.2, 20.1], ['grassTuft', 15.3, 18.4], ['grassTuft', 9.6, 22.6], ['grassTuft', 16.8, 25.6], ['grassTuft', 29.5, 24.9],
     ],
     npcs: [
+      { id: 'eb_cc_dino', sprite: 'eb_ccDino', x: 34.5, y: 26, dir: 'left', talk: 'eb_cc_dino', name: 'Baby Dinosaur', wander: 1 },
       { id: 'eb_cc_guard', sprite: 'eb_ccGuard', x: 3, y: 11, dir: 'right', talk: 'eb_cc_guard', name: 'Security Guard' },
       { id: 'eb_cc_gardener', sprite: 'eb_gardener', x: 2, y: 22, talk: 'eb_cc_gardener', name: 'Gardener', wander: 1 },
       { id: 'eb_cc_mechanic', sprite: 'eb_mechanic', x: 34, y: 9, talk: 'eb_cc_mechanic', name: 'Mechanic', wander: 1 },
@@ -185,6 +209,7 @@ registerMaps([
     objects: [
       { type: 'sign', x: 1, y: 9, text: 'CAPSULE CORPORATION. Visitors please check in at reception. Do not feed the dinosaurs.' },
       { type: 'sign', x: 29, y: 8, text: 'HANGAR 3. Authorized pilots only. Spaceship fuel cells are NOT snacks.' },
+      { type: 'sign', x: 30, y: 26, text: 'DINOSAUR PEN. Please do not feed the dinosaurs. Especially not cookies. He gets ideas. - Mrs. Briefs' },
     ],
   },
   {
@@ -207,6 +232,8 @@ registerMaps([
       { id: 'eb_cc_receptionist', sprite: 'eb_ccStaff', x: 10, y: 8, talk: 'eb_cc_receptionist', name: 'Receptionist' },
       { id: 'eb_cc_labtech', sprite: 'scientist', x: 8, y: 4, talk: 'eb_cc_labtech', name: 'Lab Scientist', wander: 1 },
       { id: 'eb_cc_cleanbot', sprite: 'rescueDrone', x: 16, y: 12, talk: 'eb_cc_cleanbot', name: 'Cleaning Robot', wander: 1 },
+      // Mrs. Briefs bakes in the kitchen. She steps out while chapters 3 and 7 have her on the party lawn.
+      { id: 'eb_cc_panchy', sprite: 'panchy', x: 18, y: 3, dir: 'left', talk: 'eb_cc_panchy', name: 'Mrs. Briefs', showIf: PANCHY_HOME, hideIf: PANCHY_ON_LAWN },
     ],
     warps: [
       { x: 9, y: 13, w: 2, h: 1, to: 'cc_yard', tx: 21, ty: 8, dir: 'down', door: true },
@@ -226,15 +253,32 @@ registerMaps([
   },
 ]);
 
-/** Dialogue lines for `s.talk`. */
-type TalkLines = Array<[string, string, Expression?]>;
+/** Mrs. Briefs greets each playable character in her own way (LoG2's MRS. BRIEFS lines insert CurCharName). */
+const PANCHY_TO_HERO: HeroReactions = {
+  goku: 'Goku, dear! I made a triple batch the moment I heard you were coming. Chi-Chi says no more than forty. I didn\'t count.',
+  vegeta: 'Vegeta, sweetie, you\'re training too hard again. Have a cookie. No, have two. You need your strength to frown like that!',
+  gohan: 'Gohan! Such a scholar now. Brain food! These have walnuts in them. Walnuts look just like little brains, you know.',
+  piccolo: 'Mr. Piccolo! I know you only drink water, so I baked you a cookie made mostly of water. ...It fell apart. Take a regular one, just in case!',
+  trunks: 'Oh my, Trunks? You\'ve grown so tall! And so handsome. I always knew you would be. Have a cookie, sweetheart. Have the whole plate.',
+  satan: 'Mr. Satan! I\'ve seen all your movies! The one where you punch the volcano is my favourite. Do champions eat cookies? Of course they do!',
+  android17: 'A park ranger! How wonderful. Do your animals like cookies? Take a few for the deer, dear. Hee hee! Deer, dear.',
+  frieza: 'Oh, a new friend of Bulma\'s! What lovely purple... spots. Do take a cookie. Everyone is nicer after a cookie.',
+};
 
-/** Pick the line for the current story point: the last entry whose chapter threshold is reached. */
-function byChapter<T>(s: ScriptApi, table: Array<[number, T]>): T {
-  let pick = table[0][1];
-  for (const [ch, v] of table) if (s.check(`chapter>=${ch}`)) pick = v;
-  return pick;
-}
+/** Mrs. Briefs's kitchen news, by story point. */
+const PANCHY_NEWS: Array<[number, string]> = [
+  [0, 'Bulma\'s birthday is coming up, so I\'m testing cake recipes. This is batch number forty. The first thirty-nine were delicious too!'],
+  [2, 'The birthday cruise is going to be wonderful! I\'ve baked for three hundred guests. Well, two hundred guests and one Goku.'],
+  [4, 'That tall gentleman, Mr. Whis, adores my cookies. He asked for the recipe! I told him the secret is love. And butter. Mostly butter.'],
+  [5, 'Bulma says someone called Frieza is coming back to Earth. How exciting! I do hope he wipes his feet.'],
+  [6, 'I had the strangest feeling this morning, as if the whole house went "poof" and then came right back. Have a cookie, dear. You look pale.'],
+  [7, 'A tournament against another universe! I\'ve packed forty bento boxes. Saiyan-sized. Mr. Buu\'s is the biggest, of course.'],
+  [8, 'That shy delivery man, Monaka, hasn\'t come out of his truck all day. I left a plate of cookies by the door. Gone in a second! Such an appetite.'],
+  [9, 'A handsome young man with lavender hair came out of that yellow time machine. He looks just like little Trunks! I\'ve baked extra, in case there are more of him.'],
+  [12, 'Bulma\'s expecting a little girl! I\'ve knitted eleven pairs of booties already. And baked a cookie for every bootie.'],
+  [13, 'They say the whole universe might be erased if this tournament goes badly. Well! I\'ve decided not to worry. Worrying makes the dough sad.'],
+  [15, 'You won the whole tournament! I baked a cake shaped like the universe. Well, our universe. It has sprinkles.'],
+];
 
 registerScripts({
   // ------------------------------------------------------------------ wc_streets
@@ -247,6 +291,18 @@ registerScripts({
       ]);
       return;
     }
+    if (await heroTalk(s, 'eb_wc_tourist', {
+      goku: 'Hey, you look like one of the "trick" fighters from the Cell Games broadcast! The spiky one! Can I get a photo? My cousin in South City will flip.',
+      vegeta: [
+        ['eb_wc_tourist', 'Excuse me, sir, could you take a picture of me in front of the-', 'happy'],
+        ['hero', 'No.', 'angry'],
+        ['eb_wc_tourist', '...Right. I\'ll ask the pigeons.', 'sad'],
+      ],
+      gohan: 'Are you a professor? You have a very professor-ish face. Is the university this way, or is that Capsule Corp too?',
+      piccolo: 'A g-green man in a cape! Is that a Capsule Corp mascot suit? Can I get a- no? No photos. Got it. Sorry, sir.',
+      trunks: 'Ooh, a real sword! Is there a cosplay convention in town? You look just like the Capsule Corp president\'s son. Only, you know, all grown up.',
+      satan: 'MR. SATAN?! In WEST CITY?! I came all this way to see a dome and I get THE CHAMPION! Sign my hat! Sign my map! Sign my face!',
+    }, 'happy')) return;
     await s.say('eb_wc_tourist', byChapter(s, [
       [0, 'The map board says the avenue runs straight east to the Capsule Corp gate. Wish me luck getting an autograph.'],
       [5, 'I was supposed to fly home last week, but the news said an alien army landed in the Rocky Wasteland. I\'m staying put!'],
@@ -281,6 +337,26 @@ registerScripts({
     }
   },
   eb_wc_kidA: async (s) => {
+    if (await heroTalk(s, 'eb_wc_kidA', {
+      goku: [
+        ['eb_wc_kidA', 'Mister, you look super strong! Can you do a Kamehameha? A REAL one?', 'happy'],
+        ['hero', 'Sure! Just a little one, though. Ka... me... ha... me... HA!', 'smirk'],
+        ['eb_wc_kidA', 'WHOAAAA! MIMI! MIMI, IT\'S REAL! I TOLD YOU IT WAS REAL!', 'shock'],
+      ],
+      vegeta: 'Mister, how does your hair stand up like that? Is it from frowning? My mom says if I frown too much my face will stay that way.',
+      gohan: [
+        ['eb_wc_kidA', 'Hey! You stand EXACTLY like the Great Saiyaman! Are you him? You are, aren\'t you?!', 'shock'],
+        ['hero', 'Ha... haha... Me? No, no. I\'m just a researcher.', 'happy'],
+        ['eb_wc_kidA', 'That\'s EXACTLY what the Great Saiyaman would say!', 'happy'],
+      ],
+      piccolo: 'Are you a real Namekian? Can you really grow your arm back? Do it! Do it! ...Please?',
+      trunks: 'Your sword is SO COOL. Can I hold it? I\'ll give it back. Probably. Maybe.',
+      satan: [
+        ['eb_wc_kidA', 'Mr. Satan! My dad says the Kamehameha at the Cell Games was a light trick. You\'d know, right? Was it a trick?', 'happy'],
+        ['hero', 'Ah- ha- HAHAHA! Of course it was a trick, kid! A cheap trick! Totally not real! ...Right?', 'shock'],
+        ['eb_wc_kidA', 'Then how come you looked so scared on TV?'],
+      ],
+    })) return;
     const n = s.inc('eb_wc_kidA_n');
     if (s.check('chapter>=5') && n % 2 === 0) {
       await s.talk([
@@ -311,6 +387,12 @@ registerScripts({
       ]);
       return;
     }
+    if (await heroTalk(s, 'eb_wc_granny', {
+      goku: 'My, you remind me of a little boy who came through here forty-odd years ago. Had a tail. Ate all my pigeon bread. Very polite, though.',
+      vegeta: 'You ought to smile more, dear. Here, feed the pigeons with me. ...Oh. They\'ve all flown off. They\'re very sensitive birds.',
+      piccolo: 'A green gentleman! Are you one of those Namekians from the news? Such lovely posture. My late husband slouched terribly.',
+      satan: 'Oh, the Champion. My grandson has your poster. I have the Cell Games on tape, you know. I watch the part where you fall off the stage every Sunday.',
+    }, 'happy')) return;
     await s.say('eb_wc_granny', byChapter(s, [
       [0, 'Young people are always flying somewhere in a hurry. Sit down once in a while. Smell the flowers.'],
       [5, 'Everyone ran for the shelters when the soldiers came. I stayed with my pigeons. They were very brave.'],
@@ -333,6 +415,18 @@ registerScripts({
       ]);
       return;
     }
+    if (await heroTalk(s, 'eb_wc_officer', {
+      goku: 'Hm. Spiky hair, orange gi... We had a wanted poster that looked like you once. No, wait. That one had a monkey tail. Carry on.',
+      vegeta: 'Sir, this is a no-fly zone... Sir? ...Have a pleasant day, sir. Please don\'t blow up the police box.',
+      gohan: 'You know, you sound a lot like the Great Saiyaman. Same voice. Different... helmet. Eh, can\'t be. He\'s much cooler.',
+      piccolo: [
+        ['eb_wc_officer', 'Hold on. Turban, cape... You\'re the fella who took the West City driving test with that Goku guy!'],
+        ['hero', '...We do not speak of the driving test.', 'angry'],
+        ['eb_wc_officer', 'Fair enough. The instructor doesn\'t either. Mostly he just stares at walls.', 'smirk'],
+      ],
+      trunks: 'Is that sword licensed, son? ...From the future, you say. I\'ll write "future" on the form. Move along.',
+      satan: 'Mr. Satan. Our precinct softball team would love to have you. As the mascot. The guys say you\'d only fall over in the outfield.',
+    })) return;
     await s.say('eb_wc_officer', byChapter(s, [
       [0, 'Heading into the wilds? The Rocky Wasteland is west, Diablo Desert is way down south. Both crawling with wild beasts and bandits.'],
       [3, 'We got a report of a flying robot with a little blue man in it buzzing around the desert. Probably that Pilaf character again.'],
@@ -349,6 +443,12 @@ registerScripts({
       ]);
       return;
     }
+    if (await heroTalk(s, 'eb_wc_clerk', {
+      vegeta: 'Ah! The "Hmph" customer! The scouter-style headsets are back in stock, sir. Exact change, as always?',
+      gohan: 'Something for the scholar? This new e-reader holds ten thousand books. Or ten thousand photos of beetles. Your call.',
+      trunks: 'Can I interest you in a phone that gets signal in... the future? Ha! Just kidding. Unless... do you need one?',
+      satan: 'Mr. Satan! Remember the "Champion Edition" radio that plays your victory speech when you switch it on? Nobody bought it. Want one? Free?',
+    }, 'happy')) return;
     await s.say('eb_wc_clerk', byChapter(s, [
       [0, 'Everything on the TV wall is a Capsule Corp model. Competing with them in West City is like competing with the sun.'],
       [2, 'Somebody bought every scouter-style headset we had. He just said "Hmph" and paid in exact change.'],
@@ -372,6 +472,22 @@ registerScripts({
       ]);
       return;
     }
+    if (await heroTalk(s, 'eb_wc_reporter', {
+      goku: 'Hey! You look like that golden-haired fighter from the Cell Games footage, minus the gold. Brother? Cousin? No comment? Okay!',
+      vegeta: [
+        ['eb_wc_reporter', 'Prince Vegeta! One quote for the West City Times? Anything at all!', 'shock'],
+        ['hero', 'Hmph.', 'angry'],
+        ['eb_wc_reporter', 'PERFECT. Tomorrow\'s front page: "PRINCE SAYS HMPH." My editor is going to cry.', 'happy'],
+      ],
+      gohan: 'Wait. You look like the little blond boy from the Cell Games, all grown up... But that\'s crazy. Mr. Satan won the Cell Games. Right? ...Right?',
+      piccolo: 'Sir, is it true you entered the 23rd World Tournament as "Junior"? I\'ll take that glare as a yes!',
+      trunks: 'You! I\'ve got a blurry photo of a purple-haired kid flying out of a Capsule Corp window... Are you his big brother?',
+      satan: [
+        ['eb_wc_reporter', 'Champ! Any comment on the rumour that a little blond kid really beat Cell?', 'smirk'],
+        ['hero', 'N-no comment! The Champion has a... a training appointment! Bye!', 'shock'],
+        ['eb_wc_reporter', 'He\'s running! The Champion is running away! Somebody get the camera!', 'happy'],
+      ],
+    })) return;
     await s.say('eb_wc_reporter', byChapter(s, [
       [0, 'My editor says no more "mystery golden-haired fighter" stories. Nobody believes them anymore.'],
       [5, 'I got a photo of the invasion! It\'s... mostly smoke. And a thumb. My thumb.'],
@@ -386,6 +502,10 @@ registerScripts({
     ]));
   },
   eb_wc_oldman: async (s) => {
+    if (await heroTalk(s, 'eb_wc_oldman', {
+      goku: 'Hm? I saw you fight at the World Tournament when you were knee-high to a grasshopper. You\'ve grown. I\'ve shrunk. Seems fair.',
+      satan: 'Hmph. I watched the Cell Games too, young man. Champion or not, it was the little boy who did all the real shouting.',
+    })) return;
     const n = s.inc('eb_wc_oldman_n');
     await s.say('eb_wc_oldman', n % 2 === 1
       ? 'I remember when the Red Ribbon Army marched through here. Then the Saiyans. Then Cell. This city is tougher than it looks, young one.'
@@ -448,6 +568,12 @@ registerScripts({
       await s.say('eb_shop_waiter', 'Welcome to the West Wind Grill. Table for one? I\'m afraid the dinosaur steak is sold out. It\'s always sold out.');
       return;
     }
+    if (await heroTalk(s, 'eb_shop_waiter', {
+      goku: 'Ah... sir. Management asks me to inform you that the all-you-can-eat buffet has been discontinued. For you. Specifically.',
+      vegeta: 'The gentleman who sent back the steak as "unworthy of a prince". Your usual table, sir. The chef is hiding in the walk-in fridge.',
+      piccolo: 'A glass of water for the gentleman? Just water. Yes, sir. ...Would you like it in a bigger glass? No? Very good, sir.',
+      satan: 'Mr. Satan! Your usual table by the window, where the photographers can see you. ...None came today. Shall I telephone them?',
+    })) return;
     await s.say('eb_shop_waiter', byChapter(s, [
       [0, 'Our tempura is made with oil imported from the Southern Continent. The chef calls it "liquid gold".'],
       [4, 'A tall gentleman with white hair complimented our tempura so sincerely that the chef cried. Then he asked for nine more plates.'],
@@ -471,6 +597,17 @@ registerScripts({
       ]);
       return;
     }
+    if (await heroTalk(s, 'eb_cc_guard', {
+      goku: 'Goku! Bulma\'s orders: you are not allowed in the kitchen unsupervised. Her exact words were "not even a little bit".',
+      vegeta: [
+        ['eb_cc_guard', 'Welcome home, Prince Vegeta, sir! The gravity room is warmed up, sir! No, I did not touch the settings, sir!', 'shock'],
+        ['hero', 'Hmph. At ease.', 'smirk'],
+      ],
+      gohan: 'Gohan! Long time no see. Bulma says the library wing is yours whenever you need some quiet for your research.',
+      piccolo: 'Mr. Piccolo, sir. I\'d ask you not to fly over the fence, but the lasers already tried to stop you once. The lasers lost.',
+      trunks: 'Master Trunks? You\'ve grown about two feet since breakfast. ...Capsule Corp. Never a dull day. Go on in, sir.',
+      satan: 'Mr. Satan. Do you have an appointment? Bulma said, and I quote: "If he\'s here about sponsorship money again, I\'m not home."',
+    })) return;
     await s.say('eb_cc_guard', byChapter(s, [
       [0, 'The gravity room\'s been running at 300 G since dawn. You can feel the floor hum from here.'],
       [5, 'Some alien called Jaco crash-landed his ship in the parking lot and asked me for directions to "the Earth girl Bulma". I let him in. Was that wrong?'],
@@ -489,6 +626,11 @@ registerScripts({
     }
   },
   eb_cc_mechanic: async (s) => {
+    if (await heroTalk(s, 'eb_cc_mechanic', {
+      vegeta: 'Prince Vegeta. The ship\'s fuelled whenever you want to go punch something on another planet. Please bring it back with fewer dents.',
+      trunks: 'That yellow time machine of yours... Capsule tech, but twenty years ahead of anything we\'ve got. Whoever built it is a genius. ...Oh. OH.',
+      satan: 'Mr. Satan! Your Champion Jet is in for repairs again? What did you... You flew it into your own statue. Right. Okay.',
+    })) return;
     await s.say('eb_cc_mechanic', byChapter(s, [
       [0, 'This ship? Dr. Brief\'s design. It flew to Namek once. Well, its grandfather did. This one mostly flies to the beach.'],
       [7, 'We\'re retrofitting the hangar for "interuniversal travel". I don\'t know what that means but the paycheck is great.'],
@@ -496,6 +638,14 @@ registerScripts({
     ]));
   },
   eb_cc_poolbot: async (s) => {
+    if (await heroTalk(s, 'eb_cc_poolbot', {
+      goku: 'BZZT. SON GOKU DETECTED. KITCHEN LOCKDOWN: ENGAGED. KITCHEN LOCKDOWN: ENGAGED. KITCHEN LOCKDOWN: ENGAGED.',
+      vegeta: 'BZZT. PRINCE VEGETA DETECTED. THIS UNIT IS NOT A SPARRING PARTNER. REPEAT: THIS UNIT IS NOT A SPARRING PARTNER.',
+      gohan: 'BZZT. HALF-SAIYAN DETECTED. INITIATING HALF OF THE KITCHEN LOCKDOWN.',
+      piccolo: 'BZZT. NAMEKIAN DETECTED. DIET: WATER ONLY. THIS UNIT APPROVES. THIS UNIT WILL TELL THE POOL.',
+      trunks: 'BZZT. TWO "TRUNKS" DETECTED ON THE PREMISES. ERROR. ERROR. REBOOTING... HELLO, TALLER TRUNKS.',
+      satan: 'BZZT. FACE MATCH: MR. SATAN. THREAT LEVEL: ZERO. AUTOGRAPH VALUE: HIGH. THIS UNIT HAS NO PEN.',
+    })) return;
     const n = s.inc('eb_cc_poolbot_n');
     await s.say('eb_cc_poolbot', [
       'BZZT. POOL CHLORINE: OPTIMAL. WATER TEMPERATURE: 28 DEGREES. SWIMMING PERMITTED.',
@@ -504,6 +654,10 @@ registerScripts({
     ][(n - 1) % 3]);
   },
   eb_cc_tech: async (s) => {
+    if (await heroTalk(s, 'eb_cc_tech', {
+      gohan: 'Gohan! Settle a bet for us? Lab says Saiyan genes skip a generation. Accounting says "please stop asking us about Saiyans".',
+      trunks: 'Are you the one from the time machine? Could I scan your sword? For science. Very polite, very respectful science.',
+    })) return;
     await s.say('eb_cc_tech', byChapter(s, [
       [0, 'I work in capsule compression. Fitting a house into something the size of a vitamin is easy. Fitting Bulma\'s shoe collection is not.'],
       [2, 'Bulma wants a scouter that doesn\'t explode when it reads a Saiyan. We\'ve gone through eleven prototypes this week.'],
@@ -529,6 +683,14 @@ registerScripts({
       ]);
       return;
     }
+    if (await heroTalk(s, 'eb_cc_receptionist', {
+      goku: 'Mr. Son! Bulma left a note for you: "DON\'T EAT THE CAKE." ...Oh. You already did. I\'ll update the note.',
+      vegeta: 'Prince Vegeta. Your three o\'clock is the gravity room. So are your four and five o\'clock. Shall I keep the schedule as it is?',
+      gohan: 'Gohan! Dr. Brief asked me to remind you that his offer stands: a lab of your own, any time you want it.',
+      piccolo: 'Mr. Piccolo! You usually wait on the roof. You came in through the front door this time! Bulma owes me a coffee.',
+      trunks: 'Welcome back, Trunks- oh! The OTHER Trunks. Bulma told us not to ask questions. I am not asking. I am smiling.',
+      satan: 'The World Champion! Yes, Capsule Corp still sponsors your tournaments. No, we will not be sponsoring "Champion Jet 2".',
+    }, 'happy')) return;
     await s.say('eb_cc_receptionist', byChapter(s, [
       [0, 'Bulma\'s computer room is through the door on the left. Please don\'t touch the big monitor; it\'s full of very expensive secrets.'],
       [2, 'A visitor in a purple robe and his tall friend in blue came by asking for "the most delicious food on Earth". I sent them to the kitchen.'],
@@ -537,6 +699,11 @@ registerScripts({
     ]));
   },
   eb_cc_labtech: async (s) => {
+    if (await heroTalk(s, 'eb_cc_labtech', {
+      vegeta: 'Prince Vegeta, sir. The gravity machine upstairs is rated for 300 G. Please, PLEASE do not "improve" it again.',
+      piccolo: 'Mr. Piccolo! For our records: could we measure your antennae? It\'s for the Namekian section of the field database. Purely scientific.',
+      trunks: 'The fuel cells in your time machine are twenty years ahead of our designs. Could I take one tiny look? Purely professional curiosity.',
+    })) return;
     await s.say('eb_cc_labtech', byChapter(s, [
       [0, 'That round pod is a Saiyan space pod. We use it to test landing systems. The dent in the floor is from Tuesday.'],
       [2, 'The gravity machine upstairs has been rebuilt nine times this year. Prince Vegeta keeps "improving" it with his fists.'],
@@ -545,10 +712,52 @@ registerScripts({
     ]));
   },
   eb_cc_cleanbot: async (s) => {
+    if (await heroTalk(s, 'eb_cc_cleanbot', {
+      goku: 'BEEP. SAIYAN DETECTED. PRE-EMPTIVELY CLEANING THE KITCHEN. ESTIMATED CRUMBS: 40,000.',
+      vegeta: 'BEEP. PRINCE DETECTED. GRAVITY ROOM REPAIR TICKETS THIS MONTH: 9. THIS UNIT IS NOT JUDGING. THIS UNIT IS COUNTING.',
+      satan: 'BEEP. GUEST HAS SIGNED 14 PHOTOS OF HIMSELF AND LEFT THEM ON THE SOFA. FILING UNDER: RECYCLING.',
+    })) return;
     const n = s.inc('eb_cc_cleanbot_n');
     await s.say('eb_cc_cleanbot', n % 2 === 1
       ? 'BEEP. CLEANING LOUNGE. DETECTED: 47 VIDEO GAME CARTRIDGES, 12 CANDY WRAPPERS, 1 SMALL BOY HIDING UNDER CUSHION. IGNORING.'
       : 'BEEP. THE KITCHEN WAS CLEANED 4 MINUTES AGO. IT IS NO LONGER CLEAN. A SAIYAN HAS EATEN THERE.');
+  },
+  // LoG2: Mrs. Briefs hands out one Cookie per talk, forever, until you carry the 99 maximum.
+  eb_cc_panchy: async (s) => {
+    const me = 'eb_cc_panchy';
+    const max = ITEMS.cookie?.max ?? 99;
+    if (s.count('cookie') >= max) {
+      await s.say(me, `Goodness, {hero}, you're carrying ${max} of my cookies already! If you get crumbs all over my carpet, I'll be quite cross.`, 'shock');
+      return;
+    }
+    const n = s.inc('eb_cc_panchy_n');
+    if (n === 1) {
+      await s.say(me, 'Oh, hello, {hero}! Make yourself at home. I just took a batch of cookies out of the oven. Have one, dear!', 'happy');
+    } else if (!(await heroTalk(s, me, PANCHY_TO_HERO, 'happy'))) {
+      await s.say(me, n % 3 === 0
+        ? 'You really can\'t get enough of my cookies, can you, {hero}? Good! That\'s why I bake them. I do love having company.'
+        : byChapter(s, PANCHY_NEWS), 'happy');
+    }
+    await s.give('cookie', 1);
+  },
+  eb_cc_dino: async (s) => {
+    if (await heroTalk(s, 'eb_cc_dino', {
+      goku: [
+        ['narrator', 'The baby dinosaur sniffs Goku\'s hand through the fence, then tries to eat his sleeve.'],
+        ['hero', 'Hey! Heh heh, you\'re hungry too, huh? Me too, buddy.', 'happy'],
+      ],
+      vegeta: [['narrator', 'The baby dinosaur takes one look at Vegeta and hides behind the fence post. Most of it, anyway.']],
+      gohan: [['narrator', 'The baby dinosaur rolls over for a belly rub. Gohan obliges. He has clearly done this before.']],
+      piccolo: [['narrator', 'The baby dinosaur stares at Piccolo. Piccolo stares back. Neither of them blinks for a very long time.']],
+      trunks: [['narrator', 'The baby dinosaur sniffs at Trunks\'s sword, sneezes, and wags its tail. In Trunks\'s time, there are no pets left at Capsule Corp.']],
+      satan: [
+        ['narrator', 'The baby dinosaur roars at Mr. Satan. It is a very small roar.'],
+        ['hero', 'EEK! ...I mean, HA HA HA! Good boy! Sit! Stay! The Champion commands you!', 'shock'],
+      ],
+    })) return;
+    const n = s.inc('eb_cc_dino_n');
+    if (n % 2 === 1) await s.narrate('The Briefs family\'s baby dinosaur presses its nose against the fence and sniffs you hopefully. It smells cookies.');
+    else await s.say('eb_cc_dino', 'Gao! Gao! (It wags its tail so hard it nearly falls over.)', 'happy');
   },
   eb_cc_terminal: async (s) => {
     if (!s.has('scouter')) {

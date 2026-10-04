@@ -1,8 +1,38 @@
 import { TILE } from '../../../engine/constants';
 import type { Dir } from '../../../engine/math';
-import type { ScriptApi } from '../../../game/script';
+import type { Field } from '../../../game/field';
+import type { Script, ScriptApi } from '../../../game/script';
 
 /** Helpers shared by the act 2 scripts (chapters 3-5). */
+
+/** Story beats currently running, per map visit (the Field object). */
+const RUNNING = new WeakMap<Field, Set<string>>();
+
+/**
+ * Wrap a trigger- or NPC-started story beat so only one copy of it runs per map visit. A scripted fight or field
+ * battle hands control back while its step trigger is still live (the beat's done flag is only set after the
+ * fight), so stepping out of the trigger band and back in mid-fight would otherwise replay the cutscene, spawn a
+ * second boss with the same uid and leave the field locked for good once the first copy moves on.
+ * The mark lives on the Field object: it is never saved and resets whenever the map is (re)loaded, so a beat
+ * abandoned through a Game Over or a reload can always be replayed.
+ */
+export function exclusive(id: string, body: Script): Script {
+  return async (s) => {
+    const field = s.field;
+    let running = RUNNING.get(field);
+    if (!running) {
+      running = new Set();
+      RUNNING.set(field, running);
+    }
+    if (running.has(id)) return;
+    running.add(id);
+    try {
+      await body(s);
+    } finally {
+      running.delete(id);
+    }
+  };
+}
 
 /** The seven Dragon Ball item ids. */
 export const DB_ITEMS = ['db1', 'db2', 'db3', 'db4', 'db5', 'db6', 'db7'] as const;

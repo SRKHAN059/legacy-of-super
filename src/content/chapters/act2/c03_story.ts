@@ -1,6 +1,6 @@
 import { registerScripts, type ScriptApi } from '../../../game/script';
 import { ensureChapterState, force, unforce } from '../common';
-import { addProp, ballCheck, DB_ITEMS, dbCount, removeIf, removeProp, respawn, stage } from './shared';
+import { addProp, ballCheck, DB_ITEMS, dbCount, exclusive, removeIf, removeProp, respawn, stage } from './shared';
 
 /**
  * Chapter 3 - "Battle of Gods" (Goku, L12-15). Main story beats:
@@ -27,7 +27,7 @@ async function openingScene(s: ScriptApi): Promise<void> {
   await s.pan(22, 19, 30);
   await s.narrate('The party lawn at Capsule Corporation lies in ruins. Lord Beerus sits among the wreckage, licking pudding off a spoon.');
   await s.talk([
-    ['beerus', 'So you\'re Kakarot. The one who bounced off my finger on King Kai\'s little planet.', 'smirk'],
+    ['beerus', 'So, Goku. The one who bounced off my finger on King Kai\'s little planet.', 'smirk'],
     ['goku', 'Heh... yeah. Sorry about everybody here, Lord Beerus. They didn\'t know who you were.', 'sad'],
     ['beerus', 'I came for one thing: the Super Saiyan God from my dream. Show me one and maybe I won\'t erase this planet.', 'neutral'],
     ['goku', 'A Super Saiyan God? I\'ve never even heard of one... but I bet Shenron has!', 'happy'],
@@ -356,14 +356,17 @@ registerScripts({
     if (s.field.def.id !== 'cc_yard') await s.warp('cc_yard', 23, 22, 'up');
     await ritualScene(s);
   },
-  /** Trigger/NPC on the sea arena: start (or retry) the Beerus fight. */
-  c03_battle: async (s) => {
+  /**
+   * Trigger/NPC on the sea arena: start (or retry) the Beerus fight. `exclusive`: re-crossing the trigger column
+   * mid-fight does not replay the intro or spawn a second Beerus.
+   */
+  c03_battle: exclusive('c03_battle', async (s) => {
     if (!s.check('c03_ritualDone&!c03_beerusDone')) {
       await s.narrate('Waves crash far below the cloud bank.');
       return;
     }
     await godBattle(s);
-  },
+  }),
   /** Beerus boss phase taunts. */
   c03_beerus_p2: async (s) => {
     await s.say('beerus', 'Not bad, not bad! Let\'s turn it up a little.', 'smirk');

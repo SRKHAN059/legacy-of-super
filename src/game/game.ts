@@ -2,13 +2,13 @@ import { CHARACTERS, type CharId } from '../content/characters';
 import { ITEMS } from '../content/items';
 import { TRACKS } from '../content/music';
 import { MAPS, resolveMap } from '../content/registry';
-import { worldOfMap } from '../content/world';
+import { SPOTS, worldOfMap, type WorldId } from '../content/world';
 import { audio } from '../engine/audio';
 import { TILE } from '../engine/constants';
 import type { Input } from '../engine/input';
 import type { Dir } from '../engine/math';
 import { SceneStack } from '../engine/scene';
-import { ChoiceScene, DialogueScene, type Line } from '../ui/dialogue';
+import { ChoiceScene, DialogueScene, textSettings, type Line } from '../ui/dialogue';
 import { GameOverScene } from '../ui/gameover';
 import { PauseMenu } from '../ui/pause';
 import { RegionMapScene } from '../ui/regionmap';
@@ -21,8 +21,8 @@ import { TitleCardScene } from '../ui/titlecard';
 import { TitleScene } from '../ui/title';
 import { WorldMapScene } from '../ui/worldmap';
 import { Field } from './field';
-import { ScriptApi, SCRIPTS, type ScriptCtx } from './script';
-import { GameState, newGame, SaveService } from './state';
+import { FightAbandoned, ScriptApi, SCRIPTS, type ScriptCtx } from './script';
+import { GameState, newGame, SaveService, type Options, type SaveData } from './state';
 import { BrowserStorage } from './storage';
 
 /** Top-level coordinator: owns state, scenes, transitions, saving and the script runner. */
@@ -44,49 +44,112 @@ export class Game {
   hideHud = false;
   /** Hook to intercept player KO (scripted losses). Return true to cancel Game Over. */
   onPlayerDown: (() => boolean) | null = null;
-  private transitioning = false;
+  /** The map transition (fade out, switch, fade in) in progress, if any. */
+  private transition: Promise<void> | null = null;
+  /** The Game Over sequence is running: no more map changes until the player continues or quits. */
+  private gameOverActive = false;
+  /** This run has a save to go back to (continued from one, or saved since New Game). */
+  runSaved = false;
 
-  constructor(readonly input: Input) {}
+  constructor(readonly input: Input) {
+    // Options are remembered across sessions (and shown on the title screen) independently of save slots.
+    const o = this.saves.loadOptions();
+    if (o) Object.assign(this.state.data, o);
+    this.applySettings();
+  }
 
-  /** Show the title screen. */
-  toTitle(): void {
+  /** True while a door, map edge or story warp is fading between maps (Field locks the player meanwhile). */
+  get inTransition(): boolean {
+    return this.transition !== null;
+  }
+
+  /** Push the current state's options (text speed, music and SFX volume) into the live engine. */
+  applySettings(d: SaveData = this.state.data): void {
+    textSettings.speed = d.textSpeed;
+    audio.musicVolume = d.musicVol;
+    audio.sfxVolume = d.sfxVol;
+  }
+
+  /** Options changed in a menu: apply them now and remember them for the next session's title screen. */
+  optionsChanged(): void {
+    this.applySettings();
+    const d = this.state.data;
+    const o: Options = { textSpeed: d.textSpeed, musicVol: d.musicVol, sfxVol: d.sfxVol };
+    this.saves.saveOptions(o);
+  }
+
+  /** Forget the running session (locks, fights, overlays) before a title / load / new game. */
+  private resetSession(): void {
     this.field = null;
     this.lockDepth = 0;
     this.fightDepth = 0;
     this.allowControl = false;
+    this.hideHud = false;
+    this.onPlayerDown = null;
+    this.gameOverActive = false;
+  }
+
+  /** Show the title screen. */
+  toTitle(): void {
+    this.resetSession();
     this.scenes.replace(new TitleScene(this));
     this.playMusic('title');
   }
 
-  /** Begin a new game in a save slot. */
+  /** Begin a new game in a save slot. Options chosen on the title screen carry over. */
   async startNewGame(slot: number): Promise<void> {
+    const prev = this.state.data;
+    this.resetSession();
     this.slot = slot;
+    this.runSaved = false;
     this.state = new GameState(newGame());
-    this.lockDepth = 0;
-    this.fightDepth = 0;
+    Object.assign(this.state.data, { textSpeed: prev.textSpeed, musicVol: prev.musicVol, sfxVol: prev.sfxVol });
+    this.applySettings();
     const boot = SCRIPTS.newGame;
     if (!boot) throw new Error('Missing "newGame" script');
     await this.runScript('newGame');
   }
 
-  /** Continue from a save slot. */
+  /** Continue from a save slot. Returns false when the slot is empty or unreadable. */
   continueGame(slot: number): boolean {
     const d = this.saves.load(slot);
     if (!d) return false;
+    this.resetSession();
     this.slot = slot;
+    this.runSaved = true;
+    // Options are global: the last values chosen (title or pause menu) apply to every file; the copy inside
+    // the save is the fallback when none were stored.
+    const o = this.saves.loadOptions();
+    if (o) Object.assign(d, o);
     this.state = new GameState(d);
-    this.lockDepth = 0;
-    this.fightDepth = 0;
-    this.allowControl = false;
-    this.startField(d.map, d.x / TILE - 0.5, d.y / TILE - 0.875, d.dir);
+    this.applySettings(d);
+    const at = this.resumePoint(d);
+    this.startField(at.map, at.tx, at.ty, at.dir);
     return true;
+  }
+
+  /**
+   * Where a loaded save resumes. A save whose map no longer exists (renamed or removed in an update) lands on
+   * an unlocked world-map spot of its world instead of failing to load.
+   */
+  private resumePoint(d: SaveData): { map: string; tx: number; ty: number; dir: Dir } {
+    if (resolveMap(d.map)) return { map: d.map, tx: d.x / TILE - 0.5, ty: d.y / TILE - 0.875, dir: d.dir };
+    console.warn(`[save] map "${d.map}" no longer exists; resuming at a landing spot`);
+    const world = (this.state.get('world') as WorldId | undefined) ?? 'earth';
+    const spots = Object.values(SPOTS).filter((s) => !s.toWorld && resolveMap(s.map));
+    const spot = spots.find((s) => s.world === world && d.regions.includes(s.id))
+      ?? spots.find((s) => d.regions.includes(s.id)) ?? spots[0];
+    if (!spot) throw new Error(`Save map "${d.map}" is unknown and no landing spot exists`);
+    this.state.set('world', spot.world);
+    return { map: spot.map, tx: spot.tx, ty: spot.ty, dir: 'down' };
   }
 
   /** Create a field for a map at a tile position and make it the base scene. */
   startField(mapId: string, tx: number, ty: number, dir: Dir): Field {
     const def = resolveMap(mapId);
     if (!def) throw new Error(`Unknown map "${mapId}"`);
-    const prev = this.field?.player;
+    const old = this.field;
+    const prev = old?.player;
     const f = new Field(this, def, tx * TILE + 8, ty * TILE + 14, dir);
     if (prev && prev.cs.id === f.player.cs.id) {
       f.player.formActive = prev.formActive;
@@ -94,6 +157,8 @@ export class Game {
       f.player.refreshSprite();
     }
     this.field = f;
+    // A scripted fight still waiting on the old map can never finish there: abandon it (see ScriptApi.fight).
+    if (old && old !== f) old.abandon();
     this.state.data.map = mapId;
     // Story warps can cross worlds (Earth, Future Earth, space): keep the world map a sign opens in step.
     const world = worldOfMap(mapId);
@@ -124,18 +189,26 @@ export class Game {
     f.fade = target;
   }
 
-  /** Fade out, switch map, fade in. */
+  /**
+   * Fade out, switch map, fade in. The player is locked for the whole transition (no damage, no talking, no
+   * second exit). A story warp requested while another transition runs waits for it, then goes ahead.
+   */
   async changeMap(mapId: string, tx: number, ty: number, dir: Dir, color = '#000000'): Promise<void> {
-    if (this.transitioning) return;
-    this.transitioning = true;
-    try {
+    while (this.transition) await this.transition;
+    if (this.gameOverActive || this.field?.player.state === 'dead') return;
+    const run = (async () => {
       await this.fadeTo(1, 12, color);
       const f = this.startField(mapId, tx, ty, dir);
       f.fade = 1;
       f.fadeColor = color;
       await this.fadeTo(0, 12, color);
+    })();
+    const mine = run.catch(() => undefined);
+    this.transition = mine;
+    try {
+      await run;
     } finally {
-      this.transitioning = false;
+      if (this.transition === mine) this.transition = null;
     }
   }
 
@@ -158,7 +231,7 @@ export class Game {
   /** Flight circle: lift off, white-out, land elsewhere. */
   async flyTo(mapId: string, tx: number, ty: number): Promise<void> {
     const f = this.field;
-    if (!f || this.transitioning) return;
+    if (!f || this.transition) return;
     this.lockDepth++;
     try {
       const p = f.player;
@@ -232,7 +305,8 @@ export class Game {
     try {
       await fn(new ScriptApi(this, ctx));
     } catch (err) {
-      console.error(`[script] ${id} failed`, err);
+      if (err instanceof FightAbandoned) console.warn(`[script] ${id}: ${err.message}`);
+      else console.error(`[script] ${id} failed`, err);
     } finally {
       this.lockDepth = Math.max(0, this.lockDepth - 1);
       this.allowControl = this.lockDepth > 0 ? prevAllow : false;
@@ -269,7 +343,9 @@ export class Game {
       this.state.data.y = f.player.y;
       this.state.data.dir = f.player.dir;
     }
-    return this.saves.save(this.slot, this.state.data);
+    const ok = this.saves.save(this.slot, this.state.data);
+    if (ok) this.runSaved = true;
+    return ok;
   }
 
   playMusic(id: string): void {
@@ -324,15 +400,34 @@ export class Game {
     }
   }
 
-  /** Game Over sequence (LoG2: back to title / last save). */
-  async gameOver(): Promise<void> {
+  /** Wait `n` ticks of whichever field is current (survives nothing replacing it; map changes are off). */
+  private async frames(n: number): Promise<void> {
     const f = this.field;
-    if (!f) return;
+    if (f) await f.wait(n);
+  }
+
+  /**
+   * Game Over sequence (LoG2: back to title / last save). Map changes are refused from here on, so the field
+   * this waits on cannot be swapped out from under it.
+   */
+  async gameOver(): Promise<void> {
+    if (!this.field || this.gameOverActive) return;
+    this.gameOverActive = true;
     this.lockDepth = 999;
-    await f.wait(50);
+    await this.frames(50);
     await this.say([{ text: 'You have died!' }]);
     await this.fadeTo(1, 30);
     this.lockDepth = 0;
     this.scenes.replace(new GameOverScene(this));
+  }
+
+  /**
+   * Game Over → Continue: back to this run's last save. A run that was never saved (New Game, even on a file
+   * holding an older playthrough) restarts from the beginning instead of loading that other playthrough.
+   */
+  continueAfterGameOver(): boolean {
+    if (this.runSaved) return this.continueGame(this.slot);
+    void this.startNewGame(this.slot);
+    return true;
   }
 }

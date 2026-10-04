@@ -6,6 +6,7 @@ import { wrap } from '../../src/engine/fontdata';
 import type { Button } from '../../src/engine/input';
 import { Shot } from '../../src/game/projectiles';
 import { ScriptApi, SCRIPTS, type FightOpts, type FightResult, type Script } from '../../src/game/script';
+import { HUB } from '../../src/content/chapters/act1/hubs';
 import { Sim } from '../sim';
 
 /**
@@ -208,6 +209,9 @@ describe('Act 1 main path', () => {
       expect(await sim.run('newGame', {}, MAX)).toBe(true);
       await settle(sim);
       expect(sim.errors).toEqual([]);
+      // Opening crawl: future Goku died of the heart virus when Trunks was an infant (Age 767), not before his birth.
+      expect(log.narr.some((n) => n.includes('Son Goku: a hero who died when Trunks was still a baby.'))).toBe(true);
+      expect(log.narr.some((n) => /before Trunks was (even )?born/.test(n))).toBe(false);
       expect(s().data.chapter).toBe(0);
       expect(s().data.map).toBe('future_hideout_in');
       expect(s().data.active).toBe('trunks');
@@ -620,6 +624,67 @@ describe('Act 1 side quests', () => {
     expect(s.count('end3')).toBe(1);
     expect(quest(sim, 'c02_spar')).toBe('done');
     expect(s.char('goku').exp).toBe(expBefore);
+  }, 120000);
+
+  it('c02_spar: no free heal; a lost bout means HP/2 and the dojo door, no reward (ROM script 0x3B63B4)', async () => {
+    const sim = new Sim();
+    const s = st(sim);
+    s.data.chapter = 3;
+    s.set('c02_rage');
+    s.join('goku', 12);
+    s.join('vegeta', 12);
+    s.data.active = 'goku';
+    sim.choice = 0;
+    // The fallback exit in HUB must stay in step with the dojo's real door.
+    const door = resolveMap('satan_dojo')?.warps?.find((w) => w.door);
+    expect(door && [door.to, door.tx, door.ty]).toEqual(['satan_mansion', ...HUB.satanDojo.outside]);
+
+    // A won bout gives the capsule and nothing else: the benched fighter stays hurt and drained.
+    await enter(sim, 'satan_dojo', 9, 11);
+    const vegeta = s.char('vegeta');
+    vegeta.hp = 1;
+    vegeta.ep = 0;
+    await talk(sim, 'c02_spYamchaNpc');
+    expect(s.flag('c02_beatYamcha')).toBe(true);
+    expect(s.count('str3')).toBe(1);
+    expect([vegeta.hp, vegeta.ep]).toEqual([1, 0]);
+    expect(sim.game.field?.def.id).toBe('satan_dojo');
+
+    // A lost bout: a real knockout through fight()'s loseOk hook (the Sim bot would otherwise win at once).
+    await enter(sim, 'satan_dojo', 9, 11);
+    const goku = s.char('goku');
+    const warps: Array<{ map: string; x: number; y: number; hp: number; ep: number }> = [];
+    const origWarp = ScriptApi.prototype.warp;
+    ScriptApi.prototype.warp = async function (this: ScriptApi, map: string, x: number, y: number, dir?: Parameters<typeof origWarp>[3]) {
+      const c = this.state.char(this.hero);
+      warps.push({ map, x, y, hp: c.hp, ep: c.ep });
+      return origWarp.call(this, map, x, y, dir);
+    };
+    try {
+      const h = await runUntil(sim, 'c02_spar_krillin', () => sim.game.fightDepth > 0);
+      const f = sim.game.field;
+      expect(f?.enemies.some((e) => e.uid === 'c02_spKrillin_bout')).toBe(true);
+      goku.ep = 5;
+      goku.hp = 3;
+      if (f) f.damagePlayer(9999, 10, f.player.x, f.player.y, { noInv: true });
+      await rawTick(sim, 5);
+      await finish(sim, h);
+    } finally {
+      ScriptApi.prototype.warp = origWarp;
+    }
+    expect(sim.errors).toEqual([]);
+    expect(warps).toEqual([{ map: 'satan_mansion', x: 31, y: 8, hp: Math.floor(goku.hpMax / 2), ep: 5 }]);
+    expect(sim.game.field?.def.id).toBe('satan_mansion');
+    expect([vegeta.hp, vegeta.ep]).toEqual([1, 0]);
+    expect(s.flag('c02_beatKrillin')).toBe(false);
+    expect(s.count('pow3')).toBe(0);
+    expect(quest(sim, 'c02_spar')).toBe('active');
+
+    // Walking back in starts a new visit: the rematch is on.
+    await enter(sim, 'satan_dojo', 9, 11);
+    await talk(sim, 'c02_spKrillinNpc');
+    expect(s.flag('c02_beatKrillin')).toBe(true);
+    expect(s.count('pow3')).toBe(1);
   }, 120000);
 });
 

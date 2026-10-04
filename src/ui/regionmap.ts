@@ -53,9 +53,14 @@ export class RegionMapScene implements Scene {
   private resolve!: () => void;
   private t = 0;
   private readonly blocks: Block[];
+  /** First look after Bulma's Scouter upgrade (flag `scouterPlus`): explain the grey blocks once. */
+  private readonly upgradeNote: boolean;
 
   constructor(private readonly game: Game) {
     this.done = new Promise((r) => (this.resolve = r));
+    const st = game.state;
+    this.upgradeNote = st.flag('scouterPlus') && !st.flag('_scouterPlusSeen');
+    if (this.upgradeNote) st.set('_scouterPlusSeen');
     const f = game.field;
     this.blocks = f ? layoutRegion(f.def).map((b) => ({ ...b, def: resolveMap(b.def.id) ?? b.def })) : [];
     audio.sfx('menuOk');
@@ -134,6 +139,9 @@ export class RegionMapScene implements Scene {
       ctx.fillRect(px - 2, py - 2, 4, 4);
       ctx.fillStyle = '#fff';
       ctx.fillRect(px - 1, py - 1, 2, 2);
+    }
+    if (this.upgradeNote && this.t < 360) {
+      font.drawCentered(ctx, 'Scouter upgraded! Unexplored areas show in grey.', SCREEN_W / 2, SCREEN_H - 22, PAL.gold, '#000');
     }
     font.drawCentered(ctx, `${f.def.name}  -  B: close`, SCREEN_W / 2, SCREEN_H - 11, '#a0a8c8', '#000');
   }

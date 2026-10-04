@@ -11,7 +11,7 @@ import type { Game } from '../game/game';
 import type { SaveData } from '../game/state';
 import { drawWindow } from './window';
 
-type Mode = 'press' | 'menu' | 'files' | 'fileAction' | 'confirmDelete' | 'options' | 'credits';
+type Mode = 'press' | 'menu' | 'files' | 'fileAction' | 'confirmDelete' | 'confirmNew' | 'options' | 'credits';
 
 let logoCache: Bitmap | null = null;
 
@@ -81,12 +81,22 @@ export class TitleScene implements Scene {
         if (ok) {
           const o = opts[this.actionSel];
           audio.sfx('menuOk');
-          if (o === 'Continue') this.game.continueGame(this.fileSel);
+          if (o === 'Continue') this.continueFile();
+          else if (o === 'New Game' && has) { this.mode = 'confirmNew'; this.actionSel = 1; }
           else if (o === 'New Game') void this.game.startNewGame(this.fileSel);
           else { this.mode = 'confirmDelete'; this.actionSel = 1; }
         }
         break;
       }
+      case 'confirmNew':
+        // A new game on an occupied file: the old save stays in the file until the new run saves over it.
+        if (up || down) { this.actionSel ^= 1; audio.sfx('menuMove'); }
+        if (back) { this.mode = 'fileAction'; this.actionSel = 1; audio.sfx('menuBack'); }
+        if (ok) {
+          if (this.actionSel === 0) { audio.sfx('menuOk'); void this.game.startNewGame(this.fileSel); }
+          else { this.mode = 'fileAction'; this.actionSel = 1; audio.sfx('menuBack'); }
+        }
+        break;
       case 'confirmDelete':
         if (up || down) { this.actionSel ^= 1; audio.sfx('menuMove'); }
         if (back) { this.mode = 'files'; audio.sfx('menuBack'); }
@@ -104,8 +114,11 @@ export class TitleScene implements Scene {
         if (l || r) {
           const dv = r ? 1 : -1;
           if (this.sel === 0) d.textSpeed = Math.max(1, Math.min(4, d.textSpeed + dv));
-          if (this.sel === 1) { d.musicVol = Math.max(0, Math.min(1, +(d.musicVol + dv * 0.1).toFixed(1))); audio.musicVolume = d.musicVol; }
-          if (this.sel === 2) { d.sfxVol = Math.max(0, Math.min(1, +(d.sfxVol + dv * 0.1).toFixed(1))); audio.sfxVolume = d.sfxVol; audio.sfx('menuMove'); }
+          if (this.sel === 1) d.musicVol = Math.max(0, Math.min(1, +(d.musicVol + dv * 0.1).toFixed(1)));
+          if (this.sel === 2) d.sfxVol = Math.max(0, Math.min(1, +(d.sfxVol + dv * 0.1).toFixed(1)));
+          // Applied now and remembered; a New Game started from here keeps them.
+          this.game.optionsChanged();
+          if (this.sel === 2) audio.sfx('menuMove');
         }
         if (ok && this.sel === 3) { this.mode = 'credits'; this.t = 0; audio.sfx('menuOk'); }
         if (back) { this.mode = 'menu'; this.sel = 1; audio.sfx('menuBack'); }
@@ -114,6 +127,17 @@ export class TitleScene implements Scene {
       case 'credits':
         if (back || (ok && this.t > 30)) { this.mode = 'options'; this.sel = 3; }
         break;
+    }
+  }
+
+  /** Load the selected file; a save that cannot be resumed is reported instead of freezing the title screen. */
+  private continueFile(): void {
+    try {
+      if (!this.game.continueGame(this.fileSel)) audio.sfx('denied');
+    } catch (err) {
+      console.error('[title] could not load file', this.fileSel + 1, err);
+      audio.sfx('denied');
+      this.game.toTitle();
     }
   }
 
@@ -171,6 +195,7 @@ export class TitleScene implements Scene {
       case 'files':
       case 'fileAction':
       case 'confirmDelete':
+      case 'confirmNew':
         this.renderFiles(ctx);
         break;
       case 'options':
@@ -210,13 +235,15 @@ export class TitleScene implements Scene {
       font.drawRight(ctx, data.chapter === 0 ? 'Prologue' : `Ch.${data.chapter}`, 216, y + 4, '#c8c8c8', '#000');
       font.drawRight(ctx, tm, 216, y + 25, '#c8c8c8', '#000');
     });
-    if (this.mode === 'fileAction' || this.mode === 'confirmDelete') {
+    if (this.mode === 'fileAction' || this.mode === 'confirmDelete' || this.mode === 'confirmNew') {
       const has = !!this.files[this.fileSel].data;
-      const opts = this.mode === 'confirmDelete' ? ['Delete', 'Cancel'] : has ? ['Continue', 'New Game', 'Delete'] : ['New Game'];
+      const opts = this.mode === 'confirmDelete' ? ['Delete', 'Cancel'] : this.mode === 'confirmNew' ? ['Start', 'Cancel']
+        : has ? ['Continue', 'New Game', 'Delete'] : ['New Game'];
       const h = opts.length * 12 + 8;
       const y = 24 + this.fileSel * 44;
       drawWindow(ctx, 150, Math.min(SCREEN_H - h - 2, y), 70, h);
       if (this.mode === 'confirmDelete') font.draw(ctx, 'Erase?', 154, Math.min(SCREEN_H - h - 2, y) - 10, '#f86060', '#000');
+      if (this.mode === 'confirmNew') font.drawRight(ctx, 'Start over?', 218, Math.min(SCREEN_H - h - 2, y) - 10, '#f8c060', '#000');
       opts.forEach((o, i) => {
         const yy = Math.min(SCREEN_H - h - 2, y) + 5 + i * 12;
         font.draw(ctx, o, 166, yy, i === this.actionSel ? PAL.gold : PAL.white, '#000');

@@ -2,13 +2,13 @@ import { registerScripts, type ScriptApi } from '../../../game/script';
 import { FORMS } from '../../characters';
 import { registerOverlay } from '../../registry';
 import { ensureChapterState, force, unforce } from '../common';
-import { bossExp, cast, clearWild, dismiss, exclusive, inArena, stageBoss } from './helpers';
+import { bossExp, cast, clearWild, dismiss, exclusive, hide, inArena, stageBoss } from './helpers';
 
 /**
  * CHAPTER 6 — "Golden Frieza" (Goku → Vegeta → Goku, L22-25).
  * Beats: c06_start (arrival on waste_mesa) → c06_round1 (Goku: Final Form, SSB, Golden Frieza, Sorbet's shot)
- * → c06_round2 (Vegeta: Golden Frieza, Earth destroyed, Whis's rewind, Goku's beam struggle, Piccolo's senzu)
- * → victory party on cc_yard → tell Beerus you are ready to leave (c06_party_beerus) → c07_start.
+ * → c06_round2 (Vegeta: Golden Frieza, Earth destroyed, Whis's rewind, Goku's beam struggle, then the Lookout, where
+ * Porunga revives Piccolo: he died shielding Gohan at the end of Chapter 5, as in the anime) → victory party on cc_yard → tell Beerus you are ready to leave (c06_party_beerus) → c07_start.
  * Side quest: c06_deserters (bronze, Jaco → waste_canyon).
  */
 
@@ -32,6 +32,12 @@ const DUEL_ARENA = { x0: 16, y0: 11, x1: 35, y1: 26 } as const;
 /** cc_yard party lawn (x 6-39, rows 15-27, centre (23,21)). */
 const LAWN = { arrive: { x: 23, y: 14 } } as const;
 
+/** Kami's Lookout plaza, in front of the palace (world builder A): Piccolo's revival. */
+const LOOKOUT = {
+  hero: { x: 21, y: 20 }, dende: { x: 21, y: 15 }, popo: { x: 23, y: 15 }, piccolo: { x: 21, y: 17 },
+  goten: { x: 19, y: 17 }, trunks: { x: 23, y: 17 }, gohan: { x: 19, y: 20 }, krillin: { x: 23, y: 20 }, bulma: { x: 24, y: 21 },
+} as const;
+
 const PRE = 'chapter==6&c06_arrived&!c06_won';
 
 // ------------------------------------------------------------------ hub overlays
@@ -47,7 +53,7 @@ registerOverlay('waste_mesa', {
     { id: 'c06_m_tien', sprite: 'tien', x: MESA.tien.x, y: MESA.tien.y, dir: 'right', talk: 'c06_tien_talk', name: 'Tien', showIf: PRE },
     { id: 'c06_m_roshi', sprite: 'roshi', x: MESA.roshi.x, y: MESA.roshi.y, dir: 'right', talk: 'c06_roshi_talk', name: 'Master Roshi', showIf: PRE },
     { id: 'c06_m_gohan', sprite: 'gohan', x: MESA.gohan.x, y: MESA.gohan.y, dir: 'right', talk: 'c06_gohan_talk', name: 'Gohan', showIf: PRE },
-    { id: 'c06_m_piccolo', sprite: 'piccolo', x: MESA.piccolo.x, y: MESA.piccolo.y, dir: 'right', talk: 'c06_piccolo_talk', name: 'Piccolo', showIf: PRE },
+    // No Piccolo here: he died at the end of Chapter 5 and Goten and Trunks carried him to the Lookout (c06_start).
     { id: 'c06_m_bulma', sprite: 'bulma', x: MESA.bulma.x, y: MESA.bulma.y, dir: 'right', talk: 'c06_bulma_talk', name: 'Bulma', showIf: PRE },
     { id: 'c06_m_jaco', sprite: 'jaco', x: MESA.jaco.x, y: MESA.jaco.y, dir: 'right', talk: 'c06_jaco_talk', name: 'Jaco', showIf: PRE },
     // Beerus and Whis arrived with Goku and Vegeta at the end of Chapter 5 and watch from Bulma's corner.
@@ -127,11 +133,36 @@ registerScripts({
     cast(s, 'c06_m_whis', 'whis', MESA.whis.x, MESA.whis.y, 'right', 'Whis');
     s.pose('c06_m_piccolo', 'ko');
     s.pose('c06_m_gohan', 'hurt');
-    await s.pan(17, 18, 50);
+    // Frieza's beam went through Piccolo's heart (end of Chapter 5): he dies here, as in the anime (ep 22).
+    await s.pan(MESA.piccolo.x + 3, MESA.piccolo.y - 1, 50);
     await s.talk([
-      ['gohan', 'Piccolo... hang on. Please.', 'hurt'],
-      ['krillin', 'His pulse is weak, but he\'s alive! If we had one more senzu...', 'shock'],
+      ['gohan', 'Mr. Piccolo... come on, open your eyes. Please!', 'hurt'],
+      ['krillin', 'Gohan... he\'s not breathing. That beam went straight through his heart. Piccolo\'s... gone.', 'sad'],
+      ['gohan', 'He died protecting me. Again. Because I let myself get weak.', 'sad'],
     ]);
+    // Goten and Trunks, hiding since Gotenks's headbutt, carry the body to the Lookout.
+    cast(s, 'c06_goten', 'goten', MESA.piccolo.x - 4, MESA.piccolo.y - 4, 'right', 'Goten');
+    cast(s, 'c06_trunks', 'trunksKid', MESA.piccolo.x - 3, MESA.piccolo.y - 4, 'right', 'Trunks');
+    await s.walkAll([
+      ['c06_goten', MESA.piccolo.x - 1, MESA.piccolo.y, 2],
+      ['c06_trunks', MESA.piccolo.x + 1, MESA.piccolo.y, 2],
+    ]);
+    await s.talk([
+      ['trunksKid', 'Gohan! We saw everything from behind the rocks!', 'shock'],
+      ['goten', 'Big brother... Mr. Piccolo isn\'t moving.', 'sad'],
+      ['gohan', 'Goten, Trunks: take Mr. Piccolo up to the Lookout. Dende will know what to do. Fly low and don\'t stop for anything.', 'sad'],
+      ['trunksKid', 'Got it. Come on, Goten, grab his legs!', 'neutral'],
+    ]);
+    // The boys lift the body between them and fly off to the north-west.
+    const away = { x: MESA.piccolo.x - 6, y: MESA.piccolo.y - 11 };
+    await Promise.all([s.lift('c06_m_piccolo', 12, 10), s.lift('c06_goten', 12, 10), s.lift('c06_trunks', 12, 10)]);
+    await s.walkAll([
+      ['c06_goten', away.x - 1, away.y, 2.5],
+      ['c06_m_piccolo', away.x, away.y, 2.5],
+      ['c06_trunks', away.x + 1, away.y, 2.5],
+    ]);
+    dismiss(s, 'c06_goten', 'c06_trunks', 'c06_m_piccolo');
+    await s.say('goku', 'Piccolo... Frieza, you\'re gonna pay for that.', 'angry');
     await s.pan(24, 17, 30);
     await s.talk([
       ['frieza', 'Do you know how I spent my years in Hell, Goku? Bound in a cocoon while cherubs sang and stuffed animals danced around me. Every. Single. Day.', 'angry'],
@@ -171,7 +202,6 @@ registerScripts({
   /** Poses for the wounded on the mesa (overlay NPCs cannot carry a pose). */
   c06_mesa_enter: async (s) => {
     if (!s.check('chapter==6&c06_arrived&!c06_won')) return;
-    if (s.exists('c06_m_piccolo') && !s.check('c06_piccoloHealed')) s.pose('c06_m_piccolo', 'ko');
     if (s.exists('c06_m_gohan')) s.pose('c06_m_gohan', 'hurt');
     if (s.exists('c06_m_goku')) s.pose('c06_m_goku', 'hurt');
   },
@@ -275,7 +305,7 @@ registerScripts({
       ['vegeta', 'Krillin. Feed that clown his senzu. I have business with the lizard.', 'angry'],
     ]);
     s.remove('c06_sorbetGun');
-    await s.say('krillin', 'Eat up, Goku! That was my last spare. Well, almost.', 'happy');
+    await s.say('krillin', 'Eat up, Goku! My very last senzu. I kept it in my sock. Don\'t ask.', 'happy');
     s.pose('hero', 'hurt');
     await s.say('goku', 'Ugh... thanks, Krillin. Vegeta... careful. He\'s getting tired, but he\'s sneaky.', 'hurt');
     // Hand-over to Vegeta.
@@ -399,37 +429,72 @@ registerScripts({
     s.shake(30, 3);
     await s.narrate('The Kamehameha swallows Frieza whole. For the second time, the emperor is sent back to Hell.');
     s.transformNow(null);
-    // ---------------------------------------------------------------- aftermath: Piccolo's senzu
-    cast(s, 'c06_m_piccolo', 'piccolo', MESA.piccolo.x, MESA.piccolo.y, 'right', 'Piccolo');
+    // ---------------------------------------------------------------- aftermath: Piccolo revived at the Lookout
+    // Whis's rewind only undid three minutes; Piccolo died long before that (anime eps 22, 25 and 27).
     cast(s, 'c06_m_gohan', 'gohan', MESA.gohan.x, MESA.gohan.y, 'right', 'Gohan');
-    cast(s, 'c06_m_krillin', 'krillin', MESA.krillin.x, MESA.krillin.y, 'right', 'Krillin');
-    s.pose('c06_m_piccolo', 'ko');
+    cast(s, 'c06_m_whis', 'whis', MESA.whis.x, MESA.whis.y, 'right', 'Whis');
+    s.pose('c06_m_gohan', null);
     await s.talk([
       ['vegeta', 'Tch. You stole my kill. Again.', 'angry'],
       ['goku', 'Sorry, Vegeta. Whis said no hesitating.', 'neutral'],
     ]);
-    await s.pan(MESA.piccolo.x + 1, MESA.piccolo.y, 40);
+    await s.pan(MESA.gohan.x - 2, MESA.gohan.y + 2, 40);
     await s.talk([
-      ['krillin', 'I hid one last senzu in my sock. Don\'t ask. Piccolo, eat!', 'happy'],
+      ['gohan', 'You did it, Dad. It\'s over. ...But Mr. Piccolo...', 'sad'],
+      ['goku', 'Whis, can\'t you turn back time a little more? Enough for Piccolo too?', 'sad'],
+      ['whis', 'I am sorry. Three minutes is all I can undo, and Mr. Piccolo fell long before that.', 'sad'],
+      ['gohan', 'Turn back... time?', 'shock'],
+      ['goku', 'Long story! Hey, don\'t give up yet. Goten and Trunks took him up to the Lookout, right? Everybody, grab on!', 'neutral'],
     ]);
-    s.pose('c06_m_piccolo', null);
-    s.set('c06_piccoloHealed');
-    s.heal();
+    s.follow();
+    s.sfx('teleport');
+    s.flash('#ffffff', 10);
+    await s.warp('lookout', LOOKOUT.hero.x, LOOKOUT.hero.y, 'up');
+    s.letterbox(true);
+    s.music('sad');
+    hide(s, 'ea_lk_popo');
+    cast(s, 'c06_l_dende', 'dende', LOOKOUT.dende.x, LOOKOUT.dende.y, 'down', 'Dende');
+    cast(s, 'c06_l_popo', 'mrPopo', LOOKOUT.popo.x, LOOKOUT.popo.y, 'down', 'Mr. Popo');
+    cast(s, 'c06_l_piccolo', 'piccolo', LOOKOUT.piccolo.x, LOOKOUT.piccolo.y, 'down', 'Piccolo');
+    cast(s, 'c06_l_goten', 'goten', LOOKOUT.goten.x, LOOKOUT.goten.y, 'right', 'Goten');
+    cast(s, 'c06_l_trunks', 'trunksKid', LOOKOUT.trunks.x, LOOKOUT.trunks.y, 'left', 'Trunks');
+    cast(s, 'c06_l_gohan', 'gohan', LOOKOUT.gohan.x, LOOKOUT.gohan.y, 'up', 'Gohan');
+    cast(s, 'c06_l_krillin', 'krillin', LOOKOUT.krillin.x, LOOKOUT.krillin.y, 'up', 'Krillin');
+    cast(s, 'c06_l_bulma', 'bulma', LOOKOUT.bulma.x, LOOKOUT.bulma.y, 'up', 'Bulma');
+    s.pose('c06_l_piccolo', 'ko');
+    await s.pan(LOOKOUT.piccolo.x, LOOKOUT.piccolo.y + 1, 30);
+    await s.talk([
+      ['trunksKid', 'Mr. Goku! We flew him all the way up here, just like Gohan said!', 'sad'],
+      ['dende', 'Our own Dragon Balls are still stone after the wish that brought Frieza back. So I called out to New Namek.', 'neutral'],
+      ['dende', 'The Namekians have gathered their Dragon Balls. Porunga is rising right now. Hold on, Piccolo...', 'sad'],
+    ]);
+    s.tint('rgba(20,30,60,0.45)');
+    s.sfx('charge');
+    await s.narrate('Far across the galaxy, the sky over New Namek turns black. The great dragon Porunga hears the Namekians\' wish: bring Piccolo back to life.');
+    s.tint(null);
+    s.flash('#f8f0a0', 16);
+    s.sfx('powerUp');
+    s.aura('c06_l_piccolo', '#f8f0a0');
+    await s.wait(30);
+    s.aura('c06_l_piccolo', null);
+    s.pose('c06_l_piccolo', null);
+    s.set('c06_piccoloRevived');
+    s.music('victory');
     await s.talk([
       ['piccolo', '...Ugh. Gohan. You got sloppy. You let a two-bit tyrant push you around.', 'angry'],
-      ['gohan', 'You\'re right. I got comfortable. Piccolo... will you train me again? For real this time?', 'sad'],
+      ['gohan', 'Mr. Piccolo! ...You\'re right. I got comfortable. Will you train me again? For real this time?', 'sad'],
       ['piccolo', 'Hmph. Don\'t make me regret it. We start when your daughter can walk.', 'smirk'],
+      ['goten', 'Yay! Mr. Piccolo\'s back!', 'happy'],
       ['bulma', 'Okay, enough near-death experiences for one day! Party at Capsule Corp tonight! Everybody\'s invited!', 'happy'],
-      ['beerus', 'Will there be pudding?', 'neutral'],
+      ['goku', 'Beerus is gonna ask if there\'s pudding.', 'happy'],
       ['bulma', 'There will be SO much pudding.', 'happy'],
     ]);
     s.follow();
     s.set('c06_won');
     await s.done('c06_frieza', false);
-    unforce(s);
     s.heal();
-    s.music('victory');
     await s.fadeOut(30);
+    unforce(s);
     await s.narrate('That evening, at Capsule Corporation...');
     await s.warp('cc_yard', LAWN.arrive.x, LAWN.arrive.y, 'down');
     s.music('peaceful');
@@ -477,7 +542,7 @@ registerScripts({
   },
   c06_krillin_talk: async (s) => {
     if (s.check('c06_round1')) {
-      await s.say('krillin', 'I\'m out of senzu beans! Well, officially. Go get him, Vegeta!', 'happy');
+      await s.say('krillin', 'I\'m out of senzu beans. Goku got the emergency sock one. Go get him, Vegeta!', 'happy');
       return;
     }
     await s.talk([
@@ -497,16 +562,9 @@ registerScripts({
   },
   c06_gohan_talk: async (s) => {
     await s.talk([
-      ['gohan', 'I got rusty. I froze up, and Piccolo paid for it.', 'sad'],
+      ['gohan', 'I got rusty. I froze up, and Mr. Piccolo died for it. Goten and Trunks took him to the Lookout.', 'sad'],
       ['gohan', s.check('c06_round1') ? 'Vegeta, please... finish this.' : 'Dad, please... finish this.', 'hurt'],
     ]);
-  },
-  c06_piccolo_talk: async (s) => {
-    if (s.check('c06_piccoloHealed')) {
-      await s.say('piccolo', 'Stop staring. I\'m fine.', 'angry');
-      return;
-    }
-    await s.narrate('Piccolo is unconscious. His breathing is shallow, but he is still alive.');
   },
   c06_bulma_talk: async (s) => {
     await s.talk([
@@ -603,7 +661,7 @@ registerScripts({
     ]);
   },
   c06_party_piccolo: async (s) => {
-    await s.say('piccolo', 'Two hours ago I was dying. Now there\'s a paper hat on my head. I hate parties.', 'angry');
+    await s.say('piccolo', 'This morning I was dead. Tonight there\'s a paper hat on my head. I\'m not sure which is worse.', 'angry');
   },
   c06_party_chichi: async (s) => {
     await s.talk([
@@ -637,6 +695,7 @@ registerScripts({
     await s.talk([
       ['trunksKid', 'We fused into Gotenks and headbutted that big guy! Nobody believes us!', 'happy'],
       ['goten', 'It was so cool! Then Piccolo told us to go hide. That part wasn\'t cool.', 'sad'],
+      ['trunksKid', 'Then we flew Mr. Piccolo all the way up to the Lookout. Dende says we did great.', 'happy'],
     ]);
   },
   c06_party_vegeta: async (s) => {

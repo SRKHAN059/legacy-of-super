@@ -148,6 +148,16 @@ export const KI_POWER = 1100;
 export const ENEMY_POWER = 900;
 
 /**
+ * Late-game enemy damage curve. Hero HP compounds +5.5-7.5% per level and late forms add flat END, while
+ * enemy STR/POW rise roughly linearly along the tier table (Guide §6), so past mid-game an enemy hit was worth
+ * a third of an early one. Attacks from a stat above 28 are scaled up (x1.32 at 36, x1.64 at 44, x1.96 at 52,
+ * capped at x2.4 from 63) so a hit costs about the same share of the hero's HP from Chapter 1 to the finale.
+ */
+export function enemyPowerScale(atk: number): number {
+  return Math.min(2.4, 1 + 0.04 * Math.max(0, atk - 28));
+}
+
+/**
  * EXP per kill (ROM 0x0800E4D2): clamped between 1/128 and 1/2 of the current level's span;
  * nothing at level 50. Values <= 5 are not clamped.
  */

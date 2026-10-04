@@ -13,7 +13,6 @@ import type { Scene } from '../engine/scene';
 import type { Game } from '../game/game';
 import { expToNext, MAX_LEVEL, STAT_CAP } from '../game/leveling';
 import type { CharState } from '../game/state';
-import { textSettings } from './dialogue';
 import { drawWindow } from './window';
 
 type Page = 'status' | 'journal' | 'options' | 'items';
@@ -63,9 +62,11 @@ export class PauseMenu implements Scene {
     audio.sfx('menuOk');
   }
 
+  /** Characters the Status page pages through: the party, led by a story guest (17, Frieza) while one is played. */
   private get party(): CharState[] {
-    const p = this.game.state.party;
-    return p.length ? p : [this.game.state.hero];
+    const st = this.game.state;
+    const p = st.party;
+    return p.some((c) => c.id === st.data.active) ? p : [st.hero, ...p];
   }
 
   private close(): void {
@@ -186,9 +187,11 @@ export class PauseMenu implements Scene {
     const r = input.repeat('right');
     if (l || r) {
       const dv = r ? 1 : -1;
-      if (this.optSel === 0) { d.textSpeed = Math.max(1, Math.min(4, d.textSpeed + dv)); textSettings.speed = d.textSpeed; }
-      if (this.optSel === 1) { d.musicVol = Math.max(0, Math.min(1, +(d.musicVol + dv * 0.1).toFixed(1))); audio.musicVolume = d.musicVol; }
-      if (this.optSel === 2) { d.sfxVol = Math.max(0, Math.min(1, +(d.sfxVol + dv * 0.1).toFixed(1))); audio.sfxVolume = d.sfxVol; audio.sfx('menuMove'); }
+      if (this.optSel === 0) d.textSpeed = Math.max(1, Math.min(4, d.textSpeed + dv));
+      if (this.optSel === 1) d.musicVol = Math.max(0, Math.min(1, +(d.musicVol + dv * 0.1).toFixed(1)));
+      if (this.optSel === 2) d.sfxVol = Math.max(0, Math.min(1, +(d.sfxVol + dv * 0.1).toFixed(1)));
+      this.game.optionsChanged();
+      if (this.optSel === 2) audio.sfx('menuMove');
     }
     if (input.pressed('A') && this.optSel === 3) { this.resolve(); this.game.toTitle(); }
   }

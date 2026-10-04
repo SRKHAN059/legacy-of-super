@@ -22,6 +22,11 @@ export class Shot {
   boom = 0;
   /** Stun frames applied on hit. */
   stun = 0;
+  /**
+   * A stun technique (Burning Attack, Spirit Bomb): its stun bypasses the short boss hitstun cap
+   * (bosses are held ~1.5 s, then break free) instead of counting as ordinary hitstun.
+   */
+  techStun = false;
   /** Arc shots: travel progress. */
   arcT = 0;
   arcDur = 0;

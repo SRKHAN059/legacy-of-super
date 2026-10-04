@@ -121,6 +121,18 @@ function record(sim: Sim): string[] {
   return out;
 }
 
+/** Record every dialogue line shown from now on (name, text and whether it carries a portrait). */
+function recordLines(sim: Sim): Array<{ name: string; text: string; portrait: boolean }> {
+  const out: Array<{ name: string; text: string; portrait: boolean }> = [];
+  const g = sim.game;
+  const say = g.say.bind(g);
+  g.say = (lines) => {
+    for (const l of lines) out.push({ name: l.name ?? '', text: l.text, portrait: !!l.portrait });
+    return say(lines);
+  };
+  return out;
+}
+
 /** Walk: hold a direction for `frames` frames (dialogue still advances), then release it. */
 async function hold(sim: Sim, dir: 'up' | 'down' | 'left' | 'right', frames: number): Promise<void> {
   sim.input.inject(dir, true);
@@ -155,10 +167,16 @@ describe('act3: chapters 6-8 chain', () => {
     await settle(sim);
 
     // ---------------------------------------------------------------- Chapter 6
+    // Every speaker in the act shows a real name (never a raw script id such as "c08_monakaF").
+    const lines = recordLines(sim);
     const said = record(sim);
     await beat(sim, 'c06_start');
     // Chapter 5 already played Goku and Vegeta's arrival: no second entrance, dessert joke or "How touching".
     expect(said.join('\n')).not.toMatch(/we're late|dessert|touching|crawled out of Hell/i);
+    // Piccolo died taking Frieza's beam for Gohan (anime ep 22); Goten and Trunks carry him to the Lookout.
+    expect(said.join('\n')).toMatch(/not breathing/);
+    expect(said.join('\n')).toMatch(/Lookout/);
+    expect(said.join('\n')).not.toMatch(/pulse|he's alive|one more senzu/i);
     said.length = 0;
     expect(st.data.chapter).toBe(6);
     expect(flag(sim, 'c06_arrived')).toBe(true);
@@ -169,6 +187,8 @@ describe('act3: chapters 6-8 chain', () => {
     // Beerus and Whis came with Goku and Vegeta (end of Chapter 5) and stay on the mesa for the whole fight.
     expect(sim.game.field?.npcs.some((n) => n.def.id === 'c06_m_beerus')).toBe(true);
     expect(sim.game.field?.npcs.some((n) => n.def.id === 'c06_m_whis')).toBe(true);
+    // Piccolo's body is no longer on the mesa.
+    expect(sim.game.field?.npcs.some((n) => /piccolo/i.test(n.def.id))).toBe(false);
     const mesaTalks = await talkAll(sim);
     expect(mesaTalks).toContain('c06_jaco_talk');
     expect(flag(sim, 'quest:c06_deserters')).toBe(true);
@@ -184,11 +204,24 @@ describe('act3: chapters 6-8 chain', () => {
     await settle(sim);
     await talkAll(sim);
 
+    said.length = 0;
+    const visited: string[] = [];
+    const changeMap = sim.game.changeMap.bind(sim.game);
+    sim.game.changeMap = (...a: Parameters<typeof changeMap>) => {
+      visited.push(a[0]);
+      return changeMap(...a);
+    };
     await beat(sim, 'c06_round2');
+    sim.game.changeMap = changeMap;
     expect(st.char('vegeta').form).toBe('ssb');
     expect(st.char('vegeta').techs).toContain('galickGun');
     expect(flag(sim, 'c06_won')).toBe(true);
-    expect(flag(sim, 'c06_piccoloHealed')).toBe(true);
+    // The rewind cannot undo Piccolo's death: Porunga revives him on the Lookout (anime ep 27), no senzu.
+    expect(flag(sim, 'c06_piccoloRevived')).toBe(true);
+    expect(visited).toEqual(['c06_void', 'waste_mesa', 'lookout', 'cc_yard']);
+    expect(said.join('\n')).toMatch(/Porunga/);
+    expect(said.join('\n')).toMatch(/^Piccolo: .*You got sloppy/m);
+    expect(said.join('\n')).not.toMatch(/senzu/i);
     expect(flag(sim, 'done:c06_frieza')).toBe(true);
     expect(flag(sim, 'quest:c06_party')).toBe(true);
     expect(flag(sim, 'noSwitch')).toBe(false);
@@ -353,6 +386,15 @@ describe('act3: chapters 6-8 chain', () => {
     expect(flag(sim, 'noSwitch')).toBe(false);
     expect(flag(sim, 'test_c09_reached')).toBe(true);
     expect(st.char('goku').level).toBeGreaterThanOrEqual(29);
+
+    // No raw ids as speaker names; "Monaka"'s lines after the lawn match carry his name and portrait.
+    const raw = lines.filter((l) => /^c0\d_|^[a-z]+_[a-z]/.test(l.name));
+    expect(raw.map((l) => `${l.name}: ${l.text}`)).toEqual([]);
+    const flick = lines.find((l) => /\*flick\*/.test(l.text));
+    expect(flick).toEqual({ name: 'Monaka', text: 'Enough. *flick*', portrait: true });
+    const train = lines.find((l) => /Train\. Far away/.test(l.text));
+    expect(train?.name).toBe('Monaka');
+    expect(train?.portrait).toBe(true);
   });
 });
 
@@ -531,10 +573,55 @@ describe('act3: story fights cannot be re-entered or walked out of', () => {
     await stepTo(sim, 6, 16); // Back inside c08_boysT (x2-7, y12-17).
     expect(sim.game.lockDepth).toBe(1);
     expect(copies(sim, 'c08_w1')).toBe(1);
+    // The wave seals the forest like a boss fight: no Whis's Charm, save disc or map edge while it is up.
+    expect(sim.game.field?.sealed).toBe(true);
+    // The south exit (row 31) and the save point (18,5) are outside the camp's arena wall.
+    await stepTo(sim, 14, 20);
+    await hold(sim, 'down', 300);
+    expect(sim.game.field?.def.id).toBe('c08_potaufeu_mushrooms');
+    expect(heroTile(sim)[1]).toBeLessThanOrEqual(21);
+    await stepTo(sim, 14, 8);
+    await hold(sim, 'right', 120);
+    expect(heroTile(sim)[0]).toBeLessThanOrEqual(16);
+    expect(sim.game.lockDepth).toBe(1);
+    expect(sim.game.allowControl).toBe(true);
     await finish(sim);
     expect(flag(sim, 'c08_boysFound')).toBe(true);
     expect(flag(sim, 'quest:c08_gryll')).toBe(true);
     expect(sim.game.lockDepth).toBe(0);
+    expect(sim.game.fightDepth).toBe(0);
+    expect(sim.game.field?.sealed).toBe(false);
+  });
+
+  it('chapter 8 Monaka: after the lawn match, "Monaka" speaks with his name and portrait', async () => {
+    const sim = new Sim();
+    const st = sim.game.state;
+    st.data.chapter = 8;
+    st.join('goku', 29);
+    st.join('vegeta', 29);
+    st.data.active = 'goku';
+    st.addQuest('c08_monaka');
+    sim.start('cc_yard', ...CC_ENTRY);
+    await settle(sim);
+    const lines = recordLines(sim);
+    // Lose the match (loseOk): the boss is left on the lawn as an enemy puppet, the case that used to show raw ids.
+    void sim.game.runScript('c08_monaka_fight');
+    const live = () => sim.game.allowControl && !!sim.game.field?.enemies.some((e) => e.uid === 'c08_monakaF' && !e.dead);
+    expect(await drive(sim, 20000, live)).toBe(true);
+    const boss = sim.game.field?.enemies.find((e) => e.uid === 'c08_monakaF');
+    if (!boss) throw new Error('no Monaka');
+    boss.ended = true;
+    await drive(sim, 4000, () => sim.game.lockDepth === 0);
+    expect(sim.errors).toEqual([]);
+    expect(flag(sim, 'c08_monakaDone')).toBe(true);
+    const monaka = lines.filter((l) => /\*flick\*|Train\. Far away/.test(l.text));
+    expect(monaka).toEqual([
+      { name: 'Monaka', text: 'Enough. *flick*', portrait: true },
+      { name: 'Monaka', text: 'Yes. Train. Far away. For a long time.', portrait: true },
+    ]);
+    // Neither the boss puppet nor the costume NPC stays behind on the lawn.
+    expect(sim.game.field?.enemies.some((e) => e.uid === 'c08_monakaF')).toBe(false);
+    expect(sim.game.field?.npcs.some((n) => n.def.id === 'c08_monakaN')).toBe(false);
   });
 
   it('chapter 8 Gryll: crossing the trigger row mid-fight does not spawn a second Copy Gryll', async () => {

@@ -1,4 +1,5 @@
 import { registerScripts, type ScriptApi } from '../../../game/script';
+import { ITEMS } from '../../items';
 
 /**
  * Ambient (non-story) dialogue for the Earth A hubs. Every script is prefixed `ea_` and safe to run in any
@@ -12,6 +13,22 @@ import { registerScripts, type ScriptApi } from '../../../game/script';
 /** Speaker id for an ambient NPC: the NPC itself when present, else a cast id / display name. */
 function spk(s: ScriptApi, id: string, fallback: string): string {
   return s.exists(id) ? id : fallback;
+}
+
+/** Free Senzu Beans Yajirobe hands out before he quits (LoG2: three meetings). */
+export const YAJI_MAX_GIFTS = 3;
+/** Numeric flag: Senzu Beans Yajirobe has given so far. */
+export const YAJI_GIFTS = 'ea_yajiGifts';
+/** Numeric flag: chapter of his most recent gift (one gift per chapter). */
+export const YAJI_GIFT_CH = 'ea_yajiGiftCh';
+/** Flag: he has delivered his "get them yourself" line. */
+export const YAJI_QUIT = 'ea_yajiQuit';
+/** Flag: a gift is waiting because the player's Senzu pouch was full. */
+export const YAJI_HELD = 'ea_yajiHeld';
+
+/** Senzu pouch capacity. */
+function senzuMax(): number {
+  return ITEMS.senzu?.max ?? 3;
 }
 
 registerScripts({
@@ -470,19 +487,57 @@ registerScripts({
   },
 
   // ================================================================ The Lookout
+  // LoG2 §9.3: Yajirobe hands over one free Senzu at each of his first three meetings. He camps at Korin's base
+  // instead of travelling to you, so a "meeting" is the first talk in a chapter. At the next meeting he quits and
+  // points you to Korin's 3-fish trade. A gift is never wasted: with a full pouch he holds it until a bean is eaten.
   ea_kb_yajirobe: async (s) => {
     const me = spk(s, 'ea_kb_yajirobe', 'yajirobe');
     const n = s.inc('ea_kb_yajirobe_n');
-    if (s.check('chapter>=5') && n > 1) {
-      await s.say(me, 'Heard there was another big fight. I wasn\'t hiding. I was... guarding the forest. From the back. Very important job.', 'smirk');
+    const ch = s.state.data.chapter;
+    const gifts = s.num(YAJI_GIFTS);
+    const newMeeting = gifts === 0 || ch !== s.num(YAJI_GIFT_CH);
+    if (gifts < YAJI_MAX_GIFTS && newMeeting) {
+      if (s.flag(YAJI_HELD)) {
+        await s.say(me, 'Ate one already, huh? Fine. Here\'s the bean I was holding for you. I only licked it a little.', 'smirk');
+      } else if (n === 1) {
+        await s.talk([
+          [me, 'Hey! Get away from my fish. Find your own campfire.', 'angry'],
+          [me, '...Oh. It\'s you, {hero}. What\'s up? Korin sent me down here to give you a little gift!', 'happy'],
+        ]);
+      } else if (gifts === 0) {
+        await s.say(me, 'There you are, {hero}! Korin\'s been nagging me all week. He sent me down here to give you a little gift!', 'happy');
+      } else {
+        await s.say(me, 'What\'s up, {hero}? Korin sent me over here with another little gift. Don\'t tell him I ate the other one.', 'happy');
+      }
+      if (s.count('senzu') >= senzuMax()) {
+        s.set(YAJI_HELD);
+        await s.say(me, 'Huh, your pouch is already stuffed with beans. I\'ll, uh... hold onto this one. Come back after you\'ve eaten one.', 'smirk');
+        return;
+      }
+      s.clear(YAJI_HELD);
+      await s.give('senzu');
+      s.set(YAJI_GIFTS, gifts + 1);
+      s.set(YAJI_GIFT_CH, ch);
+      if (gifts === 0) {
+        await s.talk([
+          [me, 'Senzu Beans fill up your health and energy! To use one, open your inventory. Don\'t waste it.'],
+          [me, 'Need more? The cat up top trades \'em for fish. Three fish, one bean. Highway robbery.'],
+          [me, 'Me? I don\'t climb the tower anymore. Too many stairs. Well, no stairs. That\'s the problem.'],
+        ]);
+      }
       return;
     }
-    if (n === 1) {
+    if (gifts >= YAJI_MAX_GIFTS && newMeeting && !s.flag(YAJI_QUIT)) {
+      s.set(YAJI_QUIT);
       await s.talk([
-        [me, 'Hey! Get away from my fish. Find your own campfire.', 'angry'],
-        [me, '...Fine, fine. You want Senzu Beans, right? Everybody does. The cat up top trades \'em for fish. Three fish, one bean. Highway robbery.'],
-        [me, 'Me? I don\'t climb the tower anymore. Too many stairs. Well, no stairs. That\'s the problem.'],
+        [me, 'I guess you\'re expecting me to give you a Senzu Bean, right?', 'smirk'],
+        [me, 'Well, guess what? I\'m tired of running errands for that cat. From now on you get \'em yourself.', 'angry'],
+        [me, 'Fly up to Korin and he\'ll set you up. Three fish a bean. But don\'t expect to get \'em for nothing!'],
       ]);
+      return;
+    }
+    if (s.check('chapter>=5') && n > 1) {
+      await s.say(me, 'Heard there was another big fight. I wasn\'t hiding. I was... guarding the forest. From the back. Very important job.', 'smirk');
       return;
     }
     await s.say(me, 'Want fish? Crabs and swamp vipers carry \'em around for some reason. Beat one up, sometimes a fish pops out. Don\'t ask me how.');

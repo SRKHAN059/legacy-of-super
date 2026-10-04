@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { resolveMap } from '../../src/content/registry';
+import { MAPS, resolveMap } from '../../src/content/registry';
 import type { CharId } from '../../src/content/characters';
 import { ENEMIES } from '../../src/content/enemies';
+import { ITEMS } from '../../src/content/items';
 import { QUESTS } from '../../src/content/quests';
+import { SPOTS } from '../../src/content/world';
+import { GLYPHS } from '../../src/engine/fontdata';
 import { SCRIPTS, ScriptApi, type FightOpts, type FightResult, type Script } from '../../src/game/script';
 import type { Line } from '../../src/ui/dialogue';
 import { Sim } from '../sim';
@@ -70,16 +73,21 @@ function watchDoubles(sim: Sim): Set<string> {
   return seen;
 }
 
-/** Record every dialogue line shown, with the map and the NPC/actor ids on screen at that moment. */
-function recordLines(sim: Sim): Array<{ map: string; text: string; npcs: string[] }> {
-  const log: Array<{ map: string; text: string; npcs: string[] }> = [];
+/** Record every dialogue line shown, with the speaker's header, the map and the NPC/actor ids on screen. */
+function recordLines(sim: Sim): Array<{ map: string; name: string; text: string; npcs: string[] }> {
+  const log: Array<{ map: string; name: string; text: string; npcs: string[] }> = [];
   const say = sim.game.say.bind(sim.game);
   sim.game.say = (lines: Line[]) => {
     const f = sim.game.field;
-    for (const l of lines) log.push({ map: f?.def.id ?? '', text: l.text, npcs: f?.npcs.map((n) => n.def.id) ?? [] });
+    for (const l of lines) log.push({ map: f?.def.id ?? '', name: l.name ?? '', text: l.text, npcs: f?.npcs.map((n) => n.def.id) ?? [] });
     return say(lines);
   };
   return log;
+}
+
+/** Characters the bitmap font cannot draw (it prints '?' for them). */
+function missingGlyphs(text: string): string[] {
+  return [...new Set([...text].filter((ch) => !GLYPHS[ch]))];
 }
 
 /** Act 4 quests still active in the journal. */
@@ -117,8 +125,11 @@ describe('act 4 - chapters 9 to 11', () => {
     const proto = ScriptApi.prototype;
     const origFight = proto.fight;
     const mooksAtStart: Record<string, number> = {};
+    // Every Chapter 10 bout in order: who fought it, where, and whether a knock-out was a story loss.
+    const fights: Array<{ uid: string; map: string; hero: string; loseOk: boolean }> = [];
     proto.fight = async function (this: ScriptApi, type: string, opts?: FightOpts): Promise<FightResult> {
       mooksAtStart[type] = this.field.enemies.filter((e) => !e.isBoss && !e.dead && !e.puppet && e.state !== 'dying').length;
+      if (/^c10_/.test(type)) fights.push({ uid: opts?.uid ?? type, map: this.field.def.id, hero: st.data.active, loseOk: !!opts?.loseOk });
       return origFight.call(this, type, opts);
     };
     try {
@@ -176,7 +187,8 @@ describe('act 4 - chapters 9 to 11', () => {
       sim.choice = 0;
       expect(q('c09_q_homework')).toBe('done');
 
-      // Departure -> the future -> Mai -> Chapter 10 begins and Goku rides back alone.
+      // Departure -> the future -> Mai -> Chapter 10 opens with the first raid on Black's hideout (Rose, the
+      // immortal Future Zamasu), and only then does Goku ride back alone to ask the gods.
       await enter(sim, 'cc_yard', 31, 10);
       expect(await talk(sim, 'c09_bulmaPad')).toBe(true);
       expect(sim.errors).toEqual([]);
@@ -187,8 +199,15 @@ describe('act 4 - chapters 9 to 11', () => {
 
       // ------------------------------------------------ Chapter 10
       expect(st.data.chapter).toBe(10);
+      expect(st.flag('c10_raidDone')).toBe(true);
+      expect(st.flag('c10_zamasuErased')).toBe(false);
+      expect(st.data.regions).toContain('c10_spot_lair');
+      expect(fights.map((f) => [f.uid, f.map, f.hero, f.loseOk])).toEqual([
+        ['c10_black1', 'c10_lair', 'vegeta', true], ['c10_rose1', 'c10_lair', 'vegeta', true], ['c10_fz1', 'c10_lair', 'goku', true],
+      ]);
       expect(q('c10_q_ask')).toBe('active');
       expect(st.data.active).toBe('goku');
+      expect(st.flag('noSwitch')).toBe(true);
       expect(st.get('world')).toBe('earth');
       expect(sim.game.field?.def.id).toBe('cc_yard');
 
@@ -255,11 +274,30 @@ describe('act 4 - chapters 9 to 11', () => {
       expect(await talk(sim, 'c10_runner')).toBe(true);
       expect(q('c10_q_medicine')).toBe('done');
 
-      // The showdown: Vegeta vs Black / Rosé, immortal Zamasu, the truth, retreat -> Chapter 11 begins.
+      // The second trip's showdown: the truth, Goku vs Black (a real boss bout), Rose, retreat -> Chapter 11 begins.
       expect(await sim.run('c10_showdown', {}, BIG)).toBe(true);
       expect(sim.errors).toEqual([]);
       expect(st.flag('c10_lairDone')).toBe(true);
       expect(q('c10_q_lair')).toBe('done');
+      expect(fights.slice(3).map((f) => [f.uid, f.map, f.hero, f.loseOk])).toEqual([
+        ['c10_zamaspar', 'u10_sacred', 'goku', true], ['c10_chief1', 'c10_babari', 'goku', false], ['c10_black2', 'c10_lair', 'goku', false],
+      ]);
+
+      // Canon order (eps 56-60): Rose and the immortal Future Zamasu are met before Beerus erases the present
+      // Zamasu, and the truth comes out on the next trip to the future.
+      const at = (text: string): number => lines.findIndex((l) => l.text.includes(text));
+      const story = [
+        ['c10_lair', 'I call it Super Saiyan Rose.'], ['c10_lair', 'Ah, Zamasu. You\'re just in time to watch.'],
+        ['future_hideout_in', 'Black called him Zamasu.'], ['cc_yard', 'He and Whis just ate everything in my fridge.'],
+        ['cc_yard', 'that is the name of the apprentice to Gowasu'], ['u10_sacred', 'That\'s HIM! The guy from the future!'],
+        ['u10_sacred', 'I heard enough. Three minutes ago.'], ['zeno_palace', 'Will you be my friend?'],
+        ['future_hideout_in', 'Then who did Beerus erase?'], ['c10_lair', 'You mean the Zamasu of your time.'],
+        ['c10_lair', 'Not of this world, Son Goku. Of YOURS'], ['c10_lair', 'We call it Project Zero Mortals.'],
+      ] as const;
+      for (const [map, text] of story) expect(lines[at(text)]?.map, text).toBe(map);
+      const order = story.map(([, text]) => at(text));
+      expect(order.every((i) => i >= 0)).toBe(true);
+      expect(order).toEqual([...order].sort((a, b) => a - b));
 
       // ------------------------------------------------ Chapter 11
       expect(st.data.chapter).toBe(11);
@@ -364,6 +402,17 @@ describe('act 4 - chapters 9 to 11', () => {
       expect(said).toContain('Mai and I are all that\'s left of my world.');
       expect(said).toContain('Aiko, and the three I sent home to her');
 
+      // Every line and speaker header can be drawn by the bitmap font (no "Super Saiyan Ros?").
+      const unprintable = lines.flatMap((l) => missingGlyphs(`${l.name}${l.text}`).map((ch) => `${l.map} "${ch}": ${l.name}: ${l.text}`));
+      expect(unprintable).toEqual([]);
+      // The Supreme Kai keeps the name the player knows from earlier chapters.
+      expect(lines.filter((l) => l.name === 'Shin')).toEqual([]);
+      expect(lines.filter((l) => l.name === 'Supreme Kai').map((l) => l.text)).toEqual(expect.arrayContaining([
+        'Goku! There you are! Lord Zeno is asking for you! Personally! Hurry, hurry, HURRY!',
+        'Bow, Goku! Bow! Lower! LOWER!',
+        'Goku! Vegeta! Lord Gowasu brought us with another Time Ring from his shrine! Take my Potara - fuse!',
+      ]));
+
       // No one is ever shown twice: Trunks's join, Beerus and Whis arriving in Universe 10, and the rest.
       expect([...doubles]).toEqual([]);
     } finally {
@@ -385,7 +434,65 @@ describe('act 4 - chapters 9 to 11', () => {
       expect(sim.errors, id).toEqual([]);
       expect(sim.game.state.data.chapter).toBe(ch + 1);
       expect(sim.game.state.char('trunks').joined).toBe(true);
+      if (id === 'c10_start') {
+        // The first raid plays inside the opening, then Goku is back in the present to ask Beerus.
+        expect(sim.game.state.flag('c10_raidDone')).toBe(true);
+        expect(sim.game.state.data.journal.c10_q_ask).toBe('active');
+        expect(sim.game.field?.def.id).toBe('cc_yard');
+        expect(sim.game.lockDepth).toBe(0);
+      }
     }
+  });
+
+  it('turns a knock-out in the first raid into a story loss, never a Game Over', async () => {
+    // The raid runs straight on from Chapter 9's departure with no save in between: every bout there is loseOk.
+    const proto = ScriptApi.prototype;
+    const orig = proto.fight;
+    const lost: string[] = [];
+    proto.fight = async function (this: ScriptApi, type: string, opts?: FightOpts): Promise<FightResult> {
+      if (['c10_black', 'c10_blackRose', 'c10_futureZamasu'].includes(type) && opts?.loseOk) {
+        lost.push(type);
+        if (opts.uid) this.spawnEnemy(type, opts.x ?? 10, opts.y ?? 5, opts.uid).puppet = true;
+        this.field.player.cs.hp = 1;
+        return 'lose';
+      }
+      return orig.call(this, type, opts);
+    };
+    try {
+      const sim = new Sim();
+      const st = sim.game.state;
+      st.data.chapter = 9;
+      for (const id of ['goku', 'vegeta', 'trunks'] as const) st.join(id, 34);
+      st.data.active = 'trunks';
+      const lines = recordLines(sim);
+      await enter(sim, 'future_hideout_in', 9, 11);
+      expect(await sim.run('c10_start', {}, BIG)).toBe(true);
+      expect(sim.errors).toEqual([]);
+      expect(lost).toEqual(['c10_black', 'c10_blackRose', 'c10_futureZamasu']);
+      expect(lines.some((l) => l.text.startsWith('Is that all a prince has to offer?'))).toBe(true);
+      expect(st.flag('c10_raidDone')).toBe(true);
+      expect(st.data.journal.c10_q_ask).toBe('active');
+      expect(sim.game.field?.def.id).toBe('cc_yard');
+      expect(st.char('goku').hp).toBe(st.char('goku').hpMax);
+    } finally {
+      proto.fight = orig;
+    }
+  });
+
+  it('only uses characters the bitmap font can draw in Act 4 names and descriptions', () => {
+    const texts: string[] = [];
+    for (const e of Object.values(ENEMIES)) if (/^c(09|10|11)_/.test(e.id)) texts.push(e.name, e.desc ?? '');
+    for (const qd of Object.values(QUESTS)) if (/^c(09|10|11)_/.test(qd.id)) texts.push(qd.title, qd.desc);
+    for (const it of Object.values(ITEMS)) if (/^c(09|10|11)_/.test(it.id)) texts.push(it.name, it.desc);
+    for (const sp of Object.values(SPOTS)) if (/^c(09|10|11)_/.test(sp.id)) texts.push(sp.name);
+    for (const m of Object.values(MAPS)) {
+      if (!/^c(09|10|11)_/.test(m.id)) continue;
+      texts.push(m.name, ...(m.npcs ?? []).map((n) => n.name ?? ''), ...(m.objects ?? []).map((o) => ('text' in o ? String(o.text ?? '') : '')));
+    }
+    expect(texts.length).toBeGreaterThan(60);
+    expect(texts.filter((t) => missingGlyphs(t).length > 0)).toEqual([]);
+    // The three Rose boss bars read "Goku Black (Rose)".
+    expect(['c10_blackRose', 'c11_blackRoseA', 'c11_blackRoseB'].map((id) => ENEMIES[id].name)).toEqual(Array(3).fill('Goku Black (Rose)'));
   });
 
   it('boss phase scripts play on their arenas', async () => {

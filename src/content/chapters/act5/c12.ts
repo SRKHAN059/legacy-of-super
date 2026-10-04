@@ -519,6 +519,7 @@ registerScripts({
       await s.say('krillin', phase === 'ch12'
         ? 'Back to the dawn training! ...Is it supposed to hurt this much? Master made tea out of that herb. He says he feels thirty years younger.'
         : 'Dawn training, every single day. 18 says if I\'m eliminated first, she keeps my share of the prize money.', 'happy');
+      await s.call('c12_forest_boat');
       return;
     }
     if (s.has('c12_herb')) { await s.call('c12_herb_handin'); return; }
@@ -649,6 +650,17 @@ registerScripts({
     await s.narrate('Take the Paradise Herb back to Master Roshi at Kame House. The boat is waiting at the pier.');
     removeAll(s, 'c12_krillinB');
     s.letterbox(false);
+  },
+
+  /**
+   * After the episode the Forest of Terror stays a place you can sail back to (its shade wolves are good training,
+   * and the Goku L42 gate guards a capsule cache that a Chapter 12 Goku usually cannot open yet).
+   */
+  c12_forest_boat: async (s) => {
+    const c = await s.ask('krillin', 'Want to borrow Master Roshi\'s boat? The Forest of Terror is just a short trip south.', ['Sail to the forest', 'Not now']);
+    if (c !== 0) return;
+    await s.narrate('Master Roshi\'s boat drops you on the Forest of Terror\'s beach.');
+    await warpTo(s, 'c12_forest', 20, 30, 'up');
   },
 
   /** Boat back to Kame House (Master Roshi meets you on the beach: `c12_herb_home`). */

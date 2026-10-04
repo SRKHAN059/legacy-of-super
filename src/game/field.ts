@@ -5,6 +5,7 @@ import { DROP_RESTORE, ITEMS, type DropKind } from '../content/items';
 import { TECHNIQUES } from '../content/techniques';
 import { audio } from '../engine/audio';
 import { SCREEN_H, SCREEN_W, TILE } from '../engine/constants';
+import { wrap } from '../engine/fontdata';
 import { font } from '../engine/gfx';
 import type { Input } from '../engine/input';
 import { center, dirVec, overlaps, type Dir, type Rect, Rng } from '../engine/math';
@@ -15,7 +16,7 @@ import { Effects } from './effects';
 import { Enemy } from './enemy';
 import type { Game } from './game';
 import { drawHud } from './hud';
-import { critChance, damage, ENEMY_POWER, KI_POWER, killExp, MELEE_POWER } from './leveling';
+import { critChance, damage, ENEMY_POWER, enemyPowerScale, KI_POWER, killExp, MELEE_POWER } from './leveling';
 import type { MapDef, TriggerDef, WarpDef } from './mapdef';
 import { Npc } from './npc';
 import { Player } from './player';
@@ -34,6 +35,9 @@ interface Pickup {
   t: number;
   hidden?: boolean;
 }
+
+/** Widest line a toast or banner draws before wrapping (screen minus a margin). */
+const OVERLAY_TEXT_W = SCREEN_W - 20;
 
 interface Toast {
   lines: string[];
@@ -65,7 +69,9 @@ export class Field implements Scene {
   tick = 0;
   /** Active boss for the HUD bar. */
   boss: Enemy | null = null;
-  private waits: Array<{ test: () => boolean; resolve: () => void }> = [];
+  private waits: Array<{ test: () => boolean; resolve: () => void; abandonable: boolean }> = [];
+  /** Set when another map replaced this field; scripted fights still waiting on it are abandoned. */
+  abandoned = false;
   private screenFlash: { color: string; t: number; max: number } | null = null;
   private skipT = 0;
   fade = 0;
@@ -136,8 +142,16 @@ export class Field implements Scene {
     this.toast(["You can't leave in the middle of a fight!"], '#f86060');
   }
 
-  /** True while a cutscene owns the controls. */
+  /**
+   * True while the player has no control: a cutscene owns the controls, or a door / map-edge transition is
+   * fading (enemies, triggers and damage pause so nothing can happen to a field that is being left).
+   */
   get locked(): boolean {
+    return this.cutscene || this.game.inTransition;
+  }
+
+  /** A script holds the controls (HUD hidden). */
+  private get cutscene(): boolean {
     return this.game.lockDepth > 0 && !this.game.allowControl;
   }
 
@@ -191,10 +205,21 @@ export class Field implements Scene {
 
   // ------------------------------------------------------------------ waits for scripts
 
-  /** Resolve when `test` becomes true (checked every tick). */
-  until(test: () => boolean): Promise<void> {
+  /**
+   * Resolve when `test` becomes true (checked every tick). An `abandonable` wait (scripted fights) is also
+   * re-tested once when another map replaces this field, so its test can notice `abandoned`.
+   */
+  until(test: () => boolean, abandonable = false): Promise<void> {
     if (test()) return Promise.resolve();
-    return new Promise((resolve) => this.waits.push({ test, resolve }));
+    return new Promise((resolve) => this.waits.push({ test, resolve, abandonable }));
+  }
+
+  /** Called when another field replaces this one: settle the abandonable waits (see ScriptApi.fight). */
+  abandon(): void {
+    this.abandoned = true;
+    const ready = this.waits.filter((w) => w.abandonable && w.test());
+    this.waits = this.waits.filter((w) => !ready.includes(w));
+    for (const w of ready) w.resolve();
   }
 
   /** Resolve after n ticks. */
@@ -233,7 +258,7 @@ export class Field implements Scene {
       p.inv = 20;
       return 0;
     }
-    const dmg = damage({ power: ENEMY_POWER, mult, stat: atk, end: p.end, res: 1, crit: false, r26: this.rng.int(0, 25) });
+    const dmg = damage({ power: ENEMY_POWER, mult: mult * enemyPowerScale(atk), stat: atk, end: p.end, res: 1, crit: false, r26: this.rng.int(0, 25) });
     p.cs.hp = Math.max(0, p.cs.hp - dmg);
     this.fx.number(p.x, p.y - 32, dmg, PAL.red);
     this.fx.hit(p.x, p.y - 14, '#ffffff', 4);
@@ -365,8 +390,8 @@ export class Field implements Scene {
     else this.rollDrop(c.x, c.y + 4);
   }
 
-  /** Core damage application to an enemy. */
-  applyDamage(e: Enemy, atk: number, mult: number, knock: { x: number; y: number }, stun: number, ki: boolean): number {
+  /** Core damage application to an enemy. `techStun`: the stun comes from a stun technique (see Enemy.onHit). */
+  applyDamage(e: Enemy, atk: number, mult: number, knock: { x: number; y: number }, stun: number, ki: boolean, techStun = false): number {
     if (e.ended || e.dead) return 0;
     const b = e.def.boss;
     if (b?.vulnerableIf && !this.state.check(b.vulnerableIf)) {
@@ -388,7 +413,7 @@ export class Field implements Scene {
     this.fx.number(e.x, e.y - (e.creatureSize || 32) - 2, dmg, crit ? '#f8f040' : '#ffffff');
     this.fx.hit(e.x, e.cy, crit ? '#f8f040' : '#ffffff', crit ? 8 : 5);
     if (crit) this.camera.shake(4, 1);
-    e.onHit(this, knock, stun);
+    e.onHit(this, knock, stun, techStun);
     const boss = e.def.boss;
     if (boss && boss.endAt > 0 && e.hp / e.maxHp <= boss.endAt) {
       e.hp = Math.max(1, Math.ceil(e.maxHp * boss.endAt));
@@ -489,9 +514,10 @@ export class Field implements Scene {
     if (this.locked) return false;
     const p = this.player;
     const fr = p.front(14, 16);
-    // NPCs.
+    // NPCs. Nobody chats in the middle of a scripted fight: A throws a punch instead (a talk script that
+    // switched characters or warped would wreck the fight that is still running).
     for (const n of this.npcs) {
-      if (n.hidden || !n.def.talk) continue;
+      if (n.hidden || !n.def.talk || this.sealed) continue;
       if (overlaps(fr, n.body()) || overlaps(fr, n.box())) {
         n.faceTo(p.x, p.y);
         n.paused = true;
@@ -659,7 +685,7 @@ export class Field implements Scene {
           if (!overlaps(r, e.body())) continue;
           s.hit.add(e);
           const v = { x: Math.sign(s.vx) * 1.4, y: Math.sign(s.vy) * 1.4 };
-          this.applyDamage(e, s.atk, s.mult, v, s.stun || 10, s.ki);
+          this.applyDamage(e, s.atk, s.mult, v, s.stun || 10, s.ki, s.techStun);
           audio.sfx('blastHit');
           if (!s.pierce) { s.dead = true; if (s.boom) this.shotImpact(s); break; }
         }
@@ -689,7 +715,7 @@ export class Field implements Scene {
           const dx = e.x - s.x;
           const dy = e.y - s.y;
           const l = Math.hypot(dx, dy) || 1;
-          this.applyDamage(e, s.atk, s.mult, { x: (dx / l) * 2.5, y: (dy / l) * 2.5 }, s.stun || 14, s.ki);
+          this.applyDamage(e, s.atk, s.mult, { x: (dx / l) * 2.5, y: (dy / l) * 2.5 }, s.stun || 14, s.ki, s.techStun);
         }
         this.hitWorld(area, s.hit);
       } else if (this.hitsPlayer(area)) {
@@ -888,7 +914,7 @@ export class Field implements Scene {
       ctx.fillRect(0, SCREEN_H - this.letterbox, SCREEN_W, this.letterbox);
     }
 
-    if (!this.locked && !this.game.hideHud) drawHud(ctx, this);
+    if (!this.cutscene && !this.game.hideHud) drawHud(ctx, this);
     this.renderToasts(ctx);
     if (this.fade > 0) {
       ctx.globalAlpha = Math.min(1, this.fade);
@@ -899,10 +925,13 @@ export class Field implements Scene {
   }
 
   private renderToasts(ctx: CanvasRenderingContext2D): void {
-    let y = 30;
+    // Below the HUD (and below a fight's countdown when one is showing).
+    let y = this.timer ? 40 : 30;
     for (const t of this.toasts.slice(0, 3)) {
-      const w = Math.max(...t.lines.map((l) => font.drawWidth(l))) + 12;
-      const h = t.lines.length * 10 + 6;
+      // Long lines wrap inside the screen; the first source line keeps the highlight colour.
+      const rows = t.lines.flatMap((l, i) => wrap(l, OVERLAY_TEXT_W).map((r) => ({ r, first: i === 0 })));
+      const w = Math.max(...rows.map((l) => font.drawWidth(l.r))) + 12;
+      const h = rows.length * 10 + 6;
       const x = Math.round((SCREEN_W - w) / 2);
       ctx.globalAlpha = Math.min(1, t.t / 20);
       ctx.fillStyle = 'rgba(16,24,40,0.88)';
@@ -910,18 +939,21 @@ export class Field implements Scene {
       ctx.fillStyle = PAL.uiFrame;
       ctx.fillRect(x, y, w, 1);
       ctx.fillRect(x, y + h - 1, w, 1);
-      t.lines.forEach((l, i) => font.drawCentered(ctx, l, SCREEN_W / 2, y + 4 + i * 10, i === 0 ? t.color : PAL.white, '#000'));
+      rows.forEach((l, i) => font.drawCentered(ctx, l.r, SCREEN_W / 2, y + 4 + i * 10, l.first ? t.color : PAL.white, '#000'));
       ctx.globalAlpha = 1;
       y += h + 3;
     }
     if (this.banner) {
       const a = Math.min(1, this.banner.t / 20, (120 - this.banner.t) / 10 + 0.1);
       ctx.globalAlpha = a;
-      const w = font.drawWidth(this.banner.text) + 20;
+      const rows = wrap(this.banner.text, OVERLAY_TEXT_W - 8);
+      const w = Math.max(...rows.map((r) => font.drawWidth(r))) + 20;
+      const h = rows.length * 10 + 4;
       const x = Math.round((SCREEN_W - w) / 2);
+      const top = 150 - h;
       ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.fillRect(x, 136, w, 14);
-      font.drawCentered(ctx, this.banner.text, SCREEN_W / 2, 139, PAL.gold, '#000');
+      ctx.fillRect(x, top, w, h);
+      rows.forEach((r, i) => font.drawCentered(ctx, r, SCREEN_W / 2, top + 3 + i * 10, PAL.gold, '#000'));
       ctx.globalAlpha = 1;
     }
   }

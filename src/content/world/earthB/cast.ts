@@ -1,4 +1,5 @@
 import { registerCast } from '../../cast';
+import { registerCreatures } from '../../creatures';
 
 const SKIN = '#f8c890';
 const SKIN_TAN = '#e8b078';
@@ -26,4 +27,9 @@ registerCast({
   eb_ccStaff: 'Receptionist', eb_ccGuard: 'Security Guard', eb_ccTech: 'Technician', eb_chef: 'Ramen Chef', eb_clerk: 'Clerk',
   eb_worker: 'Worker', eb_kidGirl: 'Girl', eb_suit: 'Salaryman', eb_mechanic: 'Mechanic', eb_gardener: 'Gardener', eb_granny: 'Granny',
   eb_geologist: 'Geologist', eb_nomad: 'Nomad', eb_trader: 'Trader', eb_climber: 'Climber', eb_ranger: 'Ranger',
+});
+
+/** The Briefs family's pet baby dinosaur in the Capsule Corp garden pen. */
+registerCreatures({
+  eb_ccDino: { kind: 'dino', body: '#78b8a0', belly: '#e8f0c8', accent: '#e07890', eye: '#302018', size: 32 },
 });

@@ -57,6 +57,82 @@ function fbm(x: number, y: number, s: number): number {
   return sum;
 }
 
+type Rgb = readonly [number, number, number];
+const C = {
+  deep: [32, 88, 192], shallow: [56, 128, 216], sand: [224, 208, 144], grass: [88, 168, 72], forest: [48, 128, 56],
+  rock: [136, 112, 88], hill: [112, 128, 80], snow: [240, 240, 248], desert: [216, 184, 112], waste: [176, 112, 72],
+  city: [168, 168, 180], block: [120, 120, 136], ruin: [140, 128, 112],
+} satisfies Record<string, Rgb>;
+
+/** Biome painted under a landing spot so the place looks like what it is (island, city, desert...). */
+type Biome = 'island' | 'city' | 'desert' | 'snow' | 'waste' | 'mountain' | 'rocky' | 'lake' | 'clearing' | 'ruins';
+
+/** Which biome a spot stands in: from its name for the special places, else from its icon. */
+export function spotBiome(sp: LandingSpot): Biome {
+  const key = `${sp.id} ${sp.name}`;
+  if (/desert/i.test(key)) return 'desert';
+  if (/snow/i.test(key)) return 'snow';
+  if (/wasteland/i.test(key)) return 'waste';
+  switch (sp.icon) {
+    case 'island': return 'island';
+    case 'city': return 'city';
+    case 'ruins': return 'ruins';
+    case 'mountain': return 'mountain';
+    case 'cave': return 'rocky';
+    case 'palace': return 'lake';
+    default: return 'clearing';
+  }
+}
+
+/**
+ * Stamp a spot's biome onto the texture after the noise pass (the noise alone put Kame House inland and West
+ * City on a snowcap). Edges are jittered so the patches blend into the surrounding terrain.
+ */
+function stampSpot(data: Uint8ClampedArray, sp: LandingSpot, seed: number, future: boolean): void {
+  const biome = spotBiome(sp);
+  const R = biome === 'island' ? 16 : biome === 'desert' || biome === 'snow' || biome === 'waste' ? 14 : biome === 'city' || biome === 'ruins' ? 12 : 10;
+  const put = (x: number, y: number, c: Rgb, water = false): void => {
+    if (x < 0 || y < 0 || x >= TEX || y >= TEX) return;
+    let [r, g, b] = c;
+    if (future) {
+      if (water) { r = 48; g = 64; b = 96; } else { const grey = (r + g + b) / 3; r = grey * 0.6 + 70; g = grey * 0.5 + 50; b = grey * 0.5 + 40; }
+    }
+    const i = (y * TEX + x) * 4;
+    data[i] = r; data[i + 1] = g; data[i + 2] = b;
+  };
+  for (let y = sp.y - R - 2; y <= sp.y + R + 2; y++) {
+    for (let x = sp.x - R - 2; x <= sp.x + R + 2; x++) {
+      const d = Math.hypot(x - sp.x, y - sp.y) + (hash2(x, y, seed + 41) - 0.5) * 3;
+      if (d > R) continue;
+      const k = d / R;
+      const n = hash2(x >> 1, y >> 1, seed + 43);
+      switch (biome) {
+        case 'island': put(x, y, k < 0.3 ? C.grass : k < 0.45 ? C.sand : k < 0.75 ? C.shallow : C.deep, k >= 0.45); break;
+        case 'city': {
+          const street = (x - sp.x + 64) % 4 === 0 || (y - sp.y + 64) % 4 === 0;
+          put(x, y, k > 0.85 ? C.grass : street ? C.city : n > 0.5 ? C.block : C.city);
+          break;
+        }
+        case 'ruins': put(x, y, k > 0.8 ? C.sand : n > 0.6 ? C.ruin : future ? C.block : C.desert); break;
+        case 'desert': put(x, y, n > 0.88 ? C.rock : C.desert); break;
+        case 'snow': put(x, y, k < 0.35 && n > 0.55 ? C.rock : C.snow); break;
+        case 'waste': put(x, y, n > 0.7 ? C.rock : C.waste); break;
+        case 'mountain': put(x, y, k < 0.35 ? C.grass : n > 0.45 ? C.rock : C.hill); break;
+        case 'rocky': put(x, y, k < 0.3 ? C.hill : C.rock); break;
+        case 'lake': put(x, y, Math.hypot(x - (sp.x + 5), y - sp.y) < 4 ? C.shallow : k > 0.8 ? C.forest : C.grass, Math.hypot(x - (sp.x + 5), y - sp.y) < 4); break;
+        default: put(x, y, k > 0.75 ? C.forest : C.grass); break;
+      }
+    }
+  }
+}
+
+/** Colour of a world texel (tests / tooling). */
+export function worldTexel(world: WorldId, x: number, y: number): [number, number, number] {
+  const t = buildTexture(world);
+  const i = (Math.floor(y) * TEX + Math.floor(x)) * 4;
+  return [t.data[i], t.data[i + 1], t.data[i + 2]];
+}
+
 /** Procedurally paint a world texture (continents, biomes, landmarks). */
 function buildTexture(world: WorldId): WorldTex {
   const hit = texCache.get(world);
@@ -103,6 +179,9 @@ function buildTexture(world: WorldId): WorldTex {
       }
       img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b; img.data[i + 3] = 255;
     }
+  }
+  if (world !== 'space') {
+    for (const sp of Object.values(SPOTS)) if (sp.world === world && !sp.toWorld) stampSpot(img.data, sp, seed, world === 'future');
   }
   ctx.putImageData(img, 0, 0);
   const tex = { data: img.data, bmp };

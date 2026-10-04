@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { Button } from '../../src/engine/input';
+import { propArt } from '../../src/art/props';
+import { MAIN_ROSTER, type CharId } from '../../src/content/characters';
 import { MAPS, resolveMap } from '../../src/content/registry';
 import { SPOTS } from '../../src/content/world';
+import { parseGrid } from '../../src/game/world';
+import type { Line } from '../../src/ui/dialogue';
 import { Sim } from '../sim';
 
 /** world/earthB: West City, Rocky Wasteland, Diablo Desert, Snowy Highlands. */
@@ -304,6 +308,244 @@ describe('world earthB: scripts', () => {
     expect(await sim.run('eb_cc_terminal')).toBe(true);
     sim.game.openScouterDb = orig;
     expect(opened).toBe(true);
+    expect(sim.errors).toEqual([]);
+  });
+});
+
+// ------------------------------------------------------------------------------------------------ LoG2 parity extras
+
+/** Record every dialogue line the game shows (speaker name + text). */
+function record(sim: Sim): string[] {
+  const out: string[] = [];
+  const orig = sim.game.say.bind(sim.game);
+  sim.game.say = (lines: Line[]) => {
+    for (const l of lines) out.push(`${l.name ?? ''}: ${l.text}`);
+    return orig(lines);
+  };
+  return out;
+}
+
+/** A fresh save at a story point, playing as `hero`. */
+function playing(hero: CharId, chapter: number, flags: string[] = []): Sim {
+  const sim = new Sim();
+  const st = sim.game.state;
+  st.join(hero, 30);
+  st.data.active = hero;
+  st.data.chapter = chapter;
+  for (const f of flags) st.set(f);
+  return sim;
+}
+
+async function talkTo(sim: Sim, npcId: string): Promise<void> {
+  const npc = sim.game.field?.npcs.find((n) => n.def.id === npcId);
+  expect(npc, `${npcId} on ${sim.game.field?.def.id}`).toBeTruthy();
+  if (!npc) return;
+  expect(await sim.run(npc.def.talk, { npc }), npcId).toBe(true);
+}
+
+describe('world earthB: Mrs. Briefs\'s endless cookies (LoG2 §9.1)', () => {
+  it('stands in the Capsule Corp kitchen and gives one Cookie per talk, every time', async () => {
+    const sim = playing('goku', 5);
+    const said = record(sim);
+    sim.start('cc_inside', 17, 3);
+    await sim.tick(3);
+    for (let i = 1; i <= 12; i++) {
+      await talkTo(sim, 'eb_cc_panchy');
+      expect(sim.game.state.count('cookie'), `talk ${i}`).toBe(i);
+    }
+    expect(said[0]).toMatch(/^Mrs\. Briefs: .*Goku/);
+    expect(said.some((l) => l.startsWith('Mrs. Briefs: Goku, dear!')), 'reacts to Goku').toBe(true);
+    expect(said.filter((l) => /You found a Cookie/.test(l)).length).toBe(12);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('stops at the 99 cap with her "you have 99 already" line', async () => {
+    const sim = playing('vegeta', 9);
+    const said = record(sim);
+    sim.start('cc_inside', 17, 3);
+    await sim.tick(3);
+    sim.game.state.data.inv.cookie = 98;
+    await talkTo(sim, 'eb_cc_panchy');
+    expect(sim.game.state.count('cookie')).toBe(99);
+    said.length = 0;
+    for (let i = 0; i < 3; i++) await talkTo(sim, 'eb_cc_panchy');
+    expect(sim.game.state.count('cookie')).toBe(99);
+    expect(said.length).toBe(3);
+    for (const l of said) expect(l).toMatch(/^Mrs\. Briefs: .*99 of my cookies/);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('is never home while a chapter has her out on the cc_yard lawn', async () => {
+    const cases: Array<[number, string[], boolean]> = [
+      [0, [], true], [1, [], true], [2, [], true], [3, [], false], [4, [], true], [6, [], true],
+      [7, [], true], [7, ['c07_champaDone'], false], [7, ['c07_champaDone', 'c07_departed'], true],
+      [9, [], true], [12, [], true], [14, [], true], [15, [], true],
+    ];
+    for (const [chapter, flags, home] of cases) {
+      const sim = playing('goku', chapter, flags);
+      sim.start('cc_inside', 17, 3);
+      await sim.tick(2);
+      const inKitchen = !!sim.game.field?.npcs.some((n) => n.def.id === 'eb_cc_panchy' && !n.hidden);
+      expect(inKitchen, `ch${chapter} ${flags.join(',')}`).toBe(home);
+      sim.start('cc_yard', 21, 8);
+      await sim.tick(2);
+      const onLawn = !!sim.game.field?.npcs.some((n) => n.def.sprite === 'panchy' && !n.hidden);
+      expect(inKitchen && onLawn, `ch${chapter}: Mrs. Briefs in two places`).toBe(false);
+      expect(sim.errors).toEqual([]);
+    }
+  });
+});
+
+describe('world earthB: hub NPCs react to the character you play (LoG2 CurChar branches)', () => {
+  const HUB_NPCS: Array<[string, string]> = [
+    ['wc_streets', 'eb_wc_tourist'], ['wc_streets', 'eb_wc_kidA'], ['wc_streets', 'eb_wc_officer'], ['wc_streets', 'eb_wc_reporter'],
+    ['cc_yard', 'eb_cc_guard'], ['cc_yard', 'eb_cc_poolbot'], ['cc_inside', 'eb_cc_receptionist'], ['cc_inside', 'eb_cc_panchy'],
+  ];
+
+  it('each busy West City / Capsule Corp NPC says something different to every main character, Mr. Satan included', async () => {
+    for (const [map, npcId] of HUB_NPCS) {
+      const heard = new Map<CharId, string[]>();
+      for (const hero of MAIN_ROSTER) {
+        const sim = playing(hero, 15);
+        const said = record(sim);
+        sim.start(map);
+        await sim.tick(3);
+        for (let i = 0; i < 5; i++) await talkTo(sim, npcId);
+        heard.set(hero, said.filter((l) => !/^: You found/.test(l)));
+        expect(sim.errors, `${npcId} as ${hero}`).toEqual([]);
+      }
+      // A line only this hero heard = a reaction to that character.
+      for (const hero of MAIN_ROSTER) {
+        const others = new Set(MAIN_ROSTER.filter((h) => h !== hero).flatMap((h) => heard.get(h) ?? []));
+        const own = (heard.get(hero) ?? []).filter((l) => !others.has(l));
+        expect(own.length, `${npcId} has no reaction to ${hero}`).toBeGreaterThan(0);
+      }
+      // The story-progress chatter is still reachable between reactions: some line is shared by every hero.
+      const shared = (heard.get('goku') ?? []).filter((l) => MAIN_ROSTER.every((h) => heard.get(h)?.includes(l)));
+      expect(shared.length, `${npcId} story chatter`).toBeGreaterThan(0);
+    }
+  });
+
+  it('every earthB region has at least one character-aware NPC', async () => {
+    const want: Array<[string, string]> = [['wc_shops', 'eb_shop_waiter'], ['waste_entry', 'eb_waste_geologist'], ['snow_peak', 'eb_snow_hermit'], ['cc_yard', 'eb_cc_dino']];
+    for (const [map, npcId] of want) {
+      const lines: string[][] = [];
+      for (const hero of ['goku', 'satan'] as CharId[]) {
+        const sim = playing(hero, 15);
+        const said = record(sim);
+        sim.start(map);
+        await sim.tick(3);
+        for (let i = 0; i < 2; i++) await talkTo(sim, npcId);
+        lines.push(said);
+        expect(sim.errors).toEqual([]);
+      }
+      expect(lines[0].join('|'), npcId).not.toBe(lines[1].join('|'));
+    }
+  });
+
+  it('runs every earthB talk script as every playable character without errors', async () => {
+    const heroes: CharId[] = [...MAIN_ROSTER, 'android17', 'frieza'];
+    for (const hero of heroes) {
+      for (const id of MAP_IDS) {
+        const m = resolveMap(id);
+        const npcs = (m?.npcs ?? []).filter((n) => n.talk.startsWith('eb_'));
+        if (!npcs.length) continue;
+        const sim = playing(hero, 13);
+        sim.start(id);
+        await sim.tick(3);
+        for (const def of npcs) {
+          const npc = sim.game.field?.npcs.find((n) => n.def.id === def.id);
+          if (!npc) continue;
+          for (let k = 0; k < 3; k++) expect(await sim.run(def.talk, { npc }), `${id}/${def.talk} as ${hero}`).toBe(true);
+        }
+        expect(sim.errors, `${id} as ${hero}`).toEqual([]);
+      }
+    }
+  });
+});
+
+describe('world earthB: Capsule Corp garden', () => {
+  /** The chapter stage: party lawn rows 15-25 (to the top of the fences), between the corner lamps. */
+  const STAGE = { x: 7 * 16, y: 15 * 16, w: (38.5 - 7) * 16, h: (25.5 - 15) * 16 };
+  const hits = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }) =>
+    a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+  function baseSolids(): Array<{ kind: string; x: number; y: number; w: number; h: number }> {
+    const out: Array<{ kind: string; x: number; y: number; w: number; h: number }> = [];
+    for (const pl of MAPS.cc_yard.props ?? []) {
+      const [kind, x, y] = Array.isArray(pl) ? pl : [pl.kind, pl.x, pl.y];
+      const art = propArt(kind);
+      if (art.solid) out.push({ kind, x: x * 16 + art.solid.x, y: y * 16 + art.solid.y, w: art.solid.w, h: art.solid.h });
+    }
+    return out;
+  }
+
+  it('dresses the lawn with a patio, walkways and flowerbeds (no big empty grass field)', () => {
+    const g = parseGrid(MAPS.cc_yard);
+    let dressed = 0;
+    for (let y = 15; y <= 27; y++) for (let x = 6; x <= 39; x++) if (g[y][x] !== 'grass') dressed++;
+    expect(dressed).toBeGreaterThan(120);
+    // Largest connected patch of plain grass on the lawn (the barren-region audit measured 108 before the garden).
+    const seen = new Set<number>();
+    let largest = 0;
+    for (let y = 15; y <= 27; y++) for (let x = 6; x <= 39; x++) {
+      if (g[y][x] !== 'grass' || seen.has(y * 64 + x)) continue;
+      let n = 0;
+      const stack = [[x, y]];
+      seen.add(y * 64 + x);
+      while (stack.length) {
+        const [a, b] = stack.pop() ?? [0, 0];
+        n++;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const c = a + dx;
+          const d = b + dy;
+          if (c < 6 || c > 39 || d < 15 || d > 27 || g[d][c] !== 'grass' || seen.has(d * 64 + c)) continue;
+          seen.add(d * 64 + c);
+          stack.push([c, d]);
+        }
+      }
+      largest = Math.max(largest, n);
+    }
+    expect(largest).toBeLessThanOrEqual(75);
+    const kinds = new Set((MAPS.cc_yard.props ?? []).map((p) => (Array.isArray(p) ? p[0] : p.kind)));
+    for (const k of ['fountain', 'fenceH', 'fenceV', 'car', 'flowers']) expect(kinds.has(k), k).toBe(true);
+  });
+
+  it('keeps every solid prop off the party stage, so no chapter NPC stands inside one', () => {
+    const solids = baseSolids();
+    for (const s of solids) expect(hits(s, STAGE), `${s.kind} at ${s.x / 16},${s.y / 16}`).toBe(false);
+    for (const n of resolveMap('cc_yard')?.npcs ?? []) {
+      if (n.id === 'eb_cc_dino') continue;
+      const box = { x: n.x * 16 + 3, y: n.y * 16 + 8, w: 10, h: 6 };
+      for (const s of solids) expect(hits(box, s), `${n.id} @${n.x},${n.y} inside ${s.kind}`).toBe(false);
+    }
+  });
+
+  it('the baby dinosaur stays in its pen and can be talked to', async () => {
+    const sim = playing('goku', 6);
+    const said = record(sim);
+    sim.start('cc_yard', 34, 24);
+    sim.game.allowControl = true;
+    for (let i = 0; i < 20; i++) {
+      await sim.tick(60);
+      const d = sim.game.field?.npcs.find((n) => n.def.id === 'eb_cc_dino');
+      if (!d) throw new Error('no dino');
+      expect(d.x > 32 * 16 + 6 && d.x < 38 * 16 + 1 && d.y > 25 * 16 + 14 && d.y <= 27 * 16 + 8, `dino at ${d.x},${d.y}`).toBe(true);
+    }
+    // Reachable over the top fence: stand on the lawn just above it, face down, press A.
+    const f = sim.game.field;
+    const d = f?.npcs.find((n) => n.def.id === 'eb_cc_dino');
+    if (!f || !d) throw new Error('no field');
+    d.paused = true;
+    d.x = 34.5 * 16 + 8;
+    d.y = 26 * 16 + 14;
+    f.player.x = d.x;
+    f.player.y = 25 * 16 + 8;
+    f.player.dir = 'down';
+    expect(f.tryInteract(), 'talk over the fence').toBe(true);
+    await sim.tick(200);
+    for (let i = 0; i < 3; i++) await talkTo(sim, 'eb_cc_dino');
+    expect(said.some((l) => /sleeve/.test(l)), 'reacts to Goku').toBe(true);
     expect(sim.errors).toEqual([]);
   });
 });

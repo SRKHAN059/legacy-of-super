@@ -14,8 +14,23 @@ export interface Line {
   name?: string;
   text: string;
   portrait?: Bitmap | null;
-  /** Show the box at the top of the screen (when the speaker is low on screen). */
+  /** Show the box at the top of the screen (set automatically when the speaker is low on screen). */
   top?: boolean;
+}
+
+/** Box position chosen with L (top) / R (bottom) while a box is open (LoG2); null = follow the line. */
+type BoxPos = 'top' | 'bottom' | null;
+
+/** L moves the text box to the top of the screen, R to the bottom (LoG2). Returns the new override. */
+function moveBox(input: Input, cur: BoxPos): BoxPos {
+  if (input.pressed('L') && cur !== 'top') { audio.sfx('menuMove'); return 'top'; }
+  if (input.pressed('R') && cur !== 'bottom') { audio.sfx('menuMove'); return 'bottom'; }
+  return cur;
+}
+
+/** Whether a line's box sits at the top, given the player's L/R override. */
+function atTop(line: Line, pos: BoxPos): boolean {
+  return pos ? pos === 'top' : !!line.top;
 }
 
 const BOX_H = 52;
@@ -40,8 +55,8 @@ function panel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
 }
 
 /** Draw the speaker header + rows + portrait frame. Shared by dialogue and choice prompts. */
-function drawBox(ctx: CanvasRenderingContext2D, line: Line, rows: string[], shownChars: number): { y: number; panelW: number } {
-  const y = line.top ? 3 : SCREEN_H - BOX_H - 3;
+function drawBox(ctx: CanvasRenderingContext2D, line: Line, rows: string[], shownChars: number, top = !!line.top): { y: number; panelW: number } {
+  const y = top ? 3 : SCREEN_H - BOX_H - 3;
   const hasPortrait = !!line.portrait;
   const panelW = hasPortrait ? PANEL_W_PORTRAIT : SCREEN_W - 6;
   panel(ctx, 3, y, panelW, BOX_H);
@@ -81,6 +96,7 @@ export class DialogueScene implements Scene {
   private page = 0;
   private shown = 0;
   private tick = 0;
+  private pos: BoxPos = null;
   done = false;
 
   constructor(lines: Line[], private readonly onDone: () => void) {
@@ -99,6 +115,7 @@ export class DialogueScene implements Scene {
   update(input: Input): void {
     if (this.done) return;
     this.tick++;
+    this.pos = moveBox(input, this.pos);
     const fast = input.isDown('B');
     if (this.shown < this.total) {
       const before = this.shown;
@@ -122,26 +139,52 @@ export class DialogueScene implements Scene {
   render(ctx: CanvasRenderingContext2D): void {
     if (this.done) return;
     const { line, rows } = this.pages[this.page];
-    const { y, panelW } = drawBox(ctx, line, rows, this.shown);
+    const { y, panelW } = drawBox(ctx, line, rows, this.shown, atTop(line, this.pos));
     if (this.shown >= this.total && Math.floor(this.tick / 16) % 2 === 0) {
       font.draw(ctx, '▼', panelW - 8, y + BOX_H - 11, PAL.white, '#000');
     }
   }
 }
 
-/** A multiple-choice prompt shown with its question box. */
+/**
+ * A multiple-choice prompt shown with its question box. A prompt longer than one box is paged like dialogue
+ * (A/B turn the page) and the options open with its last page, so the question itself is always on screen.
+ */
 export class ChoiceScene implements Scene {
   readonly transparent = true;
   private sel = 0;
   done = false;
-  private readonly rows: string[];
+  /** Pages of at most LINES_PER_PAGE rows; the options open on the last one (the prompt's last 3 rows). */
+  private readonly pages: string[][] = [];
+  private page = 0;
+  private tick = 0;
+  private pos: BoxPos = null;
 
   constructor(private readonly prompt: Line, private readonly options: string[], private readonly onPick: (i: number) => void) {
-    this.rows = wrap(prompt.text, textWidth(prompt)).slice(0, LINES_PER_PAGE);
+    // The options open with the prompt's last full box (where the question is); anything before it is paged first.
+    const rows = wrap(prompt.text, textWidth(prompt));
+    const lead = Math.max(0, rows.length - LINES_PER_PAGE);
+    for (let i = 0; i < lead; i += LINES_PER_PAGE) this.pages.push(rows.slice(i, Math.min(lead, i + LINES_PER_PAGE)));
+    this.pages.push(rows.length ? rows.slice(lead) : ['']);
+  }
+
+  /** Rows on the page showing now (the last page carries the options). */
+  get rows(): string[] {
+    return this.pages[this.page];
+  }
+
+  private get asking(): boolean {
+    return this.page >= this.pages.length - 1;
   }
 
   update(input: Input): void {
     if (this.done) return;
+    this.tick++;
+    this.pos = moveBox(input, this.pos);
+    if (!this.asking) {
+      if (input.pressed('A') || input.pressed('B')) { this.page++; audio.sfx('menuMove'); }
+      return;
+    }
     if (input.repeat('up')) { this.sel = (this.sel + this.options.length - 1) % this.options.length; audio.sfx('menuMove'); }
     if (input.repeat('down')) { this.sel = (this.sel + 1) % this.options.length; audio.sfx('menuMove'); }
     if (input.pressed('A')) { this.done = true; audio.sfx('menuOk'); this.onPick(this.sel); }
@@ -150,11 +193,17 @@ export class ChoiceScene implements Scene {
 
   render(ctx: CanvasRenderingContext2D): void {
     if (this.done) return;
-    const { y } = drawBox(ctx, this.prompt, this.rows, 9999);
+    const top = atTop(this.prompt, this.pos);
+    const { y, panelW } = drawBox(ctx, this.prompt, this.rows, 9999, top);
+    if (!this.asking) {
+      if (Math.floor(this.tick / 16) % 2 === 0) font.draw(ctx, '▼', panelW - 8, y + BOX_H - 11, PAL.white, '#000');
+      return;
+    }
     const ow = Math.max(...this.options.map((o) => font.drawWidth(o))) + 22;
     const oh = this.options.length * 12 + 8;
     const ox = SCREEN_W - ow - 4;
-    const oy = y - oh - 2;
+    // Options sit on the far side of the box from the screen edge.
+    const oy = top ? y + BOX_H + 2 : y - oh - 2;
     drawWindow(ctx, ox, oy, ow, oh);
     this.options.forEach((o, i) => {
       font.draw(ctx, o, ox + 14, oy + 5 + i * 12, i === this.sel ? PAL.gold : PAL.white, '#000');

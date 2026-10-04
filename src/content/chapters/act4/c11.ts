@@ -14,7 +14,7 @@ import { actor, bout, boost, clearActors, clearMooks, HUB, patchUp, propOff, pro
  *                                                                                                    [c11_q_charm]
  *   c11_roshi_talk     Roshi hands over the charm (Goku pockets "it")                                    [c11_q_return]
  *   c11_bulma_pad      third trip: Black wrecks the time machine on arrival, Black clones in the city    [c11_q_rift]
- *   c11_showdown       point-of-no-return prompt -> Black Rosé boss (Trunks) -> Mafuba ward puzzle on Future
+ *   c11_showdown       point-of-no-return prompt -> Black Rose boss (Trunks) -> Mafuba ward puzzle on Future
  *                      Zamasu -> the "charm" is a ramen coupon -> Potara fusion -> Fused Zamasu relay: Goku (SSB)
  *                      -> Vegito Blue (outfit + survive timer) -> Trunks's Sword of Hope (beam struggle) -> Infinite
  *                      Zamasu strikes down the survivors -> Zeno Button -> Future Zeno erases the timeline ->
@@ -642,7 +642,7 @@ registerScripts({
 
   /** Relay 2: the Potara - Vegito Blue holds Zamasu off until the fusion burns out. */
   c11_relay_vegito: async (s) => {
-    actor(s, 'c11_shin', 'supremeKai', 9, 19, 'up', 'Shin');
+    actor(s, 'c11_shin', 'supremeKai', 9, 19, 'up');
     actor(s, 'c11_gow', 'gowasu', 11, 19, 'up');
     s.sfx('teleport');
     s.flash('#58e080', 8);
@@ -930,7 +930,7 @@ registerScripts({
       if (s.check('quest:c10_q_lair')) { await s.call('c10_lair_ride'); return; }
       await s.say(me, s.flag('c10_lairDone')
         ? 'Rest while you can. They know where we are now.'
-        : 'Vegeta paces like a caged tiger. Trunks says that means he\'s worried. Vegeta says it means he\'s bored.', 'sad');
+        : 'Vegeta won\'t lie down. Trunks says that means he\'s hurt. Vegeta says it means he\'s bored.', 'sad');
       return;
     }
     await s.say(me, 'Trunks is back, and he brought heroes. For the first time in years, the kids down here are laughing.', 'happy');

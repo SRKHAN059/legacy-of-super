@@ -6,8 +6,9 @@ import { registerMaps } from '../../registry';
  *  - c09_outskirts    : West City outskirts, Goku vs Goku Black in the present.
  *  - c09_mine         : the abandoned Capsule Corp mine (Hyper-Crystal fuel quest, Excavator mini-boss).
  *  - c10_babari       : Planet Babari (Gowasu's fruit side quest, Babarian Chief).
- *  - c10_lair         : Black's hideout in the future ruins (Vegeta vs Black / Rosé, immortal Zamasu).
- *  - c11_rift_sky     : the plaza under the sky rift (Rosé boss, Mafuba seal, Fused Zamasu relay).
+ *  - c10_lair         : Black's hideout in the future ruins (first trip: Vegeta vs Black / Rose, immortal Zamasu;
+ *                       second trip: the truth, Goku vs Black).
+ *  - c11_rift_sky     : the plaza under the sky rift (Rose boss, Mafuba seal, Fused Zamasu relay).
  */
 
 registerMaps([

@@ -34,11 +34,11 @@ registerQuests([
   { id: 'c09_q_gohan', title: 'An old master', star: 'silver', region: 'spot_paozu', desc: 'In Trunks\'s era, Gohan died protecting him. This era\'s Gohan lives near Mt. Paozu with his family. Trunks would like to see him, just once.' },
   { id: 'c09_q_homework', title: 'Remedial math', star: 'bronze', region: 'spot_westcity', desc: 'The Pilaf Gang are stuck on their homework inside Capsule Corp. Maybe a time traveller can help.' },
   // Chapter 10
-  { id: 'c10_q_ask', title: 'Ask the gods', star: 'gold', region: 'spot_westcity', desc: 'Black\'s ki felt divine. Beerus and Whis are raiding the Capsule Corp fridge again - ask them about it.' },
-  { id: 'c10_q_u10', title: 'Gods of Universe 10', star: 'gold', region: 'spot_u10', desc: 'Investigate the Sacred World of Universe 10. Speak with Supreme Kai Gowasu and his apprentice Zamasu, and learn about the Time Rings.' },
+  { id: 'c10_q_ask', title: 'Ask the gods', star: 'gold', region: 'spot_westcity', desc: 'Black\'s partner is a Kai called Zamasu, and nothing can hurt him. Beerus and Whis are raiding the Capsule Corp fridge again - ask them who he is.' },
+  { id: 'c10_q_u10', title: 'Gods of Universe 10', star: 'gold', region: 'spot_u10', desc: 'Zamasu is the apprentice of Gowasu, Supreme Kai of Universe 10. Investigate the Sacred World: watch Zamasu, speak with Gowasu, and learn about the Time Rings.' },
   { id: 'c10_q_zeno', title: 'The summons', star: 'gold', region: 'spot_zeno', desc: 'Lord Zeno, King of All, wants to see Goku. Speak with him in his palace. Be polite!' },
   { id: 'c10_q_future', title: 'Return to the future', star: 'gold', region: 'spot_westcity', desc: 'Zamasu is gone, so the future should be safe... right? Take the time machine in the Capsule Corp hangar back to Trunks\'s era.' },
-  { id: 'c10_q_lair', title: 'Black\'s hideout', star: 'gold', region: 'c10_spot_lair', desc: 'Vegeta and Trunks went ahead to Black\'s hideout in the ruins east of the Resistance base. Hurry after them!' },
+  { id: 'c10_q_lair', title: 'Black\'s hideout', star: 'gold', region: 'c10_spot_lair', desc: 'Black and Zamasu are still in the future. Vegeta and Trunks went back to Black\'s hideout in the ruins east of the Resistance base for a rematch. Hurry after them!' },
   { id: 'c10_q_babari', title: 'Gowasu\'s fruit', star: 'silver', region: 'c10_spot_babari', desc: 'Gowasu planted a fruit tree on the savage planet Babari long ago. Bring back one of its fruits so he can share it with Zamasu.' },
   { id: 'c10_q_medicine', title: 'Medicine run', star: 'bronze', region: 'c10_spot_lair', desc: 'The Resistance medic needs a case of medicine from a pharmacy in the ruins near Black\'s hideout. It is fragile: you cannot fight while carrying it, and one hit breaks it.' },
   // Chapter 11
@@ -110,9 +110,9 @@ registerEnemies([
     desc: 'A copy of Goku Black born from the rift in the sky. As arrogant as the original, and just as eager to fight.',
   },
   {
-    id: 'c11_roseClone', name: 'Rosé Clone', sprite: 'blackRose', hp: 2600, str: 40, pow: 52, end: 42, exp: 32000, ai: 'shooter', speed: 1.15,
+    id: 'c11_roseClone', name: 'Rose Clone', sprite: 'blackRose', hp: 2600, str: 40, pow: 52, end: 42, exp: 32000, ai: 'shooter', speed: 1.15,
     shot: { color: '#f070b0', cooldown: 70, speed: 2.8, mult: 0.9 },
-    desc: 'A clone in Super Saiyan Rosé. Fires pink ki from a distance and calls it "beautiful" every single time.',
+    desc: 'A clone in Super Saiyan Rose. Fires pink ki from a distance and calls it "beautiful" every single time.',
   },
   {
     id: 'c11_ward', name: 'Sealing Ward', sprite: 'c11_ward', hp: 240, str: 1, pow: 1, end: 30, exp: 0, ai: 'idle', speed: 0, drops: 'none',
@@ -204,8 +204,8 @@ registerEnemies([
     },
   },
   {
-    id: 'c10_blackRose', name: 'Goku Black (Rosé)', sprite: 'blackRose', hp: 7500, str: 60, pow: 60, end: 64, exp: 0, ai: 'boss', speed: 1.25,
-    desc: 'Super Saiyan Rosé: Black\'s divine ki turned pink. Faster and harder than anything Vegeta expected.',
+    id: 'c10_blackRose', name: 'Goku Black (Rose)', sprite: 'blackRose', hp: 7500, str: 60, pow: 60, end: 64, exp: 0, ai: 'boss', speed: 1.25,
+    desc: 'Super Saiyan Rose: Black\'s divine ki turned pink. Faster and harder than anything Vegeta expected.',
     boss: {
       endAt: 0.6, kiColor: '#f070b0',
       phases: [
@@ -226,7 +226,7 @@ registerEnemies([
   },
   // ---- Chapter 11
   {
-    id: 'c11_blackRoseA', name: 'Goku Black (Rosé)', sprite: 'blackRose', hp: 7000, str: 54, pow: 57, end: 60, exp: 0, ai: 'boss', speed: 1.2,
+    id: 'c11_blackRoseA', name: 'Goku Black (Rose)', sprite: 'blackRose', hp: 7000, str: 54, pow: 57, end: 60, exp: 0, ai: 'boss', speed: 1.2,
     desc: 'Black, amused by a mortal\'s rage. He did not expect it to sting.',
     boss: {
       endAt: 0.85, kiColor: '#f070b0',
@@ -236,7 +236,7 @@ registerEnemies([
     },
   },
   {
-    id: 'c11_blackRoseB', name: 'Goku Black (Rosé)', sprite: 'blackRose', hp: 7800, str: 57, pow: 59, end: 63, exp: 120000, ai: 'boss', speed: 1.2,
+    id: 'c11_blackRoseB', name: 'Goku Black (Rose)', sprite: 'blackRose', hp: 7800, str: 57, pow: 59, end: 63, exp: 120000, ai: 'boss', speed: 1.2,
     desc: 'Black at the height of his power, wielding a scythe of pink ki that tears holes in the sky.',
     boss: {
       endAt: 0.25, kiColor: '#f070b0', minion: 'c11_blackClone',

@@ -3,19 +3,26 @@ import { ensureChapterState, force, unforce } from '../common';
 import { actor, bout, clearActors, clearMooks, godWarp, HUB, patchUp, still, talker, timeTravel, who } from './util';
 
 /**
- * CHAPTER 10 - "Gods of Universe 10" (Goku forced, Vegeta for the Rosé fight; L34-37).
+ * CHAPTER 10 - "Gods of Universe 10" (Goku forced, Vegeta for the Rose fight; L34-37).
+ *
+ * Canon order (eps 56-61): Rose and the immortal Future Zamasu beat the heroes first; only then does the
+ * investigation in Universe 10 end with Beerus erasing the present Zamasu, and the next trip to the future
+ * reveals the truth. The chapter keeps that cause and effect.
  *
  * Beats (gold journal chain):
- *   c10_start          Resistance council in the future; Goku rides back alone to ask the gods     [c10_q_ask]
- *   c10_beerus_talk    Beerus & Whis on the Capsule Corp lawn -> Whis flies Goku to Universe 10      [c10_q_u10]
+ *   c10_start          Mai found Black's hideout -> c10_raid: Vegeta vs Black (ends at 50%) -> Super Saiyan Rose
+ *                      (story loss) -> Future Zamasu at Black's side, immortal (survive) -> retreat
+ *                      -> c10_regroup: Goku rides back alone to ask the gods about "Zamasu"             [c10_q_ask]
+ *   c10_beerus_talk    Beerus & Whis on the Capsule Corp lawn: Zamasu is Gowasu's apprentice -> U10       [c10_q_u10]
  *   c10_zamasu_talk    spar vs Zamasu (ends at 50%)              \
  *   c10_ring_shrine    the Time Ring cradle is empty               } both clues -> c10_beerusU_talk
  *   c10_erasure        Zamasu strikes Gowasu, Whis rewinds 3 minutes, Beerus erases Zamasu; Gowasu's
- *                      Time Ring; Shin brings the Zeno summons                                       [c10_q_zeno]
+ *                      Time Ring; the Supreme Kai brings the Zeno summons                            [c10_q_zeno]
  *   c10_zeno_talk      Zeno befriends Goku and gives the Zeno Button                                 [c10_q_future]
- *   c10_bulma_pad      back to the future; Mai: Vegeta and Trunks went to Black's hideout             [c10_q_lair]
- *   c10_showdown       Vegeta vs Black (ends at 50%) -> Super Saiyan Rosé (story loss) -> Future Zamasu is
- *                      immortal (survive) -> the truth -> retreat, Future Yajirobe -> c11_start
+ *   c10_bulma_pad      back to the future; Mai: Black and Zamasu are still here; Vegeta and Trunks
+ *                      went back to the hideout                                                     [c10_q_lair]
+ *   c10_showdown       "Erased?" -> c10_truth (Black is the Zamasu of Goku's time) -> Goku vs Black (ends at
+ *                      50%) -> Rose -> Project Zero Mortals -> retreat, Future Yajirobe -> c11_start
  * Side: c10_q_babari (silver, Planet Babari + Babarian Chief), c10_q_medicine (bronze, carry escort).
  */
 
@@ -42,14 +49,165 @@ registerScripts({
     talker(s, 'c09_fmai', 'futureMai', HUB.hideoutIn.maiX, HUB.hideoutIn.maiY, 'down', 'c09_mai_talk', 'Mai');
     s.place('hero', 9, 12, 'up');
     await s.talk([
+      ['c09_fmai', 'I followed Black home, the day after you left. There\'s a garden in the ruins east of the highway. He drinks tea there.', 'sad'],
+      ['c10_goku', 'Tea? Black drinks tea?', 'shock'],
+      ['c09_fmai', 'Two cups, every time. I never got close enough to see who the second one was for.', 'sad'],
       ['c10_goku', 'That ki Black had... it felt like a god\'s. Like Beerus or Whis. But it also kinda felt like mine.', 'sad'],
-      ['c10_vegeta', 'A god wearing Kakarot\'s body? That\'s absurd.', 'angry'],
-      ['c10_goku', 'That\'s why I wanna ask Beerus. If anybody knows about weird gods, it\'s a weird god.'],
-      ['hero', 'Then Father and I will stay and guard the base. Black could come back at any moment.'],
-      ['c10_vegeta', 'Hmph. Somebody has to keep the boy alive. Go, Kakarot. And don\'t dawdle.'],
-      ['c09_fmai', 'Hurry back, Goku. And... thank you. All of you.', 'sad'],
+      ['c10_vegeta', 'A god wearing Kakarot\'s body? That\'s absurd. Whatever he is, I\'m going to smash that face. Today.', 'angry'],
+      ['hero', 'Then we strike first, before he comes looking for us. Mai, keep everyone below ground until we\'re back.'],
+      ['c09_fmai', 'You\'ll come back. Go.', 'smirk'],
     ]);
+    s.unlockRegion('c10_spot_lair');
+    await s.call('c10_raid');
+  },
+
+  // ================================================================== first trip to Black's hideout
+  /**
+   * Canon eps 56-57: Vegeta (Blue) outclasses Black until Super Saiyan Rose beats him; Future Zamasu appears at
+   * Black's side and shrugs off Goku's attacks; the heroes run. Every bout here is a story fight (no Game Over)
+   * because the chain runs straight on from Chapter 9's departure, with no save in between.
+   */
+  c10_raid: async (s) => {
+    await s.fadeOut(20);
     clearActors(s, ['c10_goku', 'c10_vegeta']);
+    s.switchTo('vegeta');
+    s.set('world', 'future');
+    await s.warp('c10_lair', 16, 5, 'up');
+    s.letterbox(true);
+    // Black's ki floods the courtyard; every hound and sentry in the ruins bolts.
+    clearMooks(s, '#c03060');
+    s.music('black');
+    actor(s, 'c10_black', 'gokuBlack', 19, 3, 'left');
+    actor(s, 'c10_gok', 'goku', 14, 7, 'up');
+    actor(s, 'c10_tru', 'futureTrunks', 12, 6, 'up');
+    s.place('hero', 16, 5, 'up');
+    await s.pan(17, 4, 20);
+    await s.talk([
+      ['c10_black', 'Welcome, Son Goku. And company. Tea? No? A pity. The leaves are very good this season.', 'smirk'],
+      ['c10_gok', 'Who ARE you? You\'ve got my face, and your ki feels like a god\'s.'],
+      ['c10_black', 'Patience. Your prince looks eager to entertain me first.', 'smirk'],
+      ['hero', 'Stay out of this, Kakarot. He\'s mine.', 'angry'],
+      ['c10_gok', 'Aw, c\'mon...', 'sad'],
+    ]);
+    s.transformNow('ssb');
+    await s.powerUp('hero', '#40c0f8', 40);
+    await s.wait(12);
+    await s.say('hero', 'Super Saiyan Blue. A god\'s power in a Saiyan\'s body. Let\'s see how YOU like it.', 'smirk');
+    s.follow();
+    s.letterbox(false);
+    clearActors(s, ['c10_black']);
+    const r = await bout(s, 'c10_black', { x: 18, y: 3, uid: 'c10_black1', loseOk: true });
+    s.letterbox(true);
+    if (r === 'lose') {
+      patchUp(s);
+      await s.say('gokuBlack', 'Is that all a prince has to offer? Then allow me to show you something beautiful.', 'smirk');
+    } else {
+      await s.say('gokuBlack', 'Excellent. Truly. Then allow me to show you something beautiful.', 'smirk');
+    }
+    const b = s.exists('c10_black1') ? s.actor('c10_black1') : null;
+    const bx = b ? Math.round((b.x - 8) / 16) : 18;
+    const by = b ? Math.round((b.y - 14) / 16) : 3;
+    clearActors(s, ['c10_black1']);
+    actor(s, 'c10_rose', 'gokuBlack', bx, by, 'down');
+    await s.powerUp('c10_rose', '#f070b0', 60);
+    s.sprite('c10_rose', 'blackRose');
+    s.aura('c10_rose', '#f070b0');
+    await s.wait(12);
+    await s.talk([
+      ['blackRose', 'Do you see it? A god\'s ki, poured into the finest body in the universe. I call it Super Saiyan Rose.', 'smirk'],
+      ['hero', 'Pink?! You\'re fighting me with PINK hair?!', 'shock'],
+      ['blackRose', 'Beautiful, isn\'t it?', 'smirk'],
+    ]);
+    s.letterbox(false);
+    clearActors(s, ['c10_rose']);
+    const rr = await bout(s, 'c10_blackRose', { x: bx, y: by, uid: 'c10_rose1', survive: 45, loseOk: true, label: 'HOLD ON' });
+    s.letterbox(true);
+    if (rr === 'end' || rr === 'timeout') {
+      // Vegeta held his own... so Black stops playing fair.
+      await s.say('blackRose', 'Impressive, prince. Truly. Now let me stop holding back.', 'smirk');
+      if (s.exists('c10_rose1')) {
+        s.aura('c10_rose1', '#f070b0');
+        await s.blast('c10_rose1', 'hero', '#f070b0');
+      }
+      s.flash('#f070b0', 10);
+    }
+    s.transformNow(null);
+    s.pose('hero', 'ko');
+    s.shake(20, 3);
+    await s.wait(12);
+    await s.say('blackRose', 'Pink suits me. Pain suits you, prince.', 'smirk');
+    // Future Zamasu appears at Black's side.
+    s.sfx('teleport');
+    s.flash('#b0f070', 10);
+    actor(s, 'c10_fz', 'zamasu', 12, 2, 'right', 'Zamasu');
+    await s.pan(14, 3, 20);
+    await s.talk([
+      ['blackRose', 'Ah, Zamasu. You\'re just in time to watch.', 'smirk'],
+      ['c10_fz', 'You\'re making a mess of the garden, my friend.', 'smirk'],
+      ['c10_gok', 'Zamasu...? That ki. It\'s just like Supreme Kai\'s. Are you a Kai?!', 'shock'],
+      ['c10_fz', 'I am a god, mortal. The only kind of god this world still has.', 'smirk'],
+    ]);
+    // Goku steps in.
+    const hv = s.actor('hero');
+    actor(s, 'c10_vegDown', 'vegeta', Math.round((hv.x - 8) / 16), Math.round((hv.y - 14) / 16), 'up');
+    s.pose('c10_vegDown', 'ko');
+    s.pose('hero', null);
+    clearActors(s, ['c10_gok']);
+    s.switchTo('goku');
+    s.place('hero', 14, 6, 'up');
+    s.transformNow('ssb');
+    await s.powerUp('hero', '#40c0f8', 30);
+    await s.blast('hero', 'c10_fz', '#70c8f8');
+    s.boom(12, 2, 26, '#70c8f8');
+    await s.wait(30);
+    await s.talk([
+      ['hero', 'I blew a hole right through him... and it just closed up!', 'shock'],
+      ['c10_fz', 'Is that all? Mortal ki, against a body that cannot be harmed.', 'smirk'],
+    ]);
+    s.follow();
+    s.letterbox(false);
+    clearActors(s, ['c10_fz']);
+    await bout(s, 'c10_futureZamasu', { x: 13, y: 3, uid: 'c10_fz1', survive: 30, loseOk: true, label: 'SURVIVE' });
+    s.letterbox(true);
+    patchUp(s);
+    await s.talk([
+      ['zamasu', 'Strike it as often as you like. This body will never die.', 'smirk'],
+      ['c10_tru', 'Goku! Father! We can\'t win this. Fall back!', 'shout'],
+    ]);
+    s.sfx('explode');
+    s.boom(15, 4, 30, '#88d8ff');
+    s.shake(24, 3);
+    await s.fadeOut(24, '#c8b8a0');
+    s.transformNow(null);
+    clearActors(s, ['c10_vegDown', 'c10_tru', 'c10_fz1', 'c10_rose1']);
+    await s.narrate('Trunks blasted the courtyard into a wall of dust. Under its cover, the three of them fled for the Resistance base.');
+    await s.call('c10_regroup');
+  },
+
+  /** The Resistance base after the first defeat: Goku goes back to ask the gods who "Zamasu" is. */
+  c10_regroup: async (s) => {
+    s.set('c10_raidDone');
+    s.set('world', 'future');
+    if (s.hero !== 'goku') s.switchTo('goku');
+    await s.warp('future_hideout_in', HUB.hideoutIn.arriveX, HUB.hideoutIn.arriveY, 'up');
+    s.letterbox(true);
+    s.music('sad');
+    actor(s, 'c10_vegH', 'vegeta', 7, 11, 'right');
+    s.pose('c10_vegH', 'ko');
+    actor(s, 'c10_truH', 'futureTrunks', 11, 11, 'left');
+    talker(s, 'c09_fmai', 'futureMai', HUB.hideoutIn.maiX, HUB.hideoutIn.maiY, 'down', 'c09_mai_talk', 'Mai');
+    s.place('hero', 9, 12, 'up');
+    await s.talk([
+      ['c10_vegH', 'Ngh... I... lost. To a man with Kakarot\'s face and pink hair.', 'hurt'],
+      ['c09_fmai', 'The one in green... that\'s who the second cup was for.', 'sad'],
+      ['hero', 'Black called him Zamasu. His ki felt like a Kai\'s, Trunks. Like Supreme Kai\'s. And nothing I threw at him even left a mark.', 'sad'],
+      ['c10_truH', 'A Kai, fighting beside Black? A god of creation, helping him wipe out humanity?', 'shock'],
+      ['hero', 'Beerus would know. If anybody knows about weird gods, it\'s a weird god. I\'ll ride back and ask him.'],
+      ['c10_truH', 'Then Father and I will stay and guard the base. They know our faces now.'],
+      ['c10_vegH', 'Hmph. Go, Kakarot. And don\'t dawdle. I have a rematch to win.', 'angry'],
+      ['c09_fmai', 'Hurry back, Goku.', 'sad'],
+    ]);
+    clearActors(s, ['c10_vegH', 'c10_truH']);
     force(s, 'goku');
     s.place('hero', 9, 12, 'up');
     await s.quest('c10_q_ask');
@@ -58,7 +216,7 @@ registerScripts({
     s.music('town');
     await s.talk([
       ['bulma', 'Goku? Back already? Where are Vegeta and Trunks?!', 'shock'],
-      ['hero', 'Guarding the Resistance base. I need to ask Beerus something about Black.'],
+      ['hero', 'Guarding the Resistance base. Vegeta got beat up pretty bad, but he\'s okay. I need to ask Beerus about a Kai called Zamasu.'],
       ['bulma', 'Then you\'re in luck. He and Whis just ate everything in my fridge. They\'re out on the lawn, digesting.', 'angry'],
     ]);
     s.letterbox(false);
@@ -75,7 +233,8 @@ registerScripts({
     await s.talk([
       [me, 'Mmf. What? Can\'t you see I\'m digesting? Bulma\'s pudding was acceptable, by the way. Barely.', 'smirk'],
       ['hero', 'Lord Beerus, there\'s a guy in the future who looks just like me. His ki feels like a god\'s. Like yours.'],
-      [me, '...A god\'s ki, in a mortal\'s body.', 'neutral'],
+      ['hero', 'And he\'s got a partner. Green skin, white hair, ki like a Kai\'s. Black called him Zamasu. I hit him with everything, and he just healed.'],
+      [me, '...A god\'s ki in a mortal\'s body. And a Kai who cannot be hurt, standing beside it.', 'neutral'],
       [me, 'Hmph. That smells like Kai business. They\'re always poking their noses into the mortal worlds.', 'angry'],
     ]);
     // Whis drifts over from his spot on the lawn.
@@ -86,8 +245,9 @@ registerScripts({
     await s.walk(wh, Math.round((b.x - 8) / 16) + 2, Math.round((b.y - 14) / 16), 1.2);
     s.face(wh, 'hero');
     await s.talk([
-      ['whis', 'If time travel is involved, my lord, the Time Rings come to mind. Only Supreme Kais and their apprentices are permitted to wear them.', 'smirk'],
-      [me, 'Kais. Ugh. Fine. Universe 10\'s Supreme Kai, Gowasu, keeps a whole collection. He\'s the stuffy one with the tea.', 'angry'],
+      ['whis', 'Zamasu... If memory serves, that is the name of the apprentice to Gowasu, the Supreme Kai of Universe 10.', 'neutral'],
+      ['whis', 'And if time travel is involved, my lord, the Time Rings come to mind. Only Supreme Kais and their apprentices are permitted to wear them.', 'smirk'],
+      [me, 'Kais. Ugh. Fine. Gowasu keeps a whole collection of those rings. He\'s the stuffy one with the tea.', 'angry'],
       ['whis', 'Everyone, place a hand on my back, please. Goku, that includes you. And no, you may not bring snacks.', 'happy'],
     ]);
     await s.done('c10_q_ask');
@@ -119,11 +279,12 @@ registerScripts({
     await s.talk([
       ['gowasu', 'Lord Beerus! And Whis! What an unexpected honour. Zamasu, tea for our guests, please.', 'happy'],
       ['zamasu', 'At once, master.'],
-      ['hero', 'Hi! I\'m Goku! Nice garden!', 'happy'],
-      ['zamasu', '...A mortal. Here. In the Sacred World.', 'angry'],
+      ['hero', '...! That\'s HIM! The guy from the future!', 'shock'],
+      ['whis', 'Patience, Goku. This Zamasu is here, in the present, pouring tea. Whatever the one in the future has done, this one has not done it. Yet.', 'neutral'],
+      ['zamasu', '...A mortal. Here. In the Sacred World. Shouting.', 'angry'],
       ['gowasu', 'Zamasu.', 'neutral'],
       ['zamasu', '...Welcome, mortal.'],
-      ['beerus', 'Ask your questions and don\'t break anything. I\'m going to find out whether this tea is any good.', 'smirk'],
+      ['beerus', 'Ask your questions, watch that apprentice, and don\'t break anything. I\'m going to find out whether this tea is any good.', 'smirk'],
     ]);
     // Off to the tea table (the overlay posts); stand-ins leave the scene once they get there.
     await s.walkAll([[bee, 25, 16, 1.4], [whi, 26, 16, 1.4]]);
@@ -221,7 +382,7 @@ registerScripts({
     }
     s.letterbox(true);
     await s.talk([
-      ['hero', 'Hey, Zamasu! You look pretty strong. Wanna spar?', 'happy'],
+      ['hero', 'Hey, Zamasu! Wanna spar? I wanna feel your ki up close.', 'happy'],
       [me, 'You wish to fight me? Here?', 'angry'],
       ['gowasu', 'An excellent idea! A gentle bout, Zamasu. You may learn something.', 'happy'],
       [me, 'Learn. From a mortal. ...As you wish, master. The temple plaza, then.', 'angry'],
@@ -251,8 +412,8 @@ registerScripts({
     }
     await s.talk([
       ['zamasu', 'Hmph. Your power grows every time you are struck. Like a beast that learns to bite harder.', 'angry'],
-      ['hero', 'Heh, thanks! ...Hey, wait. Your ki. It kinda reminds me of somebody.', 'shock'],
-      ['zamasu', 'I cannot imagine who.', 'smirk'],
+      ['hero', 'Heh, thanks! ...Your ki. It\'s the same as the Zamasu in the future. And it kinda reminds me of Black, too.', 'shock'],
+      ['zamasu', 'I cannot imagine what you mean.', 'smirk'],
     ]);
     s.exp(52000);
     patchUp(s);
@@ -365,13 +526,13 @@ registerScripts({
     await s.walk('c10_gow', 19, 14, 0.8);
     s.face('c10_gow', 'hero');
     await s.talk([
-      ['hero', 'So... was Zamasu the one behind Black? Is the future safe now?'],
-      ['c10_whi', 'If he was, then it should be. Should.', 'neutral'],
+      ['hero', 'So the Zamasu in the future... was this Zamasu, all grown up? Then he\'s gone too now, right? And Black with him?'],
+      ['c10_whi', 'If the Zamasu of Trunks\'s era began as this one, then he should never come to be. Should.', 'neutral'],
       ['c10_gow', 'Goku. Take this. Whoever wears a Time Ring remembers the true course of time, even if history is rewritten around them.', 'sad'],
       ['c10_gow', 'Whatever comes... remember my apprentice. And what he might have been.', 'sad'],
     ]);
     await s.give('c10_timeRing');
-    actor(s, 'c10_shin', 'supremeKai', 20, 20, 'up', 'Shin');
+    actor(s, 'c10_shin', 'supremeKai', 20, 20, 'up');
     s.sfx('teleport');
     s.flash('#ffffff', 8);
     await s.walk('c10_shin', 19, 16, 1.6);
@@ -391,7 +552,7 @@ registerScripts({
   c10_zeno_arrive: async (s) => {
     s.letterbox(true);
     s.music('space');
-    actor(s, 'c10_shin', 'supremeKai', 19, 21, 'up', 'Shin');
+    actor(s, 'c10_shin', 'supremeKai', 19, 21, 'up');
     await s.walkAll([['hero', 20, 9, 1.2], ['c10_shin', 19, 10, 1.2]]);
     await s.talk([
       ['grandPriest', 'Welcome, Son Goku. His Majesty has been looking forward to this.', 'happy'],
@@ -456,10 +617,10 @@ registerScripts({
     await s.walk('c09_fmai', 9, 10, 2);
     s.face('c09_fmai', 'hero');
     await s.talk([
-      ['c09_fmai', 'Goku! You\'re back. Vegeta and Trunks went to Black\'s hideout. I found it yesterday, and they left at dawn.', 'shock'],
-      ['hero', 'Huh? But Beerus erased Zamasu. Shouldn\'t Black be gone?'],
-      ['c09_fmai', 'Black was here an hour ago. And he had someone with him. Green skin, white hair, an earring like his.', 'sad'],
-      ['hero', '...Zamasu?!', 'shock'],
+      ['c09_fmai', 'Goku! You\'re back. Vegeta and Trunks went back to Black\'s hideout at dawn. Vegeta wouldn\'t wait any longer for his rematch.', 'shock'],
+      ['hero', 'Huh? But Beerus erased Zamasu. Shouldn\'t Black and the green one be gone?'],
+      ['c09_fmai', 'Our lookout saw them both an hour ago. Black, and the green one beside him, walking through the ruins like they owned them.', 'sad'],
+      ['hero', '...They\'re still here?! Then who did Beerus erase?', 'shock'],
     ]);
     s.unlockRegion('c10_spot_lair');
     await s.quest('c10_q_lair');
@@ -485,6 +646,11 @@ registerScripts({
     if (!s.flag('c10_lairDone')) s.clear('c10_showdownStarted');
   },
 
+  /**
+   * Second trip (canon eps 60-61): Black and Future Zamasu are still here although the present Zamasu was erased.
+   * The truth, Goku's fight with Black (the chapter's real boss bout; the lair's save points sit just below), Rose,
+   * Project Zero Mortals, and Trunks's flash.
+   */
   c10_showdown: async (s) => {
     if (!s.check('quest:c10_q_lair') || s.flag('c10_lairDone') || s.flag('c10_showdownStarted')) return;
     s.set('c10_showdownStarted');
@@ -492,129 +658,93 @@ registerScripts({
     // Black's ki floods the courtyard; every hound and sentry in the ruins bolts.
     if (clearMooks(s, '#c03060') > 0) s.shake(12, 1);
     s.music('black');
-    actor(s, 'c10_black', 'gokuBlack', 19, 3, 'left');
-    actor(s, 'c10_veg', 'vegeta', 16, 5, 'up');
-    actor(s, 'c10_tru', 'futureTrunks', 13, 6, 'up');
+    // Two cups of tea at the gods' table; Vegeta and Trunks squaring up to them.
+    actor(s, 'c10_black', 'gokuBlack', 14, 3, 'down');
+    actor(s, 'c10_fz', 'zamasu', 19, 3, 'down', 'Zamasu');
+    actor(s, 'c10_veg', 'vegeta', 14, 6, 'up');
+    actor(s, 'c10_tru', 'futureTrunks', 19, 6, 'up');
     s.place('hero', 16, 7, 'up');
-    await s.pan(17, 4, 20);
+    await s.pan(16, 4, 20);
     await s.talk([
-      ['c10_black', 'Welcome, Son Goku. Tea? No? A pity. The leaves are very good this season.', 'smirk'],
-      ['hero', 'Black! Where\'s Zamasu?!'],
-      ['c10_black', 'Patience. Your prince was just about to entertain me.', 'smirk'],
-      ['c10_veg', 'Stay out of this, Kakarot. He\'s mine.', 'angry'],
-      ['hero', 'Aw, c\'mon...', 'sad'],
+      ['c10_veg', 'Kakarot. You\'re late. They\'ve been sipping tea and smirking at us for an hour.', 'angry'],
+      ['hero', 'Zamasu?! But... Beerus erased you!', 'shock'],
+      ['c10_fz', 'Erased? Ah. You mean the Zamasu of your time. How very sad for him.', 'smirk'],
     ]);
-    // Vegeta's fight.
-    const vx = 16;
-    const vy = 5;
-    clearActors(s, ['c10_veg']);
-    actor(s, 'c10_gok', 'goku', 14, 7, 'up');
-    s.switchTo('vegeta');
-    s.place('hero', vx, vy, 'up');
+    await s.call('c10_truth');
     s.transformNow('ssb');
-    await s.powerUp('hero', '#40c0f8', 40);
-    await s.wait(12);
-    await s.say('hero', 'Super Saiyan Blue. A god\'s power in a Saiyan\'s body. Let\'s see how YOU like it.', 'smirk');
+    await s.powerUp('hero', '#40c0f8', 50);
+    await s.talk([
+      ['hero', 'You used MY body to do that?! I\'m gonna beat it right out of you! Vegeta, Trunks, keep the other one busy!', 'shout'],
+      ['c10_veg', 'Don\'t give me orders, Kakarot! ...Boy, with me!', 'angry'],
+    ]);
+    await s.walkAll([['c10_fz', 23, 3, 1.4], ['c10_veg', 21, 5, 1.8], ['c10_tru', 24, 6, 1.8]]);
+    s.face('c10_fz', 'down');
     s.follow();
     s.letterbox(false);
     clearActors(s, ['c10_black']);
-    await bout(s, 'c10_black', { x: 18, y: 3, uid: 'c10_black1' });
+    await bout(s, 'c10_black', { x: 14, y: 3, uid: 'c10_black2' });
     s.letterbox(true);
-    await s.say('gokuBlack', 'Excellent. Truly. Then allow me to show you something beautiful.', 'smirk');
-    const b = s.exists('c10_black1') ? s.actor('c10_black1') : null;
-    const bx = b ? Math.round((b.x - 8) / 16) : 18;
+    await s.say('gokuBlack', 'Splendid. This body fights well, even against its former owner. Now see what a god makes of it.', 'smirk');
+    const b = s.exists('c10_black2') ? s.actor('c10_black2') : null;
+    const bx = b ? Math.round((b.x - 8) / 16) : 14;
     const by = b ? Math.round((b.y - 14) / 16) : 3;
-    clearActors(s, ['c10_black1']);
+    clearActors(s, ['c10_black2']);
     actor(s, 'c10_rose', 'gokuBlack', bx, by, 'down');
-    await s.powerUp('c10_rose', '#f070b0', 60);
+    await s.powerUp('c10_rose', '#f070b0', 50);
     s.sprite('c10_rose', 'blackRose');
     s.aura('c10_rose', '#f070b0');
-    await s.wait(12);
-    await s.talk([
-      ['blackRose', 'Do you see it? A god\'s ki, poured into the finest body in the universe. I call it Super Saiyan Rosé.', 'smirk'],
-      ['hero', 'Pink?! You\'re fighting me with PINK hair?!', 'shock'],
-      ['blackRose', 'Beautiful, isn\'t it?', 'smirk'],
-    ]);
-    s.letterbox(false);
-    clearActors(s, ['c10_rose']);
-    const rr = await bout(s, 'c10_blackRose', { x: bx, y: by, uid: 'c10_rose1', survive: 45, loseOk: true, label: 'HOLD ON' });
-    s.letterbox(true);
-    if (rr === 'end' || rr === 'timeout') {
-      // Vegeta held his own... so Black stops playing fair.
-      await s.say('blackRose', 'Impressive, prince. Truly. Now let me stop holding back.', 'smirk');
-      if (s.exists('c10_rose1')) {
-        s.aura('c10_rose1', '#f070b0');
-        await s.blast('c10_rose1', 'hero', '#f070b0');
-      }
-      s.flash('#f070b0', 10);
-    }
+    await s.blast('c10_rose', 'hero', '#f070b0');
+    s.flash('#f070b0', 10);
     s.transformNow(null);
     s.pose('hero', 'ko');
     s.shake(20, 3);
-    await s.wait(12);
-    await s.say('blackRose', 'Pink suits me. Pain suits you, prince.', 'smirk');
-    // Future Zamasu appears.
-    s.sfx('teleport');
-    s.flash('#b0f070', 10);
-    actor(s, 'c10_fz', 'zamasu', 12, 2, 'right', 'Zamasu');
-    await s.pan(14, 3, 20);
+    // Across the courtyard, Vegeta and Trunks fare no better against the immortal.
+    s.boom(22, 5, 20, '#b0f070');
+    s.pose('c10_veg', 'ko');
+    await s.wait(16);
     await s.talk([
-      ['c10_fz', 'You\'re making a mess of the garden, my friend.', 'smirk'],
-      ['c10_gok', 'Zamasu?! But... Beerus erased you!', 'shock'],
-      ['c10_fz', 'Erased? Ah. You mean the Zamasu of your time. How very sad for him.', 'smirk'],
-    ]);
-    // Goku steps in.
-    const hv = s.actor('hero');
-    actor(s, 'c10_vegDown', 'vegeta', Math.round((hv.x - 8) / 16), Math.round((hv.y - 14) / 16), 'up');
-    s.pose('c10_vegDown', 'ko');
-    s.pose('hero', null);
-    clearActors(s, ['c10_gok']);
-    s.switchTo('goku');
-    s.place('hero', 14, 6, 'up');
-    s.transformNow('ssb');
-    await s.powerUp('hero', '#40c0f8', 30);
-    await s.blast('hero', 'c10_fz', '#70c8f8');
-    s.boom(12, 2, 26, '#70c8f8');
-    await s.wait(30);
-    await s.say('c10_fz', 'Is that all? Mortal ki, against a body that cannot be harmed.', 'smirk');
-    s.follow();
-    s.letterbox(false);
-    clearActors(s, ['c10_fz']);
-    await bout(s, 'c10_futureZamasu', { x: 13, y: 3, uid: 'c10_fz1', survive: 30, loseOk: true, label: 'SURVIVE' });
-    s.letterbox(true);
-    patchUp(s);
-    await s.call('c10_truth');
-  },
-
-  c10_black_blade: async (s) => {
-    s.flash('#c03060', 8);
-    await s.wait(10);
-    await s.talk([
-      ['gokuBlack', 'Your fists are honest, prince. Let me answer with something sharper.', 'smirk'],
-      ['hero', 'A blade made of ki? Hmph. Cute trick.', 'angry'],
-    ]);
-  },
-
-  /** The truth about Black, Project Zero Mortals, and Trunks's flash. */
-  c10_truth: async (s) => {
-    s.music('black');
-    await s.talk([
-      ['zamasu', 'Do you understand now? I wished upon this world\'s Super Dragon Balls for a body that cannot die. Then I shattered them, so no mortal could wish it back.', 'smirk'],
-      ['blackRose', 'And I... am Zamasu as well. Not of this world, Son Goku. Of YOURS - from before your Destroyer ever raised his hand.', 'smirk'],
-      ['blackRose', 'I gathered the Super Dragon Balls of your time and traded bodies with its Son Goku. The finest body in all creation. Its owner, I killed. And his family, for good measure.', 'smirk'],
-      ['hero', '...You did WHAT?', 'shout'],
-      ['blackRose', 'Then my Time Ring carried me here, to the one friend who understood. Your Hakai came too late. It erased a Zamasu who had not yet acted. I already had.', 'smirk'],
+      ['c10_veg', 'Ngh... Every hole I put in him... closes before I can make another.', 'hurt'],
       ['blackRose', 'And this earring? A keepsake from the Gowasu of this world. He was the first god we judged.', 'smirk'],
-      ['zamasu', 'Gods and mortals, side by side? No. Only gods. A world cleansed of mortal sin. We call it Project Zero Mortals.', 'smirk'],
+      ['c10_fz', 'Gods and mortals, side by side? No. Only gods. A world cleansed of mortal sin. We call it Project Zero Mortals.', 'smirk'],
       ['c10_tru', 'Everyone, cover your eyes!', 'shout'],
     ]);
     s.flash('#ffffff', 30);
     s.sfx('explode');
     s.shake(30, 3);
     await s.fadeOut(30, '#ffffff');
-    s.transformNow(null);
+    s.pose('hero', null);
+    clearActors(s, ['c10_rose', 'c10_fz', 'c10_veg', 'c10_tru']);
     await s.narrate('Trunks\'s blinding flash bought them a few seconds. It was enough to run.');
     await s.call('c10_retreat');
+  },
+
+  /** Black's ki blade (phase 2 of the Black bout): Vegeta meets it on the first trip, Goku on the second. */
+  c10_black_blade: async (s) => {
+    s.flash('#c03060', 8);
+    await s.wait(10);
+    if (s.hero === 'goku') {
+      await s.talk([
+        ['gokuBlack', 'Such honest fists. This body remembers them. Let me answer with something sharper.', 'smirk'],
+        ['hero', s.flag('c10_sawSlain') ? 'A blade made of ki... Just like the cut on that Babarian!' : 'Whoa! A blade made of ki? That thing\'s sharp!', 'shock'],
+      ]);
+      return;
+    }
+    await s.talk([
+      ['gokuBlack', 'Your fists are honest, prince. Let me answer with something sharper.', 'smirk'],
+      ['hero', 'A blade made of ki? Hmph. Cute trick.', 'angry'],
+    ]);
+  },
+
+  /** The truth about Black: the Zamasu of Goku's own time, in Goku's body, and too far along to be erased. */
+  c10_truth: async (s) => {
+    s.music('black');
+    await s.talk([
+      ['zamasu', 'Do you understand now? I wished upon this world\'s Super Dragon Balls for a body that cannot die. Then I shattered them, so no mortal could wish it back.', 'smirk'],
+      ['gokuBlack', 'And I... am Zamasu as well. Not of this world, Son Goku. Of YOURS - from before your Destroyer ever raised his hand.', 'smirk'],
+      ['gokuBlack', 'I gathered the Super Dragon Balls of your time and traded bodies with its Son Goku. The finest body in all creation. Its owner, I killed. And his family, for good measure.', 'smirk'],
+      ['hero', '...You did WHAT?', 'shout'],
+      ['gokuBlack', 'Then my Time Ring carried me here, to the one friend who understood. Your Hakai came too late. It erased a Zamasu who had not yet acted. I already had.', 'smirk'],
+    ]);
   },
 
   /** Back at the Resistance base: Future Yajirobe has dragged everyone home. */
@@ -632,8 +762,8 @@ registerScripts({
       ['c10_yaji', 'Hmph. Found you idiots lying in a crater on the highway. Dragged all three of you back. You owe me dinner. A big one.', 'angry'],
       ['c10_truH', 'Yajirobe? You\'re alive too!', 'shock'],
       ['c10_yaji', 'Course I am. Running away is a skill. You should all try it sometime.', 'smirk'],
-      ['c10_vegH', 'Ngh... I... lost. To a man with Kakarot\'s face and pink hair.', 'hurt'],
-      ['hero', 'He\'s immortal, Vegeta. The other one. I hit him with everything, and it didn\'t even leave a mark.', 'sad'],
+      ['c10_vegH', 'Ngh... Beaten twice by the same smirking face. And the green one just keeps healing.', 'hurt'],
+      ['hero', 'Black is Zamasu. A Zamasu from our time, wearing my body. And the two of them want to wipe out every mortal there is.', 'sad'],
     ]);
     s.exp(30000);
     s.heal();

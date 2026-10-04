@@ -1,6 +1,7 @@
 import { registerMaps } from '../../registry';
 import { registerScripts } from '../../../game/script';
 import { GRIDS } from './grids';
+import { heroTalk } from './talk';
 
 /*
  * SNOWY HIGHLANDS (region 'Snowy Highlands', hostile, late game T5-T7):
@@ -144,6 +145,14 @@ registerScripts({
       ]);
       return;
     }
+    if (await heroTalk(s, 'eb_snow_hermit', {
+      goku: 'The orange barrier stirs when you draw near. It knows its warrior, but it waits for the whole of your strength.',
+      vegeta: 'Prince of Saiyans. Your relic does not rest on this peak. It waits on the Great Mesa, in the Rocky Wasteland.',
+      gohan: 'Your relic is not among these, scholar. It waits in the high peaks above the valley where you were raised.',
+      piccolo: 'The green barrier hums at your approach, Namekian. It remembers the one who watches over the boy.',
+      trunks: 'The purple barrier waits for a sword from another time. Yours, I think. Return when your blade has reached its peak.',
+      satan: 'So. The relics chose YOU. ...The ancients always did love a good joke.',
+    }, 'smirk')) return;
     const trophies = ['trophyGoku', 'trophyVegeta', 'trophyGohan', 'trophyTrunks', 'trophyPiccolo'].filter((t) => s.has(t)).length;
     if (trophies >= 5) {
       await s.say('eb_snow_hermit', 'All five relics... Then the legends are true. Somewhere, a very loud man with a moustache is about to have the best day of his life.', 'happy');

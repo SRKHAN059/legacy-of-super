@@ -16,6 +16,18 @@ const KEYMAP: Record<string, Button> = {
   ShiftLeft: 'select', ShiftRight: 'select', Backspace: 'select',
 };
 
+/**
+ * Directions held by a touch at (dx, dy) from the D-pad's centre: 8 sectors of 45°, so one thumb can hold a
+ * diagonal (two buttons). Inside the small dead zone (`dead` px) nothing is held.
+ */
+export function dpadButtons(dx: number, dy: number, dead = 8): Button[] {
+  if (Math.hypot(dx, dy) < dead) return [];
+  const sector = ((Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) % 8) + 8) % 8;
+  return ([
+    ['right'], ['right', 'down'], ['down'], ['down', 'left'], ['left'], ['left', 'up'], ['up'], ['up', 'right'],
+  ] as Button[][])[sector];
+}
+
 /** Standard-mapping gamepad button indices per GBA button. */
 const PADMAP: Partial<Record<Button, number[]>> = {
   A: [0], B: [1, 2], L: [4, 6], R: [5, 7], select: [8], start: [9],
@@ -67,25 +79,40 @@ export class Input {
     }
   }
 
+  /**
+   * Touch controls. The D-pad is one zone (8-way: a thumb on a corner or sliding between arms holds a
+   * diagonal); a thumb that went down on it keeps steering from it even if it drifts off the edge.
+   * Every other button maps to the element under the pointer.
+   */
   private bindTouch(): void {
     const root = typeof document !== 'undefined' ? document.getElementById('touch') : null;
     if (!root) return;
-    const active = new Map<number, Button>();
+    const active = new Map<number, { btns: Button[]; pad: HTMLElement | null }>();
+    const held = (): Set<Button> => new Set([...active.values()].flatMap((a) => a.btns));
+    const refresh = () => {
+      const now = held();
+      for (const b of BUTTONS) {
+        const was = this.touch.has(b);
+        if (now.has(b) && !was) { this.touch.add(b); this.latched.add(b); }
+        if (!now.has(b) && was) this.touch.delete(b);
+        root.querySelector(`[data-btn="${b}"]`)?.classList.toggle('pressed', now.has(b));
+      }
+    };
     const update = (e: PointerEvent, on: boolean) => {
+      if (!on) { active.delete(e.pointerId); refresh(); return; }
+      const prev = active.get(e.pointerId);
       const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
-      const btn = el?.dataset.btn as Button | undefined;
-      const old = active.get(e.pointerId);
-      if (old && (old !== btn || !on)) {
-        active.delete(e.pointerId);
-        this.touch.delete(old);
-        root.querySelector(`[data-btn="${old}"]`)?.classList.remove('pressed');
+      const pad = prev ? prev.pad : (el?.closest('.dpad') as HTMLElement | null) ?? null;
+      let btns: Button[];
+      if (pad) {
+        const r = pad.getBoundingClientRect();
+        btns = dpadButtons(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2), r.width * 0.1);
+      } else {
+        const b = el?.dataset.btn as Button | undefined;
+        btns = b ? [b] : [];
       }
-      if (on && btn) {
-        active.set(e.pointerId, btn);
-        this.touch.add(btn);
-        this.latched.add(btn);
-        el?.classList.add('pressed');
-      }
+      active.set(e.pointerId, { btns, pad });
+      refresh();
     };
     root.addEventListener('pointerdown', (e) => { e.preventDefault(); this.gesture(); update(e, true); });
     root.addEventListener('pointermove', (e) => { if (active.has(e.pointerId)) update(e, true); });

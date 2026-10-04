@@ -12,6 +12,34 @@ type EState =
 const AGGRO = 110;
 const LEASH = 220;
 
+/**
+ * Boss poise (LoG2's chase-lock: a boss can be pinned by a combo briefly, then recovers and counters).
+ * An ordinary hit puts at most BOSS_HITSTUN frames of hitstun on a boss; after BOSS_POISE_HITS hits (or
+ * BOSS_POISE_FRAMES of accumulated hitstun) without a BOSS_POISE_RESET-frame pause, the boss breaks free:
+ * a shockwave shoves the player back, it ignores hitstun for BOSS_ARMOR frames and opens with a counter move.
+ */
+export const BOSS_HITSTUN = 6;
+export const BOSS_POISE_HITS = 5;
+export const BOSS_POISE_FRAMES = 45;
+export const BOSS_POISE_RESET = 50;
+export const BOSS_ARMOR = 60;
+/** Stun techniques (Burning Attack, Spirit Bomb) hold a boss this long (LoG2: 1-2 s), then it breaks free. */
+export const BOSS_TECH_STUN = 90;
+/** Frames a boss stays stunned after being hit out of a bull-charge wind-up. */
+const BOSS_CHARGE_PUNISH = 40;
+/** Counter moves a boss may open with after breaking free (used when its current phase knows them). */
+const COUNTER_MOVES: readonly BossMove[] = ['teleport', 'timeSkip', 'dash', 'charge', 'nova', 'volley', 'guard'];
+
+/**
+ * Max HP of a spawned enemy. Late-tier regular enemies (T6/T7, Guide §6) are trimmed by up to 25% so
+ * fights stay at ~12-18 hits as hero HP and damage compound; bosses keep their authored HP.
+ */
+export function enemyMaxHp(def: EnemyDef): number {
+  if (def.ai === 'boss' || def.invulnerable) return def.hp;
+  const k = Math.max(0, Math.min(1, (Math.max(def.str, def.pow) - 44) / 14));
+  return Math.max(1, Math.round(def.hp * (1 - 0.25 * k)));
+}
+
 /** A hostile actor: regular enemy or boss. */
 export class Enemy extends Actor {
   def: EnemyDef;
@@ -50,14 +78,22 @@ export class Enemy extends Actor {
   /** Script-driven: AI disabled. */
   puppet = false;
   private staminaAcc = 0;
+  /** Boss poise: hits and hitstun absorbed since the last pause, frames since the last hit. */
+  private poiseHits = 0;
+  private poiseFrames = 0;
+  private sinceHit = 9999;
+  /** Frames left of stun immunity after a boss breaks free. */
+  armorT = 0;
+  /** The current stun came from a stun technique / punish: the boss breaks free when it ends. */
+  private heldByTech = false;
 
   constructor(type: string, x: number, y: number) {
     const def = ENEMIES[type];
     if (!def) throw new Error(`Unknown enemy type "${type}"`);
     super(def.sprite, x, y);
     this.def = def;
-    this.hp = def.hp;
-    this.maxHp = def.hp;
+    this.hp = enemyMaxHp(def);
+    this.maxHp = this.hp;
     this.homeX = x;
     this.homeY = y;
     if (def.box) { this.w = def.box.w; this.h = def.box.h; }
@@ -82,17 +118,36 @@ export class Enemy extends Actor {
     return this.guardT > 0;
   }
 
-  /** Called by the field after damage was applied. */
-  onHit(f: Field, knock: { x: number; y: number }, stun: number): void {
+  /**
+   * Called by the field after damage was applied. `techStun` marks a stun technique (Burning Attack,
+   * Spirit Bomb): on bosses it bypasses the hitstun cap for BOSS_TECH_STUN frames.
+   */
+  onHit(f: Field, knock: { x: number; y: number }, stun: number, techStun = false): void {
     this.flash = 4;
     this.aggro = true;
     this.hitCount++;
     if (this.isBoss) {
-      // Bosses shrug off most knockback and recover quickly (LoG2 chase-lock still works briefly).
-      this.kx = knock.x * 0.5;
-      this.ky = knock.y * 0.5;
-      if (this.state === 'windup' && this.move === 'charge') { this.state = 'recover'; this.t = 0; this.stun = 40; }
-      this.stun = Math.max(this.stun, Math.min(stun, 14));
+      // Bosses shrug off most knockback; while breaking free they barely move at all.
+      const k = this.armorT > 0 ? 0.2 : 0.5;
+      this.kx = knock.x * k;
+      this.ky = knock.y * k;
+      if (this.armorT > 0 || this.state === 'dying') return;
+      if (this.state === 'windup' && this.move === 'charge') {
+        // Hitting a boss out of its bull-charge wind-up cancels the charge and staggers it (LoG2 punish).
+        this.endMove();
+        this.holdStun(BOSS_CHARGE_PUNISH);
+        return;
+      }
+      if (techStun && stun > 0) { this.holdStun(Math.min(stun, BOSS_TECH_STUN)); return; }
+      // Already held by a technique: extra hits neither extend nor break the hold.
+      if (this.heldByTech && this.stun > 0) return;
+      const s = Math.min(stun, BOSS_HITSTUN);
+      if (this.sinceHit > BOSS_POISE_RESET) { this.poiseHits = 0; this.poiseFrames = 0; }
+      this.sinceHit = 0;
+      this.poiseHits++;
+      this.poiseFrames += s;
+      this.stun = Math.max(this.stun, s);
+      if (this.poiseHits >= BOSS_POISE_HITS || this.poiseFrames >= BOSS_POISE_FRAMES) this.breakFree(f);
     } else {
       this.kx = knock.x;
       this.ky = knock.y;
@@ -100,14 +155,48 @@ export class Enemy extends Actor {
       this.stun = Math.max(this.stun, stun);
       if (this.state !== 'dying') this.state = 'chase';
     }
-    void f;
+  }
+
+  /** Long stun (technique / punish) on a boss; it breaks free and counters when the stun runs out. */
+  private holdStun(frames: number): void {
+    this.stun = Math.max(this.stun, frames);
+    this.heldByTech = true;
+    this.poiseHits = 0;
+    this.poiseFrames = 0;
+  }
+
+  /** Boss recovers from a chase-lock: shockwave, brief stun immunity and a counter move. */
+  private breakFree(f: Field): void {
+    if (this.state === 'grab') f.player.grabbed = 0;
+    this.stun = 0;
+    this.frozen = 0;
+    this.heldByTech = false;
+    this.poiseHits = 0;
+    this.poiseFrames = 0;
+    this.armorT = BOSS_ARMOR;
+    this.flash = 6;
+    this.alpha = 1;
+    const p = f.player;
+    const color = this.def.boss?.kiColor ?? '#f8f0c0';
+    f.fx.explode(this.x, this.y - 12, 16, color);
+    f.camera.shake(6, 2);
+    audio.sfx('blastHit');
+    if (dist(this, p) < 34) f.damagePlayer(this.def.str, 0.4, this.x, this.y);
+    const moves = this.phase()?.moves ?? [];
+    const options = COUNTER_MOVES.filter((m) => moves.includes(m));
+    if (!options.length) { this.endMove(); return; }
+    this.move = f.rng.pick(options);
+    this.state = 'windup';
+    this.t = 0;
+    this.hitPlayer = false;
   }
 
   update(f: Field): void {
-    this.t++;
     if (this.flash > 0) this.flash--;
     if (this.cd > 0) this.cd--;
     if (this.guardT > 0) this.guardT--;
+    if (this.armorT > 0) this.armorT--;
+    if (this.sinceHit < 9999) this.sinceHit++;
     if (this.kx || this.ky) {
       const r = f.col.move(this.box(), this.kx, this.ky, this.flying);
       this.x += r.dx;
@@ -124,17 +213,22 @@ export class Enemy extends Actor {
       if (Math.abs(this.kx) < 0.1) this.kx = 0;
       if (Math.abs(this.ky) < 0.1) this.ky = 0;
     }
-    if (this.state === 'dying') { this.updateDying(f); return; }
-    if (this.puppet || this.ended) { this.animate(); return; }
+    if (this.state === 'dying') { this.t++; this.updateDying(f); return; }
+    if (this.puppet || this.ended) { this.t++; this.animate(); return; }
+    // Frozen / stunned enemies pause their current move (its frame counter `t` does not advance), so a
+    // move's timed frames (shots, strikes, summons) fire late instead of being skipped.
     if (this.frozen > 0) { this.frozen--; this.moving = false; return; }
     if (this.stun > 0) {
       this.stun--;
       this.stunGlow = this.stun > 0 && this.stun < 30;
       this.pose = 'hurt';
       this.moving = false;
+      if (this.stun === 0 && this.heldByTech && this.isBoss) this.breakFree(f);
       return;
     }
+    this.heldByTech = false;
     this.stunGlow = false;
+    this.t++;
     if (this.isBoss) this.updateBoss(f);
     else this.updateRegular(f);
     this.animate();
@@ -366,7 +460,9 @@ export class Enemy extends Actor {
       if (this.t >= 40) {
         f.fx.explode(this.x, this.y - 8, 26, '#f8a030');
         audio.sfx('explode');
-        if (dist(this, f.player) < 32) f.damagePlayer(this.def.pow + this.def.str, 0.9, this.x, this.y);
+        // The blast hits as hard as the creature's strongest attack stat (summing STR+POW inside the cubic stat
+        // curve made it 5-8x the creature's own strike).
+        if (dist(this, f.player) < 32) f.damagePlayer(Math.max(this.def.pow, this.def.str), 1.1, this.x, this.y);
         this.dead = true;
       }
       return;

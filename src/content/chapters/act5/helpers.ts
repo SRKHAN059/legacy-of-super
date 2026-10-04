@@ -84,9 +84,11 @@ function seal(s: ScriptApi): () => void {
 /**
  * Boss fight that also pays the boss's EXP when the fight ends at its scripted threshold
  * (kills already pay it). Leaves the boss on the map as a puppet; callers `remove` it.
+ * Like LoG2, nothing is refilled first: the fighter arrives with the HP and EP they have, and Senzu Beans, the
+ * arena's breakable rocks and enemy drops are the resource game. Only a fresh relay fighter (`handOff`, `refresh`)
+ * steps in at full strength.
  */
 export async function bossFight(s: ScriptApi, type: string, opts: FightOpts = {}): Promise<FightResult> {
-  s.heal();
   const unseal = seal(s);
   const r = await s.fight(type, opts);
   unseal();
@@ -110,6 +112,17 @@ export function rememberHero(s: ScriptApi, key: string): void {
   if (s.state.get(`act5_prev_${key}`) === undefined) s.set(`act5_prev_${key}`, s.hero);
 }
 
+/**
+ * Refill one fighter's HP and EP: a fresh relay fighter stepping into the ring, or the hero getting back up after a
+ * scripted loss. Nobody else in the party is touched (LoG2 never refills the party before a boss).
+ */
+export function refresh(s: ScriptApi, id: CharId): void {
+  const c = s.state.char(id);
+  c.hp = c.hpMax;
+  c.ep = c.epMax;
+  s.sfx('heal');
+}
+
 /** Forced perspective switch for a story segment, with a short fade when the active character actually changes. */
 export async function forceFade(s: ScriptApi, id: CharId): Promise<void> {
   if (s.hero === id) { force(s, id); return; }
@@ -125,6 +138,11 @@ export interface Outgoing {
   name: string;
   /** Pose to hold (a knocked-out Goku, a hurt Frieza). */
   pose?: Pose;
+  /**
+   * Draw the outgoing fighter with this sprite instead of the hero's (a fighter who fought off screen, in the dark).
+   * The outgoing fighter is then staged even when the active character already is the incoming one.
+   */
+  sprite?: string;
 }
 
 /** Options for `handOff`. */
@@ -145,6 +163,8 @@ export interface HandOffOpts {
  * LoG2 relay hand-off (§12: fade-out, cutscene, fade-in). The screen fades out, the outgoing fighter stays on the
  * stage as an actor (so the next lines can address them), the next forced fighter takes over beside them, and the
  * screen fades back in. Without `out` or `at` the swap simply happens in the dark (a time skip).
+ * Only a fighter who actually steps in is refreshed (LoG2's Cell Games hand-offs); when the active character already
+ * is `to`, they carry on with the HP and EP they have.
  */
 export async function handOff(s: ScriptApi, to: CharId, opts: HandOffOpts = {}): Promise<void> {
   const [hx, hy] = heroTile(s);
@@ -154,8 +174,9 @@ export async function handOff(s: ScriptApi, to: CharId, opts: HandOffOpts = {}):
   s.pose('hero', null);
   s.show('hero', true);
   const swap = s.hero !== to;
-  if (opts.out && swap) {
-    stage(s, opts.out.id, sprite, hx, hy, facing, opts.out.name);
+  const outStaged = !!opts.out && (swap || !!opts.out.sprite);
+  if (opts.out && outStaged) {
+    stage(s, opts.out.id, opts.out.sprite ?? sprite, hx, hy, facing, opts.out.name);
     if (opts.out.pose) s.pose(opts.out.id, opts.out.pose);
   }
   let tx = hx;
@@ -165,12 +186,12 @@ export async function handOff(s: ScriptApi, to: CharId, opts: HandOffOpts = {}):
     tx = Math.floor(a.x / 16);
     ty = Math.floor((a.y - 14) / 16);
     s.remove(opts.at);
-  } else if (opts.out && swap) {
+  } else if (opts.out && outStaged) {
     tx = hx + (opts.dx ?? 1);
     ty = hy + (opts.dy ?? 0);
   }
   force(s, to);
-  s.heal();
+  if (swap) refresh(s, to);
   const [fx, fy] = freeNear(s, tx, ty);
   s.place('hero', fx, fy, opts.dir ?? facing);
   if (opts.form) s.transformNow(opts.form);

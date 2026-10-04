@@ -1,6 +1,7 @@
 import { PAL } from '../art/color';
 import { spriteSet } from '../art/registry';
 import { SCREEN_H, SCREEN_W } from '../engine/constants';
+import { wrap } from '../engine/fontdata';
 import { font } from '../engine/gfx';
 import type { Input } from '../engine/input';
 import type { Scene } from '../engine/scene';
@@ -13,8 +14,17 @@ export class CreditsScene implements Scene {
   private readonly stars: Array<[number, number, number]> = [];
   private readonly parade = ['goku', 'vegeta', 'gohan', 'futureTrunks', 'piccolo', 'android17', 'frieza', 'krillin', 'android18', 'tien', 'roshi', 'beerus', 'whis', 'bulma', 'chichi', 'videl', 'pan', 'goten', 'trunksKid', 'mrSatan', 'majinBuu'];
 
-  constructor(private readonly lines: string[]) {
+  /** Credit rows, wrapped to the screen ('#' heading rows keep their marker on every wrapped piece). */
+  private readonly lines: string[];
+
+  constructor(lines: string[]) {
     this.done = new Promise((r) => (this.resolve = r));
+    this.lines = lines.flatMap((l) => {
+      const head = l.startsWith('#');
+      const text = head ? l.slice(1) : l;
+      if (!text) return [l];
+      return wrap(text, SCREEN_W - 16).map((r) => (head ? `#${r}` : r));
+    });
     for (let i = 0; i < 80; i++) this.stars.push([Math.random() * SCREEN_W, Math.random() * SCREEN_H, 0.2 + Math.random()]);
   }
 

@@ -66,7 +66,20 @@ Write dialogue in-character and **paraphrase** the anime — never copy dub/sub 
   player's current level span, so enemy `exp` only needs to be in the right ballpark for its tier (§6).
   Boss `exp` is paid in full (scripted reward).
 - **Party**: Goku, Vegeta, Gohan, Trunks, Piccolo (+ secret Mr. Satan). Characters join at fixed story points
-  with LoG2-style rolled stats. The story often forces a character (switchTo + `noSwitch` flag).
+  with LoG2-style rolled stats. The story often forces a character (`force(s, id)` = switchTo + `noSwitch` flag).
+  Levels come from EXP: a chapter hand-over lifts only the hero who played the last chapter to the new band start,
+  never the bench (see `docs/CHAPTERS.md` Party timeline); `force()` lifts a benched character to band start − 3
+  so a forced segment is never a wall.
+- **Fights are sealed**: while `fight`/`clearEnemies` runs, doors, map edges, save discs, world signs, flight circles,
+  Whis's Charm **and NPC talk** are off (A throws a punch). Action triggers (`onAction`) still work mid-fight, for
+  puzzles like the c08 glyph pillars — never warp from one that can fire mid-fight (a warp that leaves a fight
+  abandons it: the fight's script is unwound with a `FightAbandoned` warning).
+- **Bosses have poise** (LoG2 chase-lock): a hit stuns a boss for at most 6 frames; after 5 quick hits it breaks free
+  (shockwave, ~1 s of stun immunity, a counter move from its phase: teleport/timeSkip/dash/charge/nova/volley/guard).
+  Stun techniques (Trunks's Burning Attack, the Spirit Bomb) hold a boss ~1.5 s (regular enemies 4 s), and hitting
+  a boss out of its bull-charge wind-up staggers it; both end with the boss breaking free. Mashing A never pins a boss.
+- **Dialogue box**: opens at the top automatically when the speaker stands low on screen; L/R move it by hand.
+  `ask()` prompts longer than one box are paged; the options open with the last page.
 
 ---
 
@@ -192,6 +205,7 @@ registerQuests([{ id: 'c03_dragonballs', title: 'Gather the seven Dragon Balls',
 | Prologue | Trunks L6 (`join('trunks',6)`), techs kiBlast + burningAttack, form `ssj`. Trunks leaves the party at the end (`s.state.char('trunks').joined = false`) — his stats carry over to Ch9 like LoG2. |
 | 1 | Goku L1 (start). Learns `kamehameha` early in Ch1; regains `ssj` form at King Kai's. |
 | 2 | Vegeta joins L8 (bigBang, form `ssj`). Bulma gives the **Scouter** (Select scan, R map). |
+| 12→13 | Flag `scouterPlus`: Bulma's Scouter upgrade (LoG2's post-announcement upgrade) — the R map also shows unexplored areas, in grey. `ensureChapterState` grants it at the start of Ch13 at the latest; an act may `s.set('scouterPlus')` earlier in a Bulma beat with a narrator line. |
 | 3 | Goku form → `ssg` after the ritual. Dragon Radar obtained. |
 | 4 | Whis starts appearing (Delicacy quest giver). |
 | 5 | Gohan joins L16 (masenko, form `ssj`), Piccolo joins L18 (specialBeamCannon, form `unweighted`). Master Roshi's charged-melee training (Kame House) becomes available (silver quest; each character talks to Roshi once). |
@@ -234,6 +248,12 @@ Damage uses the exact LoG2 ROM formula (cubic in STR/POW, END subtracts proporti
 | 29–36 | 4900–6500 | 44–50 / 46–55 / 50–60 | 40000–60000 |
 | 37–44 | 6500–8200 | 50–60 / 55–60 / 60–65 | 80000–200000 |
 | 45–50 (final/optional) | 8200–12000 | 60–80 / 59–90 / 65–90 | 300000–600000 |
+
+**Late-game engine curve** (no data change needed): hero HP compounds per level while these tables grow linearly,
+so the engine scales enemy damage by the attacking stat (`enemyPowerScale`: ×1 up to 28, ×1.32 at 36, ×1.64 at
+44, ×1.96 at 52, capped ×2.4 from 63 — every enemy and boss attack, shots and beams included) and trims regular enemies' HP from STR/POW 44
+up (`enemyMaxHp`: −25% at 58+; bosses keep their HP). Keep authoring against the tables above; the scouter shows the
+trimmed HP. Exploders' death blast hits with max(STR, POW) ×1.1.
 
 Keep END < 124. Use `resMelee`/`resKi` (0.5 = half damage) for gimmicks (e.g. a ki-resistant shell).
 `absorbKi: true` = melee-only boss (LoG2 Androids 19/20 — ki heals them; tell the player via dialogue).

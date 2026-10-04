@@ -155,6 +155,145 @@ registerProp('c14_clock', () => {
   return { bmp: finishProp(p), solid: { x: 4, y: 40, w: 24, h: 15 } };
 });
 
+// ---------------------------------------------------------------- set dressing: ZTV film lot
+/** The cardboard bank front the robbers mistook for the real bank across the street. */
+registerProp('c12_bankSet', () => {
+  const p = new Painter(64, 44);
+  // Wooden braces behind the flat, then the painted facade.
+  p.line(6, 43, 14, 20, '#8a6a40'); p.line(57, 43, 49, 20, '#8a6a40');
+  p.rect(2, 8, 60, 30, '#d8d0b8');
+  p.rect(2, 8, 60, 3, '#f0e8d0');
+  for (let i = 0; i < 4; i++) p.rect(6 + i * 15, 14, 5, 22, '#c0b8a0');
+  p.rect(0, 0, 64, 9, '#b8b098');
+  p.rect(18, 1, 28, 7, '#e0b040');
+  p.rows(21, 2, [
+    'xxx..xx..x..x.x..x',
+    'x.x.x..x.xx.x.x.x.',
+    'xxx.xxxx.x.xx.xx..',
+    'x.x.x..x.x..x.x.x.',
+    'xxx.x..x.x..x.x..x',
+  ], { x: '#503010' });
+  p.rect(27, 22, 10, 16, '#504838');
+  p.rect(28, 23, 8, 15, '#383028');
+  // Torn corner: it is only cardboard.
+  p.line(52, 30, 61, 38, '#a89878'); p.rect(56, 34, 6, 4, '#a89878');
+  p.rect(0, 38, 64, 6, '#787068');
+  return { bmp: finishProp(p), solid: { x: 2, y: 36, w: 60, h: 8 } };
+});
+
+/** A studio light on a tripod. */
+registerProp('c12_spotlight', () => {
+  const p = new Painter(18, 34);
+  p.line(9, 14, 2, 33, '#383840'); p.line(9, 14, 16, 33, '#383840'); p.vline(9, 12, 21, '#484850');
+  p.rect(3, 2, 12, 10, '#303038');
+  p.rect(4, 3, 10, 8, '#f8f0c0');
+  p.rect(5, 4, 4, 3, '#ffffff');
+  p.rect(1, 1, 16, 2, '#505060');
+  return { bmp: finishProp(p), solid: { x: 4, y: 28, w: 10, h: 6 } };
+});
+
+/** A painted cardboard boulder for the "Space Monsters" scene. */
+registerProp('c12_propRock', () => {
+  const p = new Painter(30, 26);
+  p.ellipse(1, 3, 28, 22, '#8a7a98');
+  p.ellipse(3, 2, 22, 17, '#a898b8');
+  p.ellipse(7, 4, 9, 6, '#c8b8d8');
+  p.line(22, 6, 27, 12, '#6a5a78');
+  p.rect(12, 22, 6, 4, '#8a6a40');
+  return { bmp: finishProp(p), solid: { x: 2, y: 16, w: 26, h: 9 } };
+});
+
+/** An actor's trailer with a gold star on the door. */
+registerProp('c12_trailer', () => {
+  const p = new Painter(56, 34);
+  p.rect(1, 4, 54, 24, '#e8e8f0');
+  p.rect(1, 4, 54, 3, '#c8c8d8');
+  p.rect(1, 20, 54, 2, '#3868c8');
+  p.rect(6, 9, 10, 7, '#80b0e0'); p.rect(38, 9, 12, 7, '#80b0e0');
+  p.rect(22, 8, 10, 18, '#b0b0c0');
+  p.rows(24, 10, ['..x..', '.xxx.', 'xxxxx', '.x.x.'], { x: '#f0c030' });
+  p.ellipse(6, 25, 8, 8, '#282828'); p.ellipse(42, 25, 8, 8, '#282828');
+  return { bmp: finishProp(p), solid: { x: 1, y: 14, w: 54, h: 18 } };
+});
+
+/** Floor decals: a dolly track, an "X" tape mark and loose cables (walk-through). */
+registerProp('c12_dollyTrack', () => {
+  const p = new Painter(64, 12);
+  for (let i = 0; i < 8; i++) p.rect(2 + i * 8, 1, 3, 10, '#7a5a38');
+  p.hline(0, 3, 64, '#585e68'); p.hline(0, 8, 64, '#585e68');
+  return { bmp: p.done(), solid: null, flat: true };
+});
+registerProp('c12_tapeMark', () => {
+  const p = new Painter(16, 16);
+  p.line(3, 3, 12, 12, '#f0d030'); p.line(4, 3, 13, 12, '#f0d030');
+  p.line(12, 3, 3, 12, '#f0d030'); p.line(13, 3, 4, 12, '#f0d030');
+  return { bmp: p.done(), solid: null, flat: true };
+});
+registerProp('c12_cables', () => {
+  const p = new Painter(40, 14);
+  p.line(0, 3, 10, 6, '#181818'); p.line(10, 6, 20, 4, '#181818'); p.line(20, 4, 31, 9, '#181818'); p.line(31, 9, 39, 8, '#181818');
+  p.line(0, 9, 12, 11, '#202830'); p.line(12, 11, 24, 8, '#202830'); p.line(24, 8, 39, 12, '#202830');
+  return { bmp: p.done(), solid: null, flat: true };
+});
+
+// ---------------------------------------------------------------- set dressing: poacher camp
+/** The poachers' off-road truck. */
+registerProp('c13_jeep', () => {
+  const p = new Painter(40, 26);
+  p.rect(1, 9, 38, 11, '#5a6038');
+  p.rect(1, 9, 38, 2, '#7a8050');
+  p.rect(6, 3, 14, 7, '#9ab0b8'); p.rect(6, 3, 14, 1, '#404830');
+  p.vline(24, 1, 9, '#303428'); p.vline(36, 1, 9, '#303428'); p.hline(24, 1, 13, '#303428');
+  p.rect(26, 6, 9, 3, '#806040');
+  p.ellipse(3, 16, 9, 9, '#202020'); p.ellipse(28, 16, 9, 9, '#202020');
+  p.px(7, 20, '#606060'); p.px(32, 20, '#606060');
+  return { bmp: finishProp(p), solid: { x: 1, y: 10, w: 38, h: 14 } };
+});
+
+/** A radio mast with a warning light. */
+registerProp('c13_antenna', () => {
+  const p = new Painter(14, 42);
+  p.vline(7, 4, 36, '#606870');
+  for (let i = 0; i < 6; i++) p.line(3, 8 + i * 6, 11, 12 + i * 6, '#505860');
+  p.rect(5, 0, 5, 4, '#e03030');
+  p.rect(2, 38, 10, 4, '#484030');
+  return { bmp: finishProp(p), solid: { x: 2, y: 36, w: 10, h: 6 } };
+});
+
+/** A log to sit on around the campfire. */
+registerProp('c13_log', () => {
+  const p = new Painter(28, 12);
+  p.rect(2, 2, 24, 8, '#7a5030');
+  p.hline(2, 2, 24, '#9a6a40');
+  p.ellipse(0, 1, 6, 10, '#a07848'); p.ellipse(1, 3, 3, 5, '#704828');
+  return { bmp: finishProp(p), solid: { x: 1, y: 3, w: 26, h: 8 } };
+});
+
+/** Floor decals: tyre ruts in the dirt, and a tarp of netting and rope (walk-through). */
+/** Two pressed-in ruts with a tread pattern, `len` px long (vertical, or horizontal when `across`). */
+function tyreRuts(len: number, across: boolean): Painter {
+  const p = across ? new Painter(len, 16) : new Painter(16, len);
+  const band = (o: number): void => {
+    if (across) p.rect(0, o, len, 4, '#a07c54'); else p.rect(o, 0, 4, len, '#a07c54');
+    for (let i = (o % 2); i < len; i += 3) {
+      if (across) p.vline(i, o, 4, '#7c5c3c'); else p.hline(o, i, 4, '#7c5c3c');
+    }
+  };
+  band(2);
+  band(10);
+  return p;
+}
+registerProp('c13_tracks', () => ({ bmp: tyreRuts(64, false).done(), solid: null, flat: true }));
+registerProp('c13_tracksH', () => ({ bmp: tyreRuts(64, true).done(), solid: null, flat: true }));
+registerProp('c13_tarp', () => {
+  const p = new Painter(34, 24);
+  p.rect(1, 2, 32, 20, '#3a6a58');
+  p.rect(1, 2, 32, 2, '#4a8068');
+  for (let i = 0; i < 6; i++) p.line(4 + i * 5, 5, 8 + i * 4, 19, '#2a4a40');
+  p.ellipse(20, 8, 10, 8, '#c8a868'); p.ellipse(22, 10, 6, 4, '#a88848');
+  return { bmp: p.done(), solid: null, flat: true };
+});
+
 registerScans({
   android17: { name: 'Android 17', hp: 8200, str: 60, pow: 60, end: 65, desc: 'A former android, now a park ranger on Monster Island. His energy never runs out.' },
   android18: { name: 'Android 18', hp: 7600, str: 58, pow: 58, end: 60, desc: 'Krillin\'s wife and Marron\'s mother. Will fight for a good price.' },

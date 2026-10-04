@@ -14,24 +14,24 @@ registerItems([
 
 registerQuests([
   // Chapter 12
-  { id: 'c12_days', title: 'Days of Peace: enjoy two episodes of peacetime', star: 'gold', region: 'spot_satancity', desc: 'Earth is quiet for once. Help your friends: Hit\'s contract (Beerus and Whis at Capsule Corp), Pan\'s first flight (Videl in Mt. Paozu), the Saiyaman movie (Satan City) or Krillin\'s comeback (Kame House). Any two will do.' },
+  { id: 'c12_days', title: 'Days of Peace: finish any two episodes', star: 'gold', region: 'spot_satancity', desc: 'Earth is quiet for once. Help your friends: Hit\'s contract (Beerus and Whis at Capsule Corp), Pan\'s first flight (Videl in Mt. Paozu), the Saiyaman movie (Satan City) or Krillin\'s comeback (Kame House). Any two will do.' },
   { id: 'c12_hit', title: 'The unseen assassin', star: 'silver', region: 'spot_satancity', desc: 'Someone has hired the legendary assassin Hit to take Goku out. Ask Beerus and Whis at Capsule Corp, then take Hotel Satan\'s roof stairs at night (talk to the night porter).' },
   { id: 'c12_pan', title: 'Pan\'s first flight', star: 'silver', region: 'spot_paozu', desc: 'Videl needs a babysitter, and baby Pan has just learned to fly. Catch her and carry her back without letting anything hit you.' },
   { id: 'c12_saiyaman', title: 'Great Saiyaman: the movie', star: 'silver', region: 'spot_satancity', desc: 'Barry Kahn hired Gohan as his stunt double to humiliate him. Report to the film lot in Satan City.' },
   { id: 'c12_krillin', title: 'Krillin\'s comeback', star: 'silver', region: 'spot_kame', desc: 'Master Roshi wants the Paradise Herb from the Forest of Terror. Krillin will need his courage back to get it.' },
   // Chapter 13
-  { id: 'c13_team', title: 'Recruit the Mighty Ten for the Tournament of Power', star: 'gold', region: 'spot_westcity', desc: 'Universe 7 needs ten fighters. Goku, Vegeta, Gohan and Piccolo are in. Recruit Krillin and 18, Tien and Roshi, train Gohan, find Android 17... then find a tenth.' },
+  { id: 'c13_team', title: 'Recruit the Mighty Ten of Universe 7', star: 'gold', region: 'spot_westcity', desc: 'Universe 7 needs ten fighters. Goku, Vegeta, Gohan and Piccolo are in. Recruit Krillin and 18, Tien and Roshi, train Gohan, find Android 17... then find a tenth.' },
   { id: 'c13_krillin', title: 'Recruit Krillin and Android 18', star: 'silver', region: 'spot_satancity', desc: 'Krillin is on patrol in Satan City. 18 will want to talk about money.' },
   { id: 'c13_tien', title: 'Recruit Tien and Master Roshi', star: 'silver', region: 'spot_kame', desc: 'Chiaotzu is waiting at Kame House. Something has gone wrong at Tien\'s dojo.' },
   { id: 'c13_gohan', title: 'Gohan\'s ultimate training', star: 'silver', region: 'spot_lookout', desc: 'Gohan has gone soft. Piccolo is waiting on the Lookout to beat his potential back out of him.' },
   { id: 'c13_17', title: 'Find Android 17 on Monster Island', star: 'silver', region: 'spot_monster', desc: 'Dende says Android 17 works as a park ranger on Monster Island. Poachers are prowling the reserve.' },
   { id: 'c13_frieza', title: 'The tenth warrior', star: 'silver', region: 'spot_westcity', desc: 'Buu fell asleep and won\'t wake for months. Goku has a terrible idea. Talk to Beerus and Whis at Capsule Corp.' },
-  { id: 'c13_animals', title: 'Return Monster Island\'s seven escaped animals', star: 'bronze', region: 'spot_monster', desc: 'The poachers\' ship broke open and seven rare animals fled across the world. Find them, calm them with the Ranger Beacon, then tell 17.' },
+  { id: 'c13_animals', title: 'Return the seven escaped animals', star: 'bronze', region: 'spot_monster', desc: 'The poachers\' ship broke open and seven rare animals fled across the world. Find them, calm them with the Ranger Beacon, then tell 17.' },
   // Chapter 14
   { id: 'c14_ready', title: 'The Mighty Ten assemble', star: 'gold', region: 'spot_westcity', desc: 'The Tournament of Power starts in a few hours. Save, prepare, then tell Beerus at the Capsule Corp garden table when Universe 7 is ready to leave for the World of Void.' },
   { id: 'c14_top', title: 'Win the Tournament of Power', star: 'gold', region: 'spot_zeno', desc: 'Eight universes, eighty fighters, forty-eight minutes. Fight from the west ring to the east, knock every rival out of the ring and be the last universe standing. If you ever leave the stage, the Grand Priest at Zeno\'s palace will send you back.' },
   // Post-game
-  { id: 'post_trueEnd', title: 'Visit Whis and Beerus', star: 'silver', region: 'spot_westcity', desc: 'The universes are safe. Whis and Beerus are raiding the buffet at Capsule Corp.' },
+  { id: 'post_trueEnd', title: 'Visit Whis and Beerus', star: 'gold', region: 'spot_westcity', desc: 'The universes are safe. Whis and Beerus are raiding the buffet at Capsule Corp. Talk to them whenever you are ready to see how the story ends - free roam carries on afterwards.' },
   { id: 'post_trophies', title: 'Collect the five trophies', star: 'silver', region: 'spot_snow', desc: 'Level 50 gates guard a trophy for Goku, Vegeta, Gohan, Trunks and Piccolo. Rumour says the World Champion is watching.' },
   { id: 'post_ztv', title: 'Mr. Satan\'s press conference', star: 'silver', region: 'spot_satancity', desc: 'Get Mr. Satan to level 50 and break the red gate at the ZTV studio. The world deserves to hear the "truth".' },
   { id: 'post_jiren', title: 'Jiren\'s rematch', star: 'bronze', region: 'spot_zeno', desc: 'Jiren is waiting at Zeno\'s palace. No time limit, no ring, no holding back.' },

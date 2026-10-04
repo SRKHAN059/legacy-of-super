@@ -1,7 +1,7 @@
 import { registerScripts, type ScriptApi } from '../../../game/script';
 import { registerOverlay } from '../../registry';
 import { ensureChapterState, force, unforce } from '../common';
-import { addProp, removeIf, removeProp, respawn } from './shared';
+import { addProp, exclusive, removeIf, removeProp, respawn } from './shared';
 
 /**
  * Chapter 5 - "Resurrection 'F'" (Gohan L16 forced, then Piccolo L18). Main beats:
@@ -56,7 +56,7 @@ async function opening(s: ScriptApi): Promise<void> {
   respawn(s, 'c05_trunksA', 'trunksKid', 26, 21, 'left');
   await s.pan(26, 21, 1);
   await s.fadeIn(20);
-  await s.narrate('Months later. Videl gave birth to a baby girl named Pan, and Goku and Vegeta were still training on Lord Beerus\'s planet...');
+  await s.narrate('Months later. Goku and Vegeta were still training on Lord Beerus\'s planet, and back on Earth, baby Pan was growing fast...');
   s.shake(50, 3);
   s.sfx('explode');
   s.flash('#ffffff', 12);
@@ -181,7 +181,16 @@ async function waveTwo(s: ScriptApi): Promise<void> {
     ['c05_raider', 15, 14], ['c05_officer', 12, 15], ['soldier', 18, 12],
   ]);
   s.set('c05_wave2');
+  // Krillin's senzu: Gohan goes into the Shisami fight (no save point in the canyon) at full strength.
+  s.letterbox(true);
+  await s.talk([
+    ['krillin', 'Gohan, catch! A senzu - Yajirobe only had a few left, so don\'t waste it. Something nasty is waiting up north.', 'happy'],
+    ['gohan', '*crunch* ...Thanks, Krillin. I feel like new.', 'happy'],
+  ]);
+  s.heal();
+  s.toast('HP and EP fully restored!');
   removeIf(s, ...WAVE_ALLIES.map(([id]) => id));
+  s.letterbox(false);
   await s.say('gohan', 'That\'s the last of them here. The path north leads up to the mesa...', 'neutral');
   s.music('field');
 }
@@ -251,6 +260,7 @@ async function shisamiAndTagoma(s: ScriptApi): Promise<void> {
     ['krillin', '(running up) Gohan! Here, eat this. Krillin\'s emergency senzu stash. Rest a minute before you go back in.', 'shock'],
     ['piccolo', 'Gohan. When you\'re ready, come find me. Not before.', 'neutral'],
   ]);
+  s.heal();
   await s.narrate('Piccolo now leads. His Special Beam Cannon (B) pierces every foe in its path.');
   await s.say('piccolo', 'Time to stop holding back.', 'neutral');
   await s.setForm('piccolo', 'unweighted');
@@ -455,31 +465,33 @@ registerScripts({
     force(s, 'gohan');
     await assemble(s);
   },
-  c05_wave1: async (s) => {
+  // Every trigger-started beat is `exclusive`: re-entering its trigger while its fight runs is a no-op.
+  c05_wave1: exclusive('c05_wave1', async (s) => {
     if (!s.check('c05_assembled&!c05_wave1')) { await s.narrate('Scorch marks and scattered armour. The fighting has moved on.'); return; }
     await waveOne(s);
-  },
-  c05_wave2: async (s) => {
+  }),
+  c05_wave2: exclusive('c05_wave2', async (s) => {
     if (!s.check('c05_wave1&!c05_wave2')) { await s.narrate('The canyon is quiet.'); return; }
     await waveTwo(s);
-  },
-  c05_shisami: async (s) => {
+  }),
+  c05_shisami: exclusive('c05_shisami', async (s) => {
     if (!s.check('c05_wave2&!c05_shisamiDone')) { await s.narrate('The northern path climbs toward the Great Mesa.'); return; }
     await shisamiAndTagoma(s);
-  },
+  }),
   c05_mesa_enter: async (s) => {
     if (!s.check('chapter==5&quest:c05_mesa') || s.flag('c05_mesaSeen')) return;
     s.set('c05_mesaSeen');
     await s.say('piccolo', 'The ships are on the mesa. And Frieza\'s ki... it\'s like ice down my spine. Save while you can.', 'neutral');
   },
-  c05_wave3: async (s) => {
+  c05_wave3: exclusive('c05_wave3', async (s) => {
     if (!s.check('quest:c05_mesa&!c05_wave3')) { await s.narrate('Smoke drifts across the mesa.'); return; }
     await waveThree(s);
-  },
-  c05_ginyu: async (s) => {
+  }),
+  /** Tagoma's trigger band and his NPC talk both start the Ginyu beat (one copy at a time). */
+  c05_ginyu: exclusive('c05_ginyu', async (s) => {
     if (!s.check('c05_wave3&!c05_ginyuDone')) { await s.narrate('Only craters remain where the battle raged.'); return; }
     await ginyuScene(s);
-  },
+  }),
   c05_shisami_p2: async (s) => {
     await s.say('shisami', 'You\'re not bad for a scholar. Let me get serious!', 'smirk');
   },

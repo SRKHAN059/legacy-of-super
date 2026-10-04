@@ -39,7 +39,45 @@ export interface GateInst {
   tag: string;
 }
 
+/**
+ * Rendered ground bitmaps of recently visited maps (LRU). Re-rendering a ground costs a few ms inside the
+ * door fade; keeping all ~90 maps resident cost ~76 MB of canvas memory, past mobile Safari's budget.
+ */
 const groundCache = new Map<string, Bitmap>();
+let groundLimit = 8;
+
+/** How many map grounds stay cached (default 8; tooling that sweeps every map may raise it). */
+export function setGroundCacheLimit(n: number): void {
+  groundLimit = Math.max(1, Math.floor(n));
+  while (groundCache.size > groundLimit) {
+    const oldest = groundCache.keys().next().value;
+    if (oldest === undefined) break;
+    groundCache.delete(oldest);
+  }
+}
+
+/** Cached ground for a map (refreshing its LRU position), rendering and caching it on a miss. */
+function cachedGround(id: string, grid: Terrain[][]): Bitmap {
+  const hit = groundCache.get(id);
+  if (hit) {
+    groundCache.delete(id);
+    groundCache.set(id, hit);
+    return hit;
+  }
+  const g = renderGround(grid);
+  groundCache.set(id, g);
+  while (groundCache.size > groundLimit) {
+    const oldest = groundCache.keys().next().value;
+    if (oldest === undefined) break;
+    groundCache.delete(oldest);
+  }
+  return g;
+}
+
+/** Map ids whose ground is cached, oldest first (diagnostics / tests). */
+export function cachedGrounds(): string[] {
+  return [...groundCache.keys()];
+}
 
 /** Parse a map's terrain grid, validating dimensions and legend coverage. */
 export function parseGrid(def: MapDef): Terrain[][] {
@@ -82,12 +120,7 @@ export class MapInstance {
         this.col.setTile(x, y, terrainSolid(t), terrainLiquid(t));
       }
     }
-    let g = groundCache.get(def.id);
-    if (!g) {
-      g = renderGround(this.grid);
-      groundCache.set(def.id, g);
-    }
-    this.ground = g;
+    this.ground = cachedGround(def.id, this.grid);
 
     for (const raw of def.props ?? []) {
       const pl = Array.isArray(raw) ? { kind: raw[0], x: raw[1], y: raw[2] } : raw;

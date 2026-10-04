@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CAST } from '../src/content/cast';
 import type { CharId } from '../src/content/characters';
-import { CHAPTER_MIN_LEVEL, ensureChapterState } from '../src/content/chapters/common';
+import { CHAPTER_MIN_LEVEL, ensureChapterState, FORCED_LEVEL_GAP } from '../src/content/chapters/common';
 import { QUESTS } from '../src/content/quests';
 import { MAPS, resolveMap } from '../src/content/registry';
 import { SPOTS, type WorldId } from '../src/content/world';
@@ -10,6 +10,7 @@ import type { Dir } from '../src/engine/math';
 import { Shot } from '../src/game/projectiles';
 import { SCRIPTS, type Script, type ScriptApi, type ScriptCtx } from '../src/game/script';
 import { GameState, type SaveData } from '../src/game/state';
+import { setGroundCacheLimit } from '../src/game/world';
 import { Sim } from './sim';
 
 /**
@@ -451,6 +452,8 @@ async function auditHubs(live: Sim, label: string, watch: Watch, errors: string[
 
 describe('full game: one save from newGame to the post-game', () => {
   it('plays every chapter in order on one continuous save and hands each chapter the state the next expects', async () => {
+    // The hub audits walk into ~40 maps after every beat: keep every map's ground cached (the game keeps 8).
+    setGroundCacheLimit(1000);
     const sim = new Sim();
     const st = sim.game.state;
     const q = (id: string) => st.data.journal[id];
@@ -504,8 +507,13 @@ describe('full game: one save from newGame to the post-game', () => {
         // Levels: nobody over-levelled for the chapter just finished, nobody below the new chapter's floor.
         for (const [id, lv] of Object.entries(e.levels)) expect.soft(lv, `${tag}: ${id} level at hand-over`).toBeLessThanOrEqual(CURVE[n - 1][1] + 3);
       }
-      // Characters already in the party are raised to the chapter's floor; newcomers join at their story level.
-      for (const id of Object.keys(e.levels) as CharId[]) expect.soft(st.char(id).level, `${tag}: ${id} level`).toBeGreaterThanOrEqual(CHAPTER_MIN_LEVEL[n]);
+      // LoG2 levels: the hand-over lifts only the hero who played the last chapter to the band start; the bench keeps
+      // its EXP-earned level; a character the story forces is at least band start - FORCED_LEVEL_GAP.
+      if (e.levels[e.active] !== undefined && e.active !== 'satan') {
+        expect.soft(st.char(e.active).level, `${tag}: ${e.active} (hero at hand-over) level`).toBeGreaterThanOrEqual(CHAPTER_MIN_LEVEL[n]);
+      }
+      expect.soft(e.raised.filter((r) => !r.startsWith(`${e.active} `)), `${tag}: bench raised at the hand-over`).toEqual([]);
+      if (forced) expect.soft(st.hero.level, `${tag}: forced ${st.data.active} level`).toBeGreaterThanOrEqual(CHAPTER_MIN_LEVEL[n] - FORCED_LEVEL_GAP);
       // Story costumes: Whis's gi from the end of Chapter 4 through the Frieza arc, Gohan's suit until he changes.
       const outfits: Record<string, string> = {};
       for (const id of HEROES) { const o = st.char(id).outfit; if (o) outfits[id] = o; }

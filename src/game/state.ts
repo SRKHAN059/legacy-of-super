@@ -1,4 +1,5 @@
-import { CHARACTERS, type CharId } from '../content/characters';
+import { CHARACTERS, FORMS, type CharId } from '../content/characters';
+import { TECHNIQUES } from '../content/techniques';
 import { Rng } from '../engine/math';
 import type { Dir } from '../engine/math';
 import { EXP_TABLE, levelForExp, levelUp, rollToLevel, MAX_LEVEL, type LevelUpResult, type StatBlock } from './leveling';
@@ -60,6 +61,9 @@ export interface SaveData {
 
 export const SAVE_VERSION = 1;
 export const SAVE_SLOTS = 3;
+
+/** Player options, remembered across sessions outside the save slots. */
+export type Options = Pick<SaveData, 'textSpeed' | 'musicVol' | 'sfxVol'>;
 
 /** Build a fresh level-1 character. */
 export function newChar(id: CharId): CharState {
@@ -232,12 +236,63 @@ function expFloorFor(level: number): number {
   return level <= 1 ? 0 : EXP_TABLE[level] ?? 0;
 }
 
+/**
+ * Bring a parsed save up to the current format: forward-fill top-level keys and characters added since it was
+ * made, merge every character over fresh defaults (fields added to CharState later), and drop ids the game no
+ * longer knows (techniques, forms, the active character). The map id is checked when the save is resumed.
+ */
+export function repairSave(d: SaveData): SaveData {
+  const fresh = newGame();
+  const out: SaveData = { ...fresh, ...d };
+  const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+  for (const k of ['inv', 'flags', 'journal'] as const) if (!isObj(out[k])) (out as unknown as Record<string, unknown>)[k] = {};
+  for (const k of ['journalOrder', 'scans', 'visited', 'regions'] as const) if (!Array.isArray(out[k])) out[k] = [];
+  const chars = {} as Record<CharId, CharState>;
+  for (const id of Object.keys(fresh.chars) as CharId[]) {
+    const old = isObj(d.chars?.[id]) ? d.chars[id] : undefined;
+    const c: CharState = { ...fresh.chars[id], ...(old ?? {}), id };
+    c.techs = Array.isArray(c.techs) ? c.techs.filter((t) => typeof t === 'string' && !!TECHNIQUES[t]) : [...fresh.chars[id].techs];
+    if (c.form !== null && !FORMS[c.form]) c.form = null;
+    const slots = c.techs.length + (c.form ? 1 : 0);
+    if (typeof c.selected !== 'number' || !Number.isInteger(c.selected) || c.selected < 0 || c.selected >= Math.max(1, slots)) c.selected = 0;
+    for (const k of ['level', 'exp', 'hp', 'hpMax', 'ep', 'epMax', 'str', 'pow', 'end', 'strF', 'powF', 'endF'] as const) {
+      if (typeof c[k] !== 'number' || !Number.isFinite(c[k])) c[k] = fresh.chars[id][k];
+    }
+    chars[id] = c;
+  }
+  out.chars = chars;
+  if (!CHARACTERS[out.active]) out.active = (Object.values(chars).find((c) => c.joined)?.id ?? 'goku');
+  return out;
+}
+
 /** Serialise / deserialise save slots. */
 export class SaveService {
   constructor(private readonly storage: Storage, private readonly prefix = 'legacyOfSuper.slot') {}
 
   private key(slot: number): string {
     return `${this.prefix}${slot}`;
+  }
+
+  private get optionsKey(): string {
+    return `${this.prefix}.options`;
+  }
+
+  /** Last options chosen in any menu, or null if none were stored (or they are unreadable). */
+  loadOptions(): Options | null {
+    const raw = this.storage.get(this.optionsKey);
+    if (!raw) return null;
+    try {
+      const o = JSON.parse(raw) as Partial<Options>;
+      const num = (v: unknown, lo: number, hi: number, dflt: number): number => (typeof v === 'number' && Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : dflt);
+      return { textSpeed: Math.round(num(o.textSpeed, 1, 4, 2)), musicVol: num(o.musicVol, 0, 1, 0.55), sfxVol: num(o.sfxVol, 0, 1, 0.7) };
+    } catch {
+      return null;
+    }
+  }
+
+  /** Remember options for the next session. */
+  saveOptions(o: Options): void {
+    this.storage.set(this.optionsKey, JSON.stringify({ textSpeed: o.textSpeed, musicVol: o.musicVol, sfxVol: o.sfxVol }));
   }
 
   /** Persist a game to a slot. */
@@ -255,10 +310,7 @@ export class SaveService {
         console.warn('[save] unsupported save in slot', slot);
         return null;
       }
-      // Forward-fill any characters added after the save was made.
-      const fresh = newGame();
-      for (const id of Object.keys(fresh.chars) as CharId[]) if (!d.chars[id]) d.chars[id] = fresh.chars[id];
-      return { ...fresh, ...d };
+      return repairSave(d);
     } catch (err) {
       console.warn('[save] corrupt slot', slot, err);
       return null;

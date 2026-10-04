@@ -265,10 +265,10 @@ registerScripts({
   c04_chichi_talk: async (s) => {
     if (!s.check(CH4)) { await s.say('chichi', 'Mind the radishes!', 'neutral'); return; }
     if (s.flag('c04_whisHit')) {
-      await s.say('chichi', 'He grabbed onto that angel and flew off to SPACE. Without finishing the field! Wait till he gets home...', 'angry');
+      await s.say('chichi', 'Pan is barely a month old, and her grandpa grabbed onto an angel and flew off to SPACE. Without finishing the field! Wait till he gets home...', 'angry');
       return;
     }
-    await s.say('chichi', 'Gohan and Videl are expecting! I\'ve already knitted eleven tiny sweaters. Goku hasn\'t knitted any.', 'happy');
+    await s.say('chichi', 'Gohan and Videl are expecting - any month now! I\'ve already knitted eleven tiny sweaters. Goku hasn\'t knitted any.', 'happy');
   },
   c04_gohan_talk: async (s) => {
     if (!s.check(CH4)) { await s.say('gohan', 'Hi there!', 'happy'); return; }

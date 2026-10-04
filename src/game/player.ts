@@ -15,6 +15,8 @@ const COMBO_LEN = [13, 13, 17];
 const COMBO_HIT = 4;
 const COMBO_MULT = [1, 1, 1.35];
 const HOLD_TO_CHARGE = 16;
+/** Burning Attack's stun on regular enemies (LoG2: 3-5 s). Bosses are held for less (see Enemy.onHit). */
+const STUN_TECH_FRAMES = 240;
 const MAX_MELEE_CHARGE = 60;
 const Z_FILL_FRAMES = 600; // ~10 s, LoG2 design default
 const TRANSFORM_FRAMES = 60;
@@ -343,8 +345,9 @@ export class Player extends Actor {
 
   private updateAttack(f: Field): void {
     const inp = f.input;
-    if (inp.isDown('A')) this.aHeld++;
-    // Holding A past the first jab charges the special melee (once learned from Roshi).
+    // Consecutive frames A has stayed down since the jab started (a release resets it, so mashing never charges).
+    this.aHeld = inp.isDown('A') ? this.aHeld + 1 : 0;
+    // Holding A through the first jab charges the special melee (once learned from Roshi).
     if (this.combo === 0 && this.aHeld >= HOLD_TO_CHARGE && this.cs.charged) {
       this.state = 'chargeMelee';
       this.chargeT = 0;
@@ -373,6 +376,8 @@ export class Player extends Actor {
     }
     if (this.t > 5 && inp.pressed('A')) this.queued = true;
     if (this.t >= len) {
+      // LoG2: the first jab's follow-through holds while A stays down, so the hold can reach the charge threshold.
+      if (this.combo === 0 && this.cs.charged && this.aHeld > 0) { this.pose = 'punch1'; return; }
       if (this.queued && this.combo < 2) {
         this.combo++;
         this.t = 0;
@@ -512,7 +517,7 @@ export class Player extends Actor {
         if (this.shotCd > 0) return;
         this.cs.ep -= tech.cost;
         const s = new Shot('player', tech.kind === 'wave' ? 'wave' : 'stun', m.x, m.y, v, tech.kind === 'wave' ? 4.5 : 3, tech.mult, tech.color, this.pow, this.cs.level);
-        if (tech.kind === 'stun') s.stun = 150;
+        if (tech.kind === 'stun') { s.stun = STUN_TECH_FRAMES; s.techStun = true; }
         if (tech.kind === 'wave') s.pierce = true;
         f.spawnShot(s);
         this.shotCd = 20;
@@ -597,7 +602,7 @@ export class Player extends Actor {
         s.boom = 14 + kc.lv * 8;
         s.life = 60 + kc.lv * 30;
         s.lift = kc.tech.id === 'spiritBomb' ? 22 : 14;
-        if (kc.tech.id === 'spiritBomb') s.stun = 90;
+        if (kc.tech.id === 'spiritBomb') { s.stun = 90; s.techStun = true; }
         f.spawnShot(s);
       } else {
         const dist = 36 + kc.lv * 28;

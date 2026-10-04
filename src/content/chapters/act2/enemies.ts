@@ -72,8 +72,10 @@ registerEnemies([
     box: { w: 18, h: 10 }, desc: 'A hulking soldier with a point-blank blaster and very big fists.',
   },
   {
-    id: 'c05_officer', name: 'Frieza Force Officer', sprite: 'frizaElite', hp: 680, str: 22, pow: 28, end: 20, exp: 2600, ai: 'shooter', speed: 1.15,
-    shot: { color: '#60d0f8', cooldown: 60, speed: 2.8, mult: 0.9 }, desc: 'A squad leader. Rapid, accurate fire.',
+    id: 'c05_officer', name: 'Frieza Force Officer', sprite: 'frizaElite', hp: 560, str: 22, pow: 23, end: 20, exp: 2600, ai: 'shooter', speed: 1.0,
+    // Tuned against forced L16 Gohan (no form, 214 HP): a shot costs ~12% HP at the grunts' fire rate, so the canyon
+    // and mesa waves cost about what the first wave does instead of two to three Game Overs' worth of damage.
+    shot: { color: '#60d0f8', cooldown: 85, speed: 2.8, mult: 0.9 }, desc: 'A squad leader. Fast, accurate shots that sting more than a grunt\'s.',
   },
   {
     id: 'c05_shisami', name: 'Shisami', sprite: 'shisami', hp: 2200, str: 25, pow: 22, end: 19, exp: 5000, ai: 'boss', speed: 1.3,

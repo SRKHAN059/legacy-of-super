@@ -137,7 +137,15 @@ async function gokuArrives(s: ScriptApi): Promise<void> {
   s.set('c04_whisHit');
   await s.done('c04_training');
   await s.fadeOut(20);
-  await s.narrate('A few days later, Whis returned from another food run on Earth... with a stowaway clinging to his back.');
+  // Meanwhile on Earth (ep 17): Pan is born first; only then does Goku learn about Vegeta's teacher and stow away.
+  await s.narrate('Months went by. Back on Earth, Videl gave birth to a healthy baby girl. She and Gohan named her Pan.');
+  await s.talk([
+    ['mrSatan', 'Pan, sweetie, watch Grandpa Satan defeat the evil Great Saiyaman! HYAAAH!', 'happy'],
+    ['gohan', '(as the Great Saiyaman) Justice never loses! ...Look, Videl, she\'s laughing!', 'happy'],
+    ['chichi', 'Fighting?! In front of the BABY?! Into that room, both of you. And don\'t come out until you\'ve thought about it!', 'angry'],
+    ['goku', 'Wait... Vegeta\'s been training with Whis this whole time?! Bulma, lend me your phone! I gotta catch that angel before he leaves!', 'shock'],
+  ]);
+  await s.narrate('That evening, Whis finished another food run on Earth and set off for home... with a stowaway clinging to his back.');
   respawn(s, 'c04_goku', 'goku', 30, 17, 'left');
   await s.fadeIn(20);
   await s.talk([

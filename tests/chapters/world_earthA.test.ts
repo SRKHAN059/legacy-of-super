@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { resolveMap } from '../../src/content/registry';
 import { SPOTS } from '../../src/content/world';
+import { YAJI_GIFTS, YAJI_HELD, YAJI_MAX_GIFTS, YAJI_QUIT } from '../../src/content/world/earthA/npcs';
 import { TILE } from '../../src/engine/constants';
 import type { Button } from '../../src/engine/input';
 import type { MapDef } from '../../src/game/mapdef';
@@ -294,6 +295,81 @@ describe('world earthA: ambient NPCs and examine triggers', () => {
     const npc = sim.game.field?.npcs.find((n) => n.def.id === 'ea_kt_korin');
     expect(await sim.run('ea_kt_korin', npc ? { npc } : {})).toBe(true);
     expect(sim.game.state.count('fish')).toBe(0);
+    expect(sim.game.state.count('senzu')).toBe(1);
+    expect(sim.errors).toEqual([]);
+  });
+
+  /** Talk to the Korin Forest Yajirobe once at `chapter`. */
+  async function talkYajirobe(sim: Sim, chapter: number): Promise<void> {
+    sim.game.state.data.chapter = chapter;
+    const npc = sim.game.field?.npcs.find((n) => n.def.id === 'ea_kb_yajirobe');
+    expect(npc, 'Yajirobe present').toBeTruthy();
+    expect(await sim.run('ea_kb_yajirobe', npc ? { npc } : {})).toBe(true);
+  }
+
+  it('Yajirobe gives one free Senzu per chapter at his first three meetings, then quits (LoG2 §9.3)', async () => {
+    const sim = new Sim();
+    setup(sim, 4);
+    sim.start('korin_base');
+    await sim.tick(5);
+    const st = sim.game.state;
+    // Meeting 1: a bean. Talking again in the same chapter gives nothing more.
+    await talkYajirobe(sim, 4);
+    expect(st.count('senzu')).toBe(1);
+    await talkYajirobe(sim, 4);
+    await talkYajirobe(sim, 4);
+    expect(st.count('senzu')).toBe(1);
+    // Meetings 2 and 3 in later chapters.
+    await talkYajirobe(sim, 5);
+    expect(st.count('senzu')).toBe(2);
+    await talkYajirobe(sim, 5);
+    expect(st.count('senzu')).toBe(2);
+    await talkYajirobe(sim, 7);
+    expect(st.count('senzu')).toBe(3);
+    expect(st.get(YAJI_GIFTS)).toBe(YAJI_MAX_GIFTS);
+    // Meeting 4: he quits and sends you to Korin. No beans ever again.
+    st.take('senzu', 3);
+    await talkYajirobe(sim, 8);
+    expect(st.flag(YAJI_QUIT)).toBe(true);
+    for (const ch of [8, 9, 12, 15]) await talkYajirobe(sim, ch);
+    expect(st.count('senzu')).toBe(0);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Yajirobe holds his gift while the Senzu pouch is full instead of wasting it', async () => {
+    const sim = new Sim();
+    setup(sim, 4);
+    sim.game.giveQuiet('senzu', 3);
+    sim.start('korin_base');
+    await sim.tick(5);
+    const st = sim.game.state;
+    await talkYajirobe(sim, 4);
+    expect(st.count('senzu')).toBe(3);
+    expect(st.flag(YAJI_HELD)).toBe(true);
+    expect(st.get(YAJI_GIFTS) ?? 0).toBe(0);
+    // Eat one, come back the same chapter: the held bean is handed over.
+    st.take('senzu', 1);
+    await talkYajirobe(sim, 4);
+    expect(st.count('senzu')).toBe(3);
+    expect(st.flag(YAJI_HELD)).toBe(false);
+    expect(st.get(YAJI_GIFTS)).toBe(1);
+    // Still only one gift per chapter.
+    st.take('senzu', 1);
+    await talkYajirobe(sim, 4);
+    expect(st.count('senzu')).toBe(2);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Yajirobe is away during the Chapter 3 hunt and gives his first bean once he is back', async () => {
+    const sim = new Sim();
+    setup(sim, 3);
+    sim.game.state.set('ea_yajirobeAway');
+    sim.start('korin_base');
+    await sim.tick(5);
+    expect(sim.game.field?.npcs.some((n) => n.def.id === 'ea_kb_yajirobe'), 'hidden while away').toBe(false);
+    sim.game.state.clear('ea_yajirobeAway');
+    await drive(sim, sim.game.changeMap('korin_base', 20, 28, 'up'));
+    await talkYajirobe(sim, 3);
     expect(sim.game.state.count('senzu')).toBe(1);
     expect(sim.errors).toEqual([]);
   });

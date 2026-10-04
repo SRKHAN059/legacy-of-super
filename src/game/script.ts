@@ -6,7 +6,7 @@ import { CHARACTERS, FORMS, type CharId } from '../content/characters';
 import { ENEMIES } from '../content/enemies';
 import { CHARGED_MELEE, TECHNIQUES } from '../content/techniques';
 import { audio, type Sfx } from '../engine/audio';
-import { TILE } from '../engine/constants';
+import { SCREEN_H, TILE } from '../engine/constants';
 import type { Dir } from '../engine/math';
 import type { Line } from '../ui/dialogue';
 import type { Actor } from './actor';
@@ -54,6 +54,21 @@ export interface FightOpts {
 
 /** Fight outcome. 'end' = boss reached its scripted end threshold. */
 export type FightResult = 'win' | 'end' | 'lose' | 'timeout';
+
+/**
+ * Thrown out of `fight` / `clearEnemies` when another map replaced the field the fight was on (a warp that
+ * slipped past the fight seal). It unwinds the stranded script so its locks and the fight seal are released;
+ * `Game.runScript` logs it as a warning.
+ */
+export class FightAbandoned extends Error {
+  constructor(where: string) {
+    super(`scripted fight on ${where} abandoned: the map was left mid-fight`);
+    this.name = 'FightAbandoned';
+  }
+}
+
+/** Speaker's feet lower than this on screen put the dialogue box at the top (the box covers y 105-157). */
+const SPEAKER_LOW_Y = 108;
 
 /**
  * The scripting surface used by all story content (LoG2's bytecode interpreter, as async TypeScript).
@@ -110,17 +125,34 @@ export class ScriptApi {
 
   // ---------------------------------------------------------------- dialogue
 
-  private resolveSpeaker(who: string, expr: Expression): Pick<Line, 'name' | 'portrait'> {
+  private resolveSpeaker(who: string, expr: Expression): Pick<Line, 'name' | 'portrait' | 'top'> {
     if (who === 'narrator' || who === '') return {};
     let id = who;
     if (who === 'hero') id = this.heroSprite();
+    const top = this.speakerLow(who) || undefined;
     const npc = this.game.field?.npcs.find((n) => n.def.id === who);
     if (npc) {
-      return { name: npc.name || CAST_NAMES[npc.spriteId] || '', portrait: CAST[npc.spriteId] ? portrait(npc.spriteId, expr) : null };
+      return { name: npc.name || CAST_NAMES[npc.spriteId] || '', portrait: CAST[npc.spriteId] ? portrait(npc.spriteId, expr) : null, top };
     }
-    if (who === 'hero') return { name: CHARACTERS[this.hero].name, portrait: portrait(id, expr) };
-    if (CAST[id]) return { name: CAST_NAMES[id] ?? id, portrait: portrait(id, expr) };
-    return { name: who };
+    if (who === 'hero') return { name: CHARACTERS[this.hero].name, portrait: portrait(id, expr), top };
+    if (CAST[id]) return { name: CAST_NAMES[id] ?? id, portrait: portrait(id, expr), top };
+    return { name: who, top };
+  }
+
+  /**
+   * True when the speaking actor stands low on screen, where the bottom dialogue box would cover them
+   * (the box then opens at the top; L/R still move it by hand).
+   */
+  private speakerLow(who: string): boolean {
+    const f = this.game.field;
+    if (!f) return false;
+    const p = f.player;
+    let a: Actor | undefined;
+    if (who === 'hero' || who === p.spriteId || who === CHARACTERS[this.hero].sprite) a = p;
+    else a = f.npcs.find((n) => n.def.id === who && !n.hidden) ?? f.npcs.find((n) => n.spriteId === who && !n.hidden);
+    if (!a || a.hidden) return false;
+    const feet = a.y - a.z - f.camera.y;
+    return feet > SPEAKER_LOW_Y && feet < SCREEN_H + 24;
   }
 
   private heroSprite(): string {
@@ -510,9 +542,14 @@ export class ScriptApi {
     return this.field.spawnEnemy(type, x * TILE + 8, y * TILE + 14, uid);
   }
 
-  /** Wait until all listed enemy uids are gone. */
+  /**
+   * Wait until all listed enemy uids are gone (on the map the wave was spawned on). Like `fight`, a wave whose map
+   * is replaced mid-wait throws FightAbandoned, so a caller holding the fight seal (act 3 `inArena`) releases it.
+   */
   async waitDefeat(uids: string[]): Promise<void> {
-    await this.field.until(() => !this.field.enemies.some((e) => e.uid && uids.includes(e.uid) && e.state !== 'dying'));
+    const f = this.field;
+    await f.until(() => f.abandoned || !f.enemies.some((e) => e.uid && uids.includes(e.uid) && e.state !== 'dying'), true);
+    if (f.abandoned) throw new FightAbandoned(f.def.id);
   }
 
   /**
@@ -552,12 +589,13 @@ export class ScriptApi {
     const b = boss;
     this.game.fightDepth++;
     try {
-      await f.until(() => b.dead || b.ended || lost || (!!opts.survive && !!f.timer && f.timer.frames <= 0) || f.player.state === 'dead');
+      await f.until(() => f.abandoned || b.dead || b.ended || lost || (!!opts.survive && !!f.timer && f.timer.frames <= 0) || f.player.state === 'dead', true);
     } finally {
       this.game.fightDepth = Math.max(0, this.game.fightDepth - 1);
     }
-    this.game.allowControl = false;
     this.game.onPlayerDown = prevDown;
+    if (f.abandoned) throw new FightAbandoned(f.def.id);
+    this.game.allowControl = false;
     f.player.inv = 0;
     f.timer = null;
     f.forceHostile = prevHostile;
@@ -622,14 +660,16 @@ export class ScriptApi {
 
   /** Wait until every enemy on the map is defeated (field battles). */
   async clearEnemies(): Promise<void> {
+    const f = this.field;
     this.game.allowControl = true;
-    this.field.forceHostile = true;
+    f.forceHostile = true;
     this.game.fightDepth++;
     try {
-      await this.field.until(() => this.field.enemies.every((e) => e.dead || e.state === 'dying' || e.def.invulnerable));
+      await f.until(() => f.abandoned || f.enemies.every((e) => e.dead || e.state === 'dying' || e.def.invulnerable), true);
     } finally {
       this.game.fightDepth = Math.max(0, this.game.fightDepth - 1);
     }
+    if (f.abandoned) throw new FightAbandoned(f.def.id);
     this.game.allowControl = false;
   }
 }

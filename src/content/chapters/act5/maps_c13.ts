@@ -121,6 +121,8 @@ registerMaps([
     legend: { v: 'void', m: 'marble', a: 'arena' },
     grid: expo.rows(),
     props: [['throne', 15, 1], ['pillar', 4, 0.5], ['pillar', 29, 0.5], ['pillar', 10, 0.5], ['pillar', 23, 0.5], ['brokenPillar', 8, 9], ['brokenPillar', 25, 18]],
+    // Recovery jars in two corners of the ring (LoG2 arenas: breakable recovery pots).
+    objects: [{ type: 'breakable', x: 9, y: 19, size: 1, look: 'jar' }, { type: 'breakable', x: 24, y: 9, size: 1, look: 'jar' }],
   },
   {
     id: 'c13_monster_beach', name: 'Monster Island Shore', music: 'peaceful', region: 'Monster Island',
@@ -210,6 +212,12 @@ registerMaps([
       ['spaceship', 16, 1], ['c13_cage', 6, 7], ['c13_cage', 28, 8], ['c13_cage', 9, 15], ['c13_cage', 26, 16],
       ['tent', 3, 18], ['tent', 31, 15], ['campfire', 20, 13], ['crate', 12, 4], ['crate', 13, 4], ['barrel', 27, 4], ['barrel', 28, 4],
       ['crate', 33, 11], ['lamp', 14, 9], ['lamp', 25, 9], ['tree', 2, 2], ['tree', 34, 2], ['tree', 35, 20], ['pine', 1, 22],
+      // The camp proper: tyre ruts from the gate, the poachers' truck, a campfire circle, gear, cages and a radio mast.
+      ['c13_tracks', 22, 11], ['c13_tracks', 22, 15], ['c13_tracks', 22, 19], ['c13_tracks', 22, 23], ['c13_tracksH', 17, 23.4],
+      ['c13_jeep', 15.5, 21], ['c13_log', 17.9, 13.2], ['c13_log', 19.4, 14.6], ['c13_tarp', 12.5, 16.5], ['crate', 11, 16], ['barrel', 14.6, 15.8],
+      ['c13_antenna', 26.5, 19.5], ['c13_cage', 12, 22.5], ['barrel', 25.2, 23.4], ['barrel', 26.2, 23.7], ['crate', 17, 18],
+      ['smallRock', 15, 24.5], ['smallRock', 24, 25.3], ['smallRock', 13, 12], ['grassTuft', 27, 14.5], ['grassTuft', 9, 25.6],
+      ['grassTuft', 23.6, 16.5], ['smallRock', 18.5, 26], ['grassTuft', 16, 11.2], ['c13_tarp', 7, 9.2],
     ],
     npcs: [
       { id: 'c13_ani3', sprite: 'c13_glowMoth', x: 30, y: 23, talk: 'c13_animal_talk', name: 'Glow Moth', showIf: 'c13_animalsLoose', hideIf: 'c13_ani_c13_ani3' },
@@ -232,7 +240,7 @@ registerMaps([
     exits: { south: { to: 'c13_monster_jungle', showIf: '!act5_busy' } },
   },
   {
-    id: 'c13_tien_dojo', name: 'Tien-Shin Dojo', music: 'peaceful', region: 'Tien\'s Dojo',
+    id: 'c13_tien_dojo', name: 'Tien-Shin Dojo', music: 'peaceful', region: 'Tien-Shin Dojo',
     legend: { '#': 'cliff', '.': 'grass', ',': 'darkGrass', d: 'dirt', '=': 'path', '~': 'water' },
     grid: dojo.rows(),
     props: [
@@ -260,7 +268,7 @@ registerMaps([
     triggers: [{ id: 'c13_dojoEvent', x: 14, y: 19, w: 8, h: 2, script: 'c13_dojo_event', showIf: 'quest:c13_tien&!act5_busy', hideIf: 'done:c13_tien' }],
   },
   {
-    id: 'c13_training_wilds', name: 'Wilderness Plateau', music: 'field', hostile: true, region: 'The Lookout',
+    id: 'c13_training_wilds', name: 'Wilderness Plateau', music: 'field', hostile: true, region: 'Wilderness Plateau',
     legend: { '#': 'cliff', x: 'wasteland', r: 'rock', d: 'dirt', '~': 'water' },
     grid: wild.rows(),
     props: [...wildProps, ['crater', 16, 10], ['crater', 22, 14]],
@@ -272,6 +280,7 @@ registerMaps([
     objects: [
       { type: 'save', x: 4, y: 12 }, { type: 'worldSign', x: 4, y: 14 },
       { type: 'breakable', x: 12, y: 4, size: 3, item: 'end1', id: 'c13_wildRock' }, { type: 'breakable', x: 25, y: 9, size: 2 },
+      { type: 'breakable', x: 11, y: 15, size: 1 },
       { type: 'chest', x: 30, y: 21, id: 'c13_wildCache', item: 'str3' },
     ],
     barriers: [{ id: 'c13_g_piccolo', x: 26, y: 22, w: 1, h: 1, level: 45, character: 'piccolo' }],

@@ -78,7 +78,7 @@ registerScripts({
     await s.narrate('This is not the world you know.');
     await s.narrate('In this timeline, two Androids once turned the Earth to ash. A young Saiyan named Trunks crossed time itself to find the strength to stop them - and he did.');
     await s.pan(18, 6, 90);
-    await s.narrate('For a few short years, the survivors dared to rebuild. Then a stranger came out of nowhere, wearing the face of Son Goku: a hero who died before Trunks was even born.');
+    await s.narrate('For a few short years, the survivors dared to rebuild. Then a stranger came out of nowhere, wearing the face of Son Goku: a hero who died when Trunks was still a baby.');
     await s.pan(31, 7, 90);
     s.music('black');
     await s.talk([

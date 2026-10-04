@@ -75,6 +75,9 @@ registerMaps([
     objects: [
       { type: 'save', x: 4, y: 18 },
       { type: 'sign', x: 11, y: 2, text: 'HOTEL SATAN - ROOF. Access for maintenance staff and world champions only.' },
+      // Hit's arena keeps LoG2's breakable recovery pots (left roof for the contract, right roof for the rematch).
+      { type: 'breakable', x: 14, y: 9, size: 1, look: 'crate' }, { type: 'breakable', x: 3, y: 14, size: 1, look: 'jar' },
+      { type: 'breakable', x: 33, y: 16, size: 2, look: 'crate' }, { type: 'breakable', x: 23, y: 4, size: 1, look: 'jar' },
     ],
     npcs: [{ id: 'post_hitN', sprite: 'hit', x: 27, y: 8, dir: 'left', talk: 'post_hit_talk', name: 'Hit', showIf: 'post_game&done:c12_hit', hideIf: 'defeated:post_hit1' }],
     onEnter: ['act5_map_enter', 'c12_roof_enter'],
@@ -115,6 +118,13 @@ registerMaps([
       ['c12_filmCamera', 12, 20], ['c12_filmCamera', 26, 20], ['c12_filmCamera', 8, 11], ['chair', 21, 21],
       ['tent', 32, 11], ['table', 33, 15], ['crate', 3, 12], ['crate', 4, 12], ['crate', 3, 13], ['tv', 6, 15],
       ['barrel', 36, 18], ['plant', 2, 19], ['plant', 37, 19], ['bush', 4, 21], ['bush', 33, 21], ['flowers', 6, 22], ['flowers', 35, 22],
+      // The sound stage: the cardboard bank front the robbers fell for, painted rocks, lights, tape marks and a dolly track.
+      ['c12_bankSet', 17, 7.25], ['c12_propRock', 13, 13.5], ['c12_propRock', 25.5, 16], ['c12_spotlight', 11, 16.5],
+      ['c12_spotlight', 9, 16], ['c12_spotlight', 29.5, 16], ['c12_tapeMark', 15, 10], ['c12_tapeMark', 22, 11], ['c12_tapeMark', 18, 15], ['c12_tapeMark', 26, 13],
+      ['c12_dollyTrack', 13, 17.6], ['c12_cables', 12.5, 19.6], ['c12_cables', 23, 19.5], ['c12_cables', 9, 12.8], ['c12_cables', 29, 13],
+      // Around the lot: Barry Kahn's trailer, equipment cases and more cable.
+      ['c12_trailer', 2, 16.6], ['crate', 36, 10], ['crate', 37, 10], ['crate', 37, 11], ['c12_cables', 13.5, 21.5], ['c12_cables', 24, 22.2],
+      ['barrel', 28, 22], ['c12_tapeMark', 6, 9], ['c12_cables', 33, 4.2], ['c12_cables', 5, 4.2],
     ],
     npcs: [
       { id: 'c12_director', sprite: 'c12_director', x: 20, y: 22, talk: 'c12_director_talk', name: 'Director', showIf: 'c12_filmDone' },
@@ -125,6 +135,8 @@ registerMaps([
     objects: [
       { type: 'save', x: 3, y: 23 },
       { type: 'sign', x: 23, y: 23, text: 'ZTV Studios, Lot B. QUIET ON SET. Stunt doubles report to the director.' },
+      { type: 'sign', x: 3, y: 15, text: 'BARRY KAHN. Knock first. Do not knock twice. Do not look directly at Mr. Kahn.' },
+      { type: 'breakable', x: 10, y: 14, size: 1, look: 'crate' }, { type: 'breakable', x: 29, y: 11, size: 1, look: 'crate' },
     ],
     onEnter: 'act5_map_enter',
     // The lot gate closes while the shoot's fights run.

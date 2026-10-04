@@ -1,6 +1,7 @@
 import { PAL, shade } from '../art/color';
 import { audio } from '../engine/audio';
 import { SCREEN_H, SCREEN_W } from '../engine/constants';
+import { wrap } from '../engine/fontdata';
 import { font, type Bitmap } from '../engine/gfx';
 import type { Input } from '../engine/input';
 import type { Scene } from '../engine/scene';
@@ -109,7 +110,7 @@ export class BeamStruggleScene implements Scene {
     ctx.fillStyle = this.o.heroColor;
     ctx.fillRect(40, 130, Math.round(160 * this.balance), 6);
     const line = this.o.lines?.length ? this.o.lines[Math.floor(this.t / 150) % this.o.lines.length] : '';
-    if (line) font.drawCentered(ctx, line, SCREEN_W / 2, 20, PAL.white, '#000');
+    if (line) wrap(line, SCREEN_W - 12).slice(0, 3).forEach((r, i) => font.drawCentered(ctx, r, SCREEN_W / 2, 14 + i * 10, PAL.white, '#000'));
     if (!this.finished && this.t % 30 < 20) font.drawCentered(ctx, this.surge > 0 ? 'HOLD ON! MASH A!' : 'MASH A!', SCREEN_W / 2, 144, this.surge > 0 ? '#f86060' : PAL.gold, '#000');
     if (this.finished) {
       ctx.globalAlpha = Math.min(1, this.finished / 40);

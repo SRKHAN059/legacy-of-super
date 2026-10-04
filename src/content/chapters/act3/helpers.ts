@@ -45,7 +45,9 @@ export interface ArenaBox {
 /**
  * Keep the hero inside `box` while `pending` (a fight or a wave) is unresolved: an invisible arena wall, so a staged
  * battle cannot be walked out of through a door, a map exit, a flight circle or a save point (which would strand
- * the beat's script on a map that no longer exists). Resolves with `pending`'s value.
+ * the beat's script on a map that no longer exists). The field is also sealed like a boss fight for the duration,
+ * so an enemy wave awaited with `waitDefeat` (which is not a `fight`) blocks Whis's Charm, save discs and map edges
+ * too. Resolves with `pending`'s value.
  */
 export function inArena<T>(s: ScriptApi, pending: Promise<T>, box: ArenaBox): Promise<T> {
   const minX = box.x0 * TILE + 8;
@@ -59,7 +61,12 @@ export function inArena<T>(s: ScriptApi, pending: Promise<T>, box: ArenaBox): Pr
     p.y = Math.min(maxY, Math.max(minY, p.y));
   };
   clampHero();
-  return duringFight(s, pending, 1, clampHero);
+  // A Game Over or a return to the title resets fightDepth itself (and `pending` then never resolves).
+  const game = field.game;
+  game.fightDepth++;
+  return duringFight(s, pending, 1, clampHero).finally(() => {
+    game.fightDepth = Math.max(0, game.fightDepth - 1);
+  });
 }
 
 /** Remove every wild (uid-less) enemy from the current map so a scripted boss fight is one-on-one. */

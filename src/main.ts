@@ -29,13 +29,32 @@ const ctx = canvas.getContext('2d', { alpha: false });
 if (!ctx) throw new Error('2D canvas context unavailable');
 ctx.imageSmoothingEnabled = false;
 
+/**
+ * Space the on-screen controls take on a touch screen: in landscape the two clusters' width on each side, in
+ * portrait their height along the bottom. The game screen is laid out in what is left, so the controls never
+ * cover the play field, the dialogue box or the HUD.
+ */
+function touchReserve(): { side: number; bottom: number } {
+  const left = document.querySelector('#touch .cluster.left')?.getBoundingClientRect();
+  const right = document.querySelector('#touch .cluster.right')?.getBoundingClientRect();
+  if (!left || !right || !left.width || !right.width) return { side: 0, bottom: 0 };
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const gap = 6;
+  if (w > h) return { side: Math.ceil(Math.max(left.right, w - right.left)) + gap, bottom: 0 };
+  return { side: 0, bottom: Math.ceil(h - Math.min(left.top, right.top)) + gap };
+}
+
 /** Fit the 240x160 canvas to the window, preferring integer scale for crisp pixels. */
 function fit(): void {
   if (!canvas) return;
   const touch = window.matchMedia('(pointer: coarse)').matches;
-  const availW = window.innerWidth - (touch ? 0 : 32);
-  const availH = window.innerHeight - (touch ? 0 : 32);
-  const raw = Math.min(availW / SCREEN_W, availH / SCREEN_H);
+  const shell = document.getElementById('shell');
+  const reserve = touch ? touchReserve() : { side: 0, bottom: 0 };
+  if (shell) shell.style.padding = `0 ${reserve.side}px ${reserve.bottom}px`;
+  const availW = window.innerWidth - (touch ? 0 : 32) - reserve.side * 2;
+  const availH = window.innerHeight - (touch ? 0 : 32) - reserve.bottom;
+  const raw = Math.max(0.5, Math.min(availW / SCREEN_W, availH / SCREEN_H));
   const scale = raw >= 2 && !touch ? Math.floor(raw) : raw;
   canvas.style.width = `${Math.floor(SCREEN_W * scale)}px`;
   canvas.style.height = `${Math.floor(SCREEN_H * scale)}px`;

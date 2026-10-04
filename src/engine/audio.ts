@@ -72,9 +72,29 @@ export class Audio {
   private current: { track: Track; name: string; rows: string[][]; row: number; nextTime: number } | null = null;
   private timer: number | null = null;
   private pendingTrack: { name: string; track: Track } | null = null;
-  musicVolume = 0.55;
-  sfxVolume = 0.7;
+  private musicVol = 0.55;
+  private sfxVol = 0.7;
   muted = false;
+
+  /** Music volume 0..1; takes effect immediately on the playing track. */
+  get musicVolume(): number {
+    return this.musicVol;
+  }
+
+  set musicVolume(v: number) {
+    this.musicVol = Math.max(0, Math.min(1, v));
+    if (this.ctx && this.musicBus) this.musicBus.gain.setValueAtTime(this.musicVol * (this.current?.track.volume ?? 1), this.ctx.currentTime);
+  }
+
+  /** Sound-effect volume 0..1; takes effect immediately. */
+  get sfxVolume(): number {
+    return this.sfxVol;
+  }
+
+  set sfxVolume(v: number) {
+    this.sfxVol = Math.max(0, Math.min(1, v));
+    if (this.ctx && this.sfxBus) this.sfxBus.gain.setValueAtTime(this.sfxVol, this.ctx.currentTime);
+  }
 
   /** Create the AudioContext; must be called from a user gesture. */
   unlock(): void {

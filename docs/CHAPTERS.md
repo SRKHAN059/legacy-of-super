@@ -25,8 +25,19 @@ technique!"), and a handoff into the next chapter. Side content is silver/bronze
 ## Party timeline (repeat of Guide §5, enforced by `ensureChapterState`)
 
 Prologue Trunks L6 (leaves after) · Ch1 Goku L1 · Ch2 Vegeta joins L8 · Ch5 Gohan L16 + Piccolo L18 ·
-Ch9 Trunks rejoins L30 · forms/techs per Guide §5. Level curve: P 6 · 1: 1–8 · 2: 8–12 · 3: 12–15 · 4: 15–18 ·
-5: 18–22 · 6: 22–25 · 7: 25–29 · 8: 29–31 · 9: 30–34 · 10: 34–37 · 11: 37–40 · 12: 40–42 · 13: 42–45 · 14: 45–48.
+Ch9 Trunks rejoins L30 · forms/techs per Guide §5. Level curve (the band each chapter is tuned for,
+`CHAPTER_MIN_LEVEL` = its start): P 6 · 1: 1–8 · 2: 8–12 · 3: 12–15 · 4: 15–18 · 5: 18–22 · 6: 22–25 · 7: 25–29 ·
+8: 29–31 · 9: 30–34 · 10: 34–37 · 11: 37–40 · 12: 40–42 · 13: 42–45 · 14: 45–48.
+
+**Levels come from EXP, as in LoG2.** Characters join at their story level (LoG2's SetMinLevel). In a playthrough
+that started with the prologue, a hand-over lifts only the hero who played the chapter that just ended (the
+active character when `cNN_start` runs) to `CHAPTER_MIN_LEVEL[N]` — the chapter-end story EXP. Benched characters
+are never raised: they fall behind and must be rotated in to keep up (the coloured level gates and the L50 trophies
+depend on it). The other safety net is `force(s, id)`: when the story puts a character on the field, they are
+lifted to at least band start − 3 (`CHAPTER_MIN_LEVEL[chapter] - FORCED_LEVEL_GAP`) so a forced segment is never a
+wall; a character who joined in that chapter keeps their join level. A chapter started standalone (tests, the
+`?map=` dev entry) still floors the whole party at `CHAPTER_MIN_LEVEL[N]`, so every chapter remains playable on its
+own.
 
 ---
 
@@ -123,7 +134,8 @@ Ch9 Trunks rejoins L30 · forms/techs per Guide §5. Level curve: P 6 · 1: 1–
   Kaio-ken (`transformNow('ssbkk')`) and wins by forfeit. Zeno appears; Super Shenron cameo. Unlock `spot_nameless`.
 
 ### Chapter 8 — "The Copy" (L29→31) — short interlude
-- Beerus demands to fight "Monaka" (Goku in disguise — comedy boss with `endAt` 0.9). Galactic Patrol job on
+- Goku demands a match with "Monaka", the "strongest fighter in Universe 7"; Beerus fights him himself inside the
+  Monaka costume (comedy boss with `endAt` 0.9). Galactic Patrol job on
   planet Potaufeu (your maps `c08_potaufeu_*`): the Commeson creates **Copy-Vegeta** (boss mirroring Vegeta's
   stats; `vulnerableIf` the Commeson core is exposed — a small puzzle) and duplicate Goten/Trunks clones.
   → `c09_start`.
@@ -174,11 +186,12 @@ Ch9 Trunks rejoins L30 · forms/techs per Guide §5. Level curve: P 6 · 1: 1–
 ### Chapter 14 — "The Tournament of Power" (L45→48 + god-mode finale) — LoG2 parallel: the Cell Games gauntlet
 - `top_arena_a/b/c` (`ringOut` maps). Opening melee with waves of fighters from many universes (`universeFighter`,
   `prideTrooper`, register more), Gohan leads (forced) with swaps. Bosses in order (relay, each with a forced
-  character): U9 trio (Basil/Lavender/Bergamo), Kale berserk (`survive`), Caulifla & Kale → **Kefla** (Goku reaches
-  UI -Sign- mid-fight: `transformNow('ui')`), U3's robot, **Toppo (God of Destruction)** vs Vegeta
-  (`setForm('vegeta','ssbe')`), **Dyspo** (Gohan + Frieza), **Jiren** — Goku masters Ultra Instinct (god-mode, like
-  LoG2's SSJ2 Gohan; `transformNow('ui')`), then the last stand: Frieza → Android 17 vs Jiren, ring-out of all three,
-  17 is the last one standing. Goku learns `spiritBomb` for the big clash (**beam struggle**). Vegeta learns
+  character): U9 trio (Basil/Lavender/Bergamo), Kale berserk (`survive`), Goku's first clash with **Jiren** (eps
+  109-110: Goku learns `spiritBomb` for the big clash, **beam struggle**; Jiren throws it back and Goku first awakens
+  Ultra Instinct -Sign-: `transformNow('ui')`), Caulifla & Kale → **Kefla** (-Sign- *returns* mid-fight, eps 115-116),
+  U3's robot, **Toppo (God of Destruction)** vs Vegeta (`setForm('vegeta','ssbe')`), **Dyspo** (Gohan + Frieza),
+  **Jiren** again — Goku masters Ultra Instinct (god-mode, like LoG2's SSJ2 Gohan; `transformNow('ui')`), then the
+  last stand: Frieza → Android 17 vs Jiren, ring-out of all three, 17 is the last one standing. Vegeta learns
   `finalFlash`. 17's wish restores the erased universes → credits.
 
 ### Epilogue & Post-game (`post_` prefix)

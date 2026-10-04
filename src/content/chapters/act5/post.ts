@@ -1,22 +1,28 @@
 import { registerScripts, type ScriptApi } from '../../../game/script';
 import { unforce } from '../common';
-import { bossFight, freeNear, heroTile, removeAll, stage, warpTo } from './helpers';
+import { bossFight, freeNear, heroTile, removeAll, stage, stageOrReuse, warpTo } from './helpers';
 import { HUB } from './hubs';
 
 /**
- * Epilogue & post-game (LoG2 §16): free roam, the "true ending" with Whis and Beerus, the five trophies →
- * Mr. Satan unlock, his ZTV alternate ending, and the optional superbosses (Jiren's rematch after the seven
- * animals, Hit's no-rules contract). Whis's 25 Earth Delicacies reward stays with Act 2's Whis (c04_delicacies).
+ * Epilogue & post-game (LoG2 §14.10, §16): free roam after the final battle; the canonical ending (Whis's epilogue
+ * vignettes and the credits) only when the player talks to the hub NPCs, Beerus and Whis at Capsule Corp; the five
+ * trophies → Mr. Satan unlock and his ZTV alternate ending; and the optional superbosses (Jiren's rematch after the
+ * seven animals, Hit's no-rules contract). Whis's 25 Earth Delicacies reward stays with Act 2's Whis (c04_delicacies).
  */
 
 const TROPHIES = ['trophyGoku', 'trophyVegeta', 'trophyGohan', 'trophyTrunks', 'trophyPiccolo'] as const;
 
 /**
- * LoG2's Mr. Satan rule: he joins at L40 if Goku was L45+ when Cell was beaten (5 levels past that chapter's
- * gate), otherwise at L1. Here the final battle is Jiren's, Chapter 14 starts every fighter at L45 and its curve
- * ends at L48, so the equivalent "beyond the curve" mark is Goku at L50 when Universe 7 won (`c14_gokuLv`).
+ * LoG2's Mr. Satan rule: he joins at L40 if Goku was L45+ when Cell was beaten, otherwise at L1. That is five levels
+ * past the Cell Games' L40 gate, a push of 4.92M EXP (L40 -> L45). Here the final battle is Jiren's and Chapter 14
+ * starts every fighter at L45, where the EXP curve is far steeper: five levels (L50) would cost 15.3M EXP, three
+ * times LoG2's push. The matching mark is the end of the chapter's own curve, Goku at L48 when Universe 7 won
+ * (`c14_gokuLv`): 6.87M EXP from L45, about 5.8M of it ground out beyond the tournament's scripted EXP.
  */
-export const SATAN_RULE_GOKU_LEVEL = 50;
+export const SATAN_RULE_GOKU_LEVEL = 48;
+
+/** Set while the true ending runs, so a hub's onEnter trophy check never cuts into it. */
+const ENDING = 'post_inEnding';
 
 /** How many of the five L50-gate trophies the party holds. */
 export function trophyCount(s: ScriptApi): number {
@@ -24,11 +30,12 @@ export function trophyCount(s: ScriptApi): number {
 }
 
 registerScripts({
-  // ================================================================ post-game start (after the credits)
+  // ================================================================ post-game start (right after the final battle)
   post_start: async (s) => {
     s.set('post_game');
     s.setChapter(15);
     s.clear('fc_topQuiet');
+    s.clear(ENDING);
     s.set('world', 'earth');
     unforce(s);
     s.switchTo('goku');
@@ -38,44 +45,23 @@ registerScripts({
     await s.quest('post_trueEnd', true);
     await s.quest('post_trophies', true);
     if (s.check('done:c12_hit')) await s.quest('post_hit', true);
-    await s.narrate('Journal updated! Lord Beerus and Whis are lounging at the Capsule Corp garden table.');
-    // Trophies won before the credits count too.
+    await s.narrate('Journal updated! Lord Beerus and Whis are lounging at the Capsule Corp garden table. Talk to them whenever you are ready to see how the story ends.');
+    // Trophies won before the final battle count too.
     await s.call('post_trophy_check');
   },
 
-  /** Beerus (and Whis) at Capsule Corp after the tournament: true ending, delicacies, Mr. Satan. */
+  /** Beerus (and Whis) at Capsule Corp after the tournament: the true ending first, then delicacies and Mr. Satan. */
   post_beerus_talk: async (s) => {
+    if (!s.check('done:post_trueEnd')) {
+      await s.call('post_true_ending');
+      return;
+    }
     if (s.check('char:satan')) {
       await s.talk([
         ['beerus', '...You. The "champion". You know I could erase this whole planet with a sneeze?', 'angry'],
         ['mrSatan', 'Ha... HAHAHA! Of course, Lord Beerus! May I offer you this commemorative Satan Pudding? Limited edition!', 'shock'],
         ['beerus', '...Hm. Leave the pudding. You may live.', 'smirk'],
       ]);
-      return;
-    }
-    if (!s.check('done:post_trueEnd')) {
-      s.letterbox(true);
-      s.music('ending');
-      await s.talk([
-        ['beerus', 'So. Universe 7 survived. Barely. Because an ANDROID was the only one still standing.', 'angry'],
-        ['whis', 'Ohoho. Would you like to see how everyone is doing, my lord? My staff shows quite a lot.', 'happy'],
-      ]);
-      s.flash('#4890e0', 12);
-      await s.narrate('In Universe 11, Jiren trains beside Toppo and Belmod. For the first time, he is not training alone.');
-      await s.narrate('Far across space, Frieza\'s new army salutes its old emperor. He is smiling, which is never good news.');
-      await s.narrate('In another future, Trunks and Mai walk through a city with its lights back on. A child chases pigeons in the square.');
-      await s.narrate('And on Earth, a Saiyan who once just wanted a good fight has learned what it means to fight for everyone.');
-      s.flash('#4890e0', 12);
-      await s.talk([
-        ['beerus', 'Goku. Next time you feel like asking Zeno for a tournament... I will destroy you FIRST.', 'angry'],
-        ['hero', 'Heh heh... sure thing, Lord Beerus. ...But it WAS fun, right?', 'happy'],
-        ['whis', 'Ohohoho! Shall we have dessert, then?', 'happy'],
-      ]);
-      await s.narrate('THE END. ...But the adventure never really ends. Free roam continues.');
-      s.letterbox(false);
-      s.music('town');
-      await s.done('post_trueEnd', false);
-      await s.give('end3');
       return;
     }
     const n = trophyCount(s);
@@ -88,10 +74,98 @@ registerScripts({
     await s.say('beerus', lines[s.inc('post_beerusTalks') % lines.length], 'smirk');
   },
 
+  /**
+   * The canonical ending, LoG2's "talk to Dende": Whis's staff shows where everyone ended up (Universe 11, Frieza,
+   * Future Trunks, Monster Island, Goku and Vegeta sparring), the credits roll, and free roam carries on afterwards.
+   */
+  post_true_ending: async (s) => {
+    s.set(ENDING);
+    try {
+      s.letterbox(true);
+      s.music('ending');
+      await s.talk([
+        ['beerus', 'So. Universe 7 survived. Barely. Because an ANDROID was the only one still standing.', 'angry'],
+        ['whis', 'Ohoho. Would you like to see how everyone is doing, my lord? My staff shows quite a lot.', 'happy'],
+      ]);
+      s.flash('#4890e0', 12);
+      await s.narrate('In Universe 11, Jiren trains beside Toppo and Belmod. For the first time, he is not training alone.');
+      await s.narrate('Far across space, Frieza\'s new army salutes its old emperor. He is smiling, which is never good news.');
+      await s.narrate('In another future, Trunks and Mai walk through a city with its lights back on. A child chases pigeons in the square.');
+      await s.narrate('Days later, on Monster Island...');
+      await s.warp('c13_monster_hut', 16, 12, 'up');
+      s.letterbox(true);
+      s.music('peaceful');
+      // 17 already stands at his ranger station (map NPC); the family drops by.
+      const temp17 = stageOrReuse(s, 'c13_17', 'android17', 16, 10, 'down', 'Android 17');
+      stage(s, 'c14_e18', 'android18', 18, 11, 'left', 'Android 18');
+      stage(s, 'c14_eKrillin', 'krillinGi', 19, 12, 'left', 'Krillin');
+      stage(s, 'c14_eMarron', 'c13_marron', 14, 12, 'right', 'Marron');
+      await s.talk([
+        ['c13_marron', 'Uncle 17! Where\'s the boat?', 'happy'],
+        ['android17', 'There is no boat, Marron. I wished for something better.', 'smirk'],
+        ['krillin', 'Ten million zeni each, though! Bulma paid up!', 'happy'],
+        ['android18', '...After I reminded her. Twice.', 'smirk'],
+        ['android17', 'Ten million zeni. Hm. I could buy a really nice boat with that.', 'happy'],
+      ]);
+      removeAll(s, 'c14_e18', 'c14_eKrillin', 'c14_eMarron');
+      if (temp17) removeAll(s, 'c13_17');
+      await s.narrate('And on Earth, a Saiyan who once just wanted a good fight has learned what it means to fight for everyone.');
+      await s.warp('c13_training_wilds', 16, 13, 'right');
+      s.letterbox(true);
+      stage(s, 'c14_eGoku', 'gokuSSB', 15, 12, 'right', 'Goku');
+      stage(s, 'c14_eVegeta', 'vegetaSSB', 20, 12, 'left', 'Vegeta');
+      s.show('hero', false);
+      await s.talk([
+        ['vegeta', 'Kakarot. You reached Ultra Instinct before me. That changes nothing. I WILL surpass you.', 'angry'],
+        ['goku', 'Heh. I know you will, Vegeta. That\'s why it\'s so much fun!', 'happy'],
+      ]);
+      await s.clash('c14_eGoku', 'c14_eVegeta', 120);
+      s.flash('#ffffff', 20);
+      await s.narrate('The gods watched. The universes lived. And two Saiyans kept on fighting, just because they could.');
+      removeAll(s, 'c14_eGoku', 'c14_eVegeta');
+      s.show('hero', true);
+      await s.credits([
+        '#Universe 7: The Mighty Ten',
+        'Son Goku', 'Vegeta', 'Son Gohan', 'Piccolo', 'Android 17', 'Android 18', 'Krillin', 'Tien Shinhan', 'Master Roshi', 'Frieza',
+        '',
+        '#Also starring',
+        'Future Trunks', 'Bulma', 'Chi-Chi', 'Videl and Pan', 'Goten and Trunks', 'Mr. Satan (World Champion)', 'Majin Buu (asleep)',
+        '',
+        '#Gods and Angels',
+        'Beerus and Whis', 'Champa and Vados', 'Grand Priest', 'Lord Zeno and Future Zeno',
+        '',
+        '#Worthy opponents',
+        'Hit', 'Toppo', 'Dyspo', 'Kefla', 'Jiren',
+        '',
+        '#Special thanks',
+        'The seven animals of Monster Island', 'Barry Kahn\'s stunt double', 'Super Shenron', 'Everyone who lent their energy',
+      ]);
+      // Back at the garden table, where the story was told.
+      await warpTo(s, HUB.cc.map, 24, 19, 'up');
+      s.letterbox(true);
+      await s.talk(s.hero === 'goku' ? [
+        ['beerus', 'Goku. Next time you feel like asking Zeno for a tournament... I will destroy you FIRST.', 'angry'],
+        ['hero', 'Heh heh... sure thing, Lord Beerus. ...But it WAS fun, right?', 'happy'],
+        ['whis', 'Ohohoho! Shall we have dessert, then?', 'happy'],
+      ] : [
+        ['beerus', 'And tell Goku: next time he feels like asking Zeno for a tournament... I will destroy him FIRST.', 'angry'],
+        ['whis', 'Ohohoho! He would only ask for another one, my lord. Shall we have dessert, then?', 'happy'],
+      ]);
+      await s.narrate('THE END. ...But the adventure never really ends. Free roam continues.');
+      s.letterbox(false);
+      s.music('town');
+      await s.done('post_trueEnd', false);
+      await s.give('end3');
+    } finally {
+      s.clear(ENDING);
+    }
+    await s.call('post_trophy_check');
+  },
+
   // ================================================================ trophies → Mr. Satan
-  /** onEnter on hubs: all five trophies → Mr. Satan bursts in and joins. */
+  /** onEnter on hubs: all five trophies → Mr. Satan bursts in and joins (never in the middle of the true ending). */
   post_trophy_check: async (s) => {
-    if (!s.check('quest:post_trophies') || s.state.char('satan').joined || trophyCount(s) < 5) return;
+    if (s.flag(ENDING) || !s.check('quest:post_trophies') || s.state.char('satan').joined || trophyCount(s) < 5) return;
     await s.call('post_satan_unlock');
   },
 
@@ -120,6 +194,11 @@ registerScripts({
   post_ztv_ending: async (s) => {
     if (!s.check('char:satan')) {
       await s.narrate('The ZTV studio\'s VIP entrance. A sign reads: "Reserved for the World Champion."');
+      return;
+    }
+    // The press conference (and its credits) plays once; afterwards the studio only shows the reruns.
+    if (s.flag('post_ztvSeen')) {
+      await s.narrate('ZTV is showing the press conference again. And again. Mr. Satan has asked for it to air every hour, forever.');
       return;
     }
     await s.narrate('The red gate is rubble. Mr. Satan straightens his gi and marches into ZTV\'s studio, cameras already rolling.');
@@ -263,5 +342,6 @@ registerScripts({
     // "Krillin's comeback" never played: it is still open, re-voiced for a tournament veteran.
     if (!s.check('done:c12_krillin')) { await s.call('c12_krillin_kame'); return; }
     await s.say('krillin', 'Eliminated first. Again. But hey - I got to be there! And 18 bought a new car with the prize money.', 'happy');
+    await s.call('c12_forest_boat');
   },
 });

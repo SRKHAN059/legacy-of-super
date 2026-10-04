@@ -25,7 +25,11 @@ export const HUB = {
   satanMansion: { satan: [17, 10] },
   satanPlaza: { kid: [24, 28] },
   satanShop: { shopper: [9, 5] },
-  satanDojo: { yamcha: [6, 12], krillin: [13, 12], tien: [16, 12], ring: [10, 5] },
+  satanDojo: {
+    yamcha: [6, 12], krillin: [13, 12], tien: [16, 12], ring: [10, 5],
+    /** On satan_mansion, just below the dojo door (fallback for where a lost spar puts you). */
+    outside: [31, 8],
+  },
   // Space (farC: space.ts).
   kingKai: { arrive: [16, 18], kingKai: [16, 13], bubbles: [12, 16], fight: [16, 15], whis: [20, 13], gregory: [19, 15] },
   beerusPalace: { bed: [2, 4], whis: [5, 5], arrive: [9.5, 11] },

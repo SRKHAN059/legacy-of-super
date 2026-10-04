@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { CAST } from '../../src/content/cast';
+import { handOff } from '../../src/content/chapters/act5/helpers';
+import { SATAN_RULE_GOKU_LEVEL } from '../../src/content/chapters/act5/post';
 import { CREATURES } from '../../src/content/creatures';
 import { ENEMIES } from '../../src/content/enemies';
 import { QUESTS } from '../../src/content/quests';
 import { resolveMap } from '../../src/content/registry';
+import { SPOTS } from '../../src/content/world';
+import { measure } from '../../src/engine/fontdata';
 import type { Button } from '../../src/engine/input';
+import { EXP_TABLE } from '../../src/game/leveling';
 import { SCRIPTS } from '../../src/game/script';
+import { parseGrid } from '../../src/game/world';
 import { Sim } from '../sim';
 
 declare const setImmediate: (cb: () => void) => void;
@@ -64,6 +70,18 @@ function record(sim: Sim): Said[] {
     return orig(lines);
   };
   return log;
+}
+
+/** Record every credits roll (the full list of lines each time). */
+function recordCredits(sim: Sim): string[][] {
+  const rolls: string[][] = [];
+  const g = sim.game;
+  const orig = g.credits.bind(g);
+  g.credits = (lines) => {
+    rolls.push([...lines]);
+    return orig(lines);
+  };
+  return rolls;
 }
 
 /**
@@ -160,6 +178,7 @@ describe('act 5 chain (Ch12 → Ch14 → post-game)', () => {
     const q = (id: string) => st.data.journal[id];
     const log = record(sim);
     const said = (re: RegExp) => log.findIndex((l) => re.test(l.text));
+    const rolls = recordCredits(sim);
 
     // ---------------- Chapter 12: Days of Peace
     sim.start('paozu_home', 31, 10);
@@ -280,6 +299,15 @@ describe('act 5 chain (Ch12 → Ch14 → post-game)', () => {
     expect(st.flag('c14_stageA')).toBe(true);
     expect(st.flag('act5_busy')).toBe(false);
     expect(st.char('goku').techs).toContain('spiritBomb');
+    // Anime order (dbs_story.md eps 98-111): U9 erased → Krillin out → Kale stopped → U10 erased, Tien, Roshi →
+    // Frieza eliminates Frost (as the forced guest) → Goku vs Jiren and UI -Sign- → Hit's elimination.
+    expect(st.flag('defeated:c14_frost1')).toBe(true);
+    const chronoA = [/Universe 9 vanishes/, /Krillin has been eliminated/, /He stopped her\.\.\. with one shot/, /erases Universe 10/,
+      /Master Roshi frees Vegeta/, /Frost has been eliminated by Frieza/, /^Jiren! Fight me!/, /^Ultra Instinct -Sign-\./, /Hit traps Jiren/];
+    const idxA = chronoA.map((re) => said(re));
+    for (const [i, re] of chronoA.entries()) expect(idxA[i], String(re)).toBeGreaterThan(-1);
+    for (let i = 1; i < idxA.length; i++) expect(idxA[i], `${chronoA[i]} after ${chronoA[i - 1]}`).toBeGreaterThan(idxA[i - 1]);
+    expect(log[said(/^\.\.\.said no one with any taste/)]?.hero).toBe('frieza');
     expect(st.char('android17').level).toBeGreaterThanOrEqual(46);
     expect(st.char('frieza').level).toBeGreaterThanOrEqual(47);
     expect(st.flag('noSwitch')).toBe(false);
@@ -296,8 +324,21 @@ describe('act 5 chain (Ch12 → Ch14 → post-game)', () => {
     expect(st.flag('c14_reactorDown')).toBe(true);
     expect(st.data.active).toBe('goku');
 
+    // Stage B opens with Kefla (eps 112-116): Frost and Universe 10 are already history.
+    const stageBFrom = said(/Told you we'd be back, Universe 7/);
+    expect(stageBFrom).toBeGreaterThan(said(/Hit traps Jiren/));
+    expect(said(/Universe 4 is erased/)).toBeGreaterThan(stageBFrom);
+
     await beat(sim, 'top_arena_c', 'c14_stageC', 3, 17);
     expect(st.char('vegeta').form).toBe('ssbe');
+    // Stage C (eps 122-131): Vegeta first reaches SSB Evolved against Jiren, then Dyspo takes Gohan out (ep 124)
+    // before Vegeta, in SSB Evolved again, eliminates Toppo (eps 125-126); then Mastered Ultra Instinct.
+    const chronoC = [/Super Saiyan Blue, Evolved!/, /has achieved SSB Evolved/, /Gohan has been eliminated/, /Toppo is blasted clean off the stage/,
+      /Mastered Ultra Instinct!/, /Universe 7 is the winner/];
+    const idxC = chronoC.map((re) => said(re));
+    for (const [i, re] of chronoC.entries()) expect(idxC[i], String(re)).toBeGreaterThan(-1);
+    for (let i = 1; i < idxC.length; i++) expect(idxC[i], `${chronoC[i]} after ${chronoC[i - 1]}`).toBeGreaterThan(idxC[i - 1]);
+    expect(log.filter((l) => /has achieved SSB Evolved/.test(l.text)).length).toBe(1);
     expect(st.char('vegeta').techs).toContain('finalFlash');
     expect(q('c14_top')).toBe('done');
     expect(st.flag('c14_won')).toBe(true);
@@ -321,18 +362,33 @@ describe('act 5 chain (Ch12 → Ch14 → post-game)', () => {
     }
     // Goku's level when Universe 7 won is kept for LoG2's Mr. Satan rule.
     expect(st.get('c14_gokuLv')).toBe(st.char('goku').level);
+    // The arena is the World of Void throughout (never "Null Realm").
+    expect(said(/welcome to the World of Void/)).toBeGreaterThan(-1);
+    expect(log.filter((l) => /Null Realm/.test(l.text))).toEqual([]);
 
-    // ---------------- Post-game (credits rolled inside c14_epilogue)
+    // ---------------- Post-game: free roam starts right after the wish (LoG2 §16); no credits yet.
     expect(st.flag('post_game')).toBe(true);
     expect(st.data.active).toBe('goku');
     expect(sim.game.field?.def.id).toBe('cc_yard');
+    expect(rolls).toEqual([]);
+    expect(said(/There is no boat, Marron/)).toBe(-1);
+    // The hub NPCs hold the canonical ending: the journal's gold star points at them (LoG2's "Talk to Dende").
     expect(q('post_trueEnd')).toBe('active');
+    expect(QUESTS.post_trueEnd.star).toBe('gold');
     expect(q('post_hit')).toBe('active');
     expect(st.char('satan').joined).toBe(false);
 
-    // True ending with Beerus and Whis.
+    // True ending with Beerus and Whis: Whis's staff shows the epilogue, then the credits roll, then free roam.
+    const endFrom = log.length;
     await beat(sim, 'cc_yard', 'act5_beerus_talk', 25, 17);
     expect(q('post_trueEnd')).toBe('done');
+    expect(rolls.length).toBe(1);
+    expect(rolls[0]).toContain('#Universe 7: The Mighty Ten');
+    expect(said(/There is no boat, Marron/)).toBeGreaterThanOrEqual(endFrom);
+    expect(said(/two Saiyans kept on fighting/)).toBeGreaterThan(said(/There is no boat, Marron/));
+    expect(said(/^THE END\./)).toBeGreaterThan(said(/two Saiyans kept on fighting/));
+    expect(sim.game.field?.def.id).toBe('cc_yard');
+    expect(st.flag('post_inEnding')).toBe(false);
 
     // 25 delicacies: Act 5's Beerus never pays Whis's reward; Act 2's Whis gives the charm exactly once.
     st.give('delicacy', 25, 25);
@@ -345,13 +401,13 @@ describe('act 5 chain (Ch12 → Ch14 → post-game)', () => {
       expect(st.count('whisStaff')).toBe(1);
     }
 
-    // Trophies → Mr. Satan joins on the next hub entry (L40 only if Goku was L50+ when Universe 7 won, else L1).
+    // Trophies → Mr. Satan joins on the next hub entry (L40 only if Goku was L48+ when Universe 7 won, else L1).
     for (const t of ['trophyGoku', 'trophyVegeta', 'trophyGohan', 'trophyTrunks', 'trophyPiccolo']) st.give(t, 1, 1);
     sim.start('cc_yard', 22, 20);
     await settle(sim);
     expect(sim.errors).toEqual([]);
     expect(st.char('satan').joined).toBe(true);
-    expect(st.char('satan').level).toBe(Number(st.get('c14_gokuLv') ?? 0) >= 50 ? 40 : 1);
+    expect(st.char('satan').level).toBe(Number(st.get('c14_gokuLv') ?? 0) >= SATAN_RULE_GOKU_LEVEL ? 40 : 1);
     expect(q('post_trophies')).toBe('done');
     expect(q('post_ztv')).toBe('active');
 
@@ -363,6 +419,9 @@ describe('act 5 chain (Ch12 → Ch14 → post-game)', () => {
     expect(q('post_ztv')).toBe('done');
     expect(st.flag('post_ztvSeen')).toBe(true);
     expect(sim.game.field?.def.id).toBe('satan_plaza');
+    // The comedic alternative ending rolls its own credits.
+    expect(rolls.length).toBe(2);
+    expect(rolls[1]).toContain('#The Legend of Mr. Satan');
 
     // 7 animals → 17 → Jiren's rematch at Zeno's palace (pow5/str5/end5).
     st.data.active = 'goku';
@@ -547,6 +606,8 @@ describe('act 5 fights cannot strand the player', () => {
     // Leave mid-fight (save + reload stands in for Whis's Charm and the Grand Priest's return trip): stage A restarts.
     reload(sim);
     expect(st.flag('act5_busy')).toBe(false);
+    // Wait on the relay itself, not only on the lock count (the abandoned pre-reload script also unwinds now).
+    for (let i = 0; i < TICKS && !st.flag('c14_stageA'); i += 5) await sim.tick(5);
     await settle(sim);
     expect(sim.errors).toEqual([]);
     expect(st.flag('c14_stageA')).toBe(true);
@@ -901,8 +962,15 @@ describe('act 5 continuity', () => {
     expect(after).toMatch(/pulled strings/);
   });
 
-  it('Mr. Satan joins at L40 only if Goku was L50+ when Universe 7 won (LoG2 rule), otherwise at L1', async () => {
-    for (const [lv, expected] of [[50, 40], [47, 1]] as const) {
+  it('Mr. Satan joins at L40 only if Goku was L48+ when Universe 7 won (LoG2 rule), otherwise at L1', async () => {
+    // LoG2: Goku L45+ when Cell fell, a 4.92M EXP push past the Cell Games' L40 gate. Chapter 14 starts at L45; the
+    // matching mark costs about as much (not the 15.3M of five more levels on the steep end of the curve).
+    expect(SATAN_RULE_GOKU_LEVEL).toBe(48);
+    const log2 = EXP_TABLE[45] - EXP_TABLE[40];
+    const here = EXP_TABLE[SATAN_RULE_GOKU_LEVEL] - EXP_TABLE[45];
+    expect(here / log2).toBeGreaterThan(0.75);
+    expect(here / log2).toBeLessThan(1.5);
+    for (const [lv, expected] of [[48, 40], [50, 40], [47, 1]] as const) {
       const sim = freshSim(15, 50);
       const st = sim.game.state;
       st.set('post_game');
@@ -952,6 +1020,144 @@ describe('act 5 continuity', () => {
       };
       expect(reach(false), `${map}: ${chest} behind ${gate} while closed`).toBe(false);
       expect(reach(true), `${map}: ${chest} reachable once ${gate} breaks`).toBe(true);
+    }
+  });
+});
+
+/** Step the game like `drive`, but without topping the hero's HP up (to see what a fight starts with). */
+async function stepUntil(sim: Sim, cond: () => boolean, max = 20000): Promise<void> {
+  let a = false;
+  for (let i = 0; i < max && !cond(); i++) {
+    const top = sim.game.scenes.top?.constructor.name ?? '';
+    if (/Dialogue|TitleCard|Choice/.test(top)) { a = !a; sim.input.inject('A', a); } else sim.input.inject('A', false);
+    sim.input.poll();
+    sim.game.scenes.update(sim.input);
+    await flush();
+  }
+}
+
+describe('act 5 audit fixes', () => {
+  it('boss fights never refill HP/EP first; a relay hand-off refreshes only the fighter stepping in', async () => {
+    // Hit's rematch: Goku walks in hurt and stays hurt (LoG2: no refills before a boss; recovery pots on the roof).
+    const sim = freshSim(15, 48);
+    const st = sim.game.state;
+    st.set('post_game');
+    st.addQuest('c12_hit');
+    st.completeQuest('c12_hit');
+    st.addQuest('post_hit');
+    sim.start('c12_rooftop', 8, 16);
+    await settle(sim);
+    const goku = st.char('goku');
+    goku.hp = Math.floor(goku.hpMax / 2);
+    goku.ep = Math.floor(goku.epMax / 3);
+    const npc = sim.game.field?.npcs.find((n) => n.def.id === 'post_hitN');
+    expect(npc).toBeTruthy();
+    void sim.game.runScript('post_hit_talk', { npc });
+    await stepUntil(sim, () => midFight(sim));
+    expect(midFight(sim)).toBe(true);
+    expect(goku.hp).toBeLessThanOrEqual(Math.floor(goku.hpMax / 2));
+    expect(goku.ep).toBeLessThan(goku.epMax);
+    // Every act 5 boss arena has breakable recovery pots or rocks instead (LoG2 §12).
+    for (const id of ['c12_rooftop', 'c12_film_set', 'c12_forest', 'c13_expo', 'c13_tien_dojo', 'c13_monster_camp', 'c13_training_wilds', 'c13_baba_lake']) {
+      expect(resolveMap(id)?.objects?.filter((o) => o.type === 'breakable' && !o.item).length, id).toBeGreaterThanOrEqual(2);
+    }
+
+    // A relay hand-off: the fresh fighter steps in at full strength; nobody else is touched.
+    const sim2 = freshSim(14, 45);
+    const st2 = sim2.game.state;
+    st2.join('gohan', 45);
+    st2.join('vegeta', 45);
+    sim2.start('c13_monster_hut', 16, 12);
+    await settle(sim2);
+    for (const id of ['goku', 'gohan', 'vegeta'] as const) { st2.char(id).hp = 10; st2.char(id).ep = 1; }
+    SCRIPTS.zz_act5_handoff = async (s) => { await handOff(s, 'gohan', { out: { id: 'zz_goku', name: 'Goku' } }); };
+    expect(await sim2.run('zz_act5_handoff', {}, TICKS)).toBe(true);
+    delete SCRIPTS.zz_act5_handoff;
+    expect(sim2.errors).toEqual([]);
+    expect(st2.data.active).toBe('gohan');
+    expect(st2.char('gohan').hp).toBe(st2.char('gohan').hpMax);
+    expect(st2.char('gohan').ep).toBe(st2.char('gohan').epMax);
+    expect(st2.char('goku').hp).toBe(10);
+    expect(st2.char('vegeta').hp).toBe(10);
+  });
+
+  it('the Forest of Terror can be revisited after Krillin\'s comeback, so its Goku L42 cache is never lost', async () => {
+    const sim = freshSim(13, 44);
+    const st = sim.game.state;
+    for (const f of ['c12_herbGot', 'c12_calm']) st.set(f);
+    st.addQuest('c12_krillin');
+    st.completeQuest('c12_krillin');
+    sim.start('kame_island', 20, 22);
+    await settle(sim);
+    expect(sim.game.field?.npcs.some((n) => n.def.id === 'act5_krillinK1')).toBe(true);
+    await beat(sim, null, 'c12_krillin_kame');
+    expect(sim.game.field?.def.id).toBe('c12_forest');
+    expect(sim.game.field?.map.objects.some((o) => o.def.type === 'chest' && o.def.id === 'c12_forestCache' && !o.gone)).toBe(true);
+    expect(sim.game.field?.map.gates.some((g) => g.def.id === 'c12_g_goku' && g.def.level === 42 && !g.broken)).toBe(true);
+    await beat(sim, null, 'c12_forest_leave');
+    expect(sim.game.field?.def.id).toBe('kame_island');
+    expect(st.data.journal.c12_krillin).toBe('done');
+
+    // Post-game Krillin offers the same boat trip.
+    const sim2 = freshSim(15, 48);
+    const st2 = sim2.game.state;
+    for (const f of ['post_game', 'c14_won', 'c12_herbGot', 'c12_calm']) st2.set(f);
+    st2.addQuest('c12_krillin');
+    st2.completeQuest('c12_krillin');
+    sim2.start('kame_island', 20, 22);
+    await settle(sim2);
+    await beat(sim2, null, 'post_krillin_talk');
+    expect(sim2.game.field?.def.id).toBe('c12_forest');
+  });
+
+  it('act 5 journal titles fit the journal row whole', () => {
+    const mine = Object.values(QUESTS).filter((q) => /^(c1[234]_|post_)/.test(q.id));
+    expect(mine.length).toBeGreaterThan(15);
+    for (const q of mine) {
+      // pause.ts cuts titles over 44 characters; the row has 212 px from x=22.
+      expect(q.title.length, q.id).toBeLessThanOrEqual(44);
+      expect(measure(q.title), q.id).toBeLessThanOrEqual(212);
+    }
+  });
+
+  it('act 5 locations use one name each (region = world map spot name)', () => {
+    for (const id of ['c13_tien_dojo', 'c13_training_wilds', 'c13_baba_lake', 'c13_monster_beach']) {
+      const spot = Object.values(SPOTS).find((sp) => sp.map === id);
+      expect(spot, id).toBeTruthy();
+      expect(resolveMap(id)?.region, id).toBe(spot?.name);
+    }
+  });
+
+  it('the poacher camp and the film lot have no screen-sized stretches of bare ground', () => {
+    // No 6x6-tile window (most of a 15x10-tile screen's open middle) is plain walkable ground of one terrain with
+    // nothing on it: no prop or decal, object or NPC.
+    const N = 6;
+    for (const id of ['c13_monster_camp', 'c12_film_set']) {
+      const sim = new Sim();
+      sim.game.state.data.chapter = 13;
+      sim.start(id);
+      const f = sim.game.field;
+      const def = resolveMap(id);
+      if (!f || !def) throw new Error(id);
+      const terrain = parseGrid(def);
+      const busy = new Set<string>();
+      for (const p of f.map.props) {
+        for (let y = Math.floor(p.y / 16); y <= Math.floor((p.y + p.art.bmp.height - 1) / 16); y++) {
+          for (let x = Math.floor(p.x / 16); x <= Math.floor((p.x + p.art.bmp.width - 1) / 16); x++) busy.add(`${x},${y}`);
+        }
+      }
+      for (const o of def.objects ?? []) busy.add(`${o.x},${o.y}`);
+      for (const n of def.npcs ?? []) busy.add(`${n.x},${n.y}`);
+      const bare = (x: number, y: number) => !busy.has(`${x},${y}`) && !f.col.blocked({ x: x * 16 + 3, y: y * 16 + 8, w: 10, h: 6 });
+      const empty: string[] = [];
+      for (let y = 0; y + N <= terrain.length; y++) {
+        for (let x = 0; x + N <= terrain[0].length; x++) {
+          let all = true;
+          for (let dy = 0; dy < N && all; dy++) for (let dx = 0; dx < N && all; dx++) all = bare(x + dx, y + dy) && terrain[y + dy][x + dx] === terrain[y][x];
+          if (all) empty.push(`${x},${y}`);
+        }
+      }
+      expect(empty, `${id}: bare ${N}x${N} stretches`).toEqual([]);
     }
   });
 });

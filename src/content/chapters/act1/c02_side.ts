@@ -1,4 +1,5 @@
 import type { Expression } from '../../../art/portrait';
+import type { Dir } from '../../../engine/math';
 import { registerScripts, type ScriptApi } from '../../../game/script';
 import { HUB } from './hubs';
 import { arenaFight, scanCount, unlockSpot, type Errand } from './util';
@@ -8,7 +9,7 @@ import { arenaFight, scanCount, unlockSpot, type Errand } from './util';
  * - Guests on the Princess Bulma react to the party's three phases (before Beerus, during the feast, after the heist).
  * - Bronze c02_scan: Bulma's Scouter field test (scan five guests).
  * - Silver c02_spar: the Satan Dojo sparring arena (LoG2 §11): Yamcha, then Krillin, then Tien; one bout per visit,
- *   no EXP, losing costs nothing; rewards STR+3, POW+3, END+3.
+ *   no EXP; losing leaves the fighter on half HP outside the dojo door (ROM script 0x3B63B4); rewards STR+3, POW+3, END+3.
  * - Marina ambient NPCs.
  */
 
@@ -272,7 +273,18 @@ interface SparOpts {
   wait?: string;
 }
 
-/** One LoG2-style sparring bout: one per visit, no EXP, losing is free. */
+/** Where a lost spar drops the player: the far side of the dojo's own door (falls back to the mansion grounds). */
+function dojoExit(s: ScriptApi): { map: string; x: number; y: number; dir: Dir } {
+  const w = s.field.def.warps?.find((d) => d.door) ?? s.field.def.warps?.[0];
+  if (w) return { map: w.to, x: w.tx, y: w.ty, dir: w.dir ?? 'down' };
+  const [x, y] = HUB.satanDojo.outside;
+  return { map: 'satan_mansion', x, y, dir: 'down' };
+}
+
+/**
+ * One LoG2-style sparring bout: one per visit, no EXP, and no free heal. A win gives only the capsule; a loss
+ * (ROM script 0x3B63B4) sets the fighter's HP to HPmax/2, EP untouched, and puts them outside the arena.
+ */
 async function spar(s: ScriptApi, o: SparOpts): Promise<void> {
   if (s.flag(o.beaten)) { await s.say(o.speaker, o.after, 'happy'); return; }
   if (o.need && !s.flag(o.need)) { await s.say(o.speaker, o.wait ?? 'Not yet.'); return; }
@@ -286,8 +298,14 @@ async function spar(s: ScriptApi, o: SparOpts): Promise<void> {
   const r = await arenaFight(s, o.enemy, { x: rx, y: ry, uid: `${o.enemy}_bout`, loseOk: true });
   if (s.exists(`${o.enemy}_bout`)) s.remove(`${o.enemy}_bout`);
   if (s.exists(o.npc)) s.show(o.npc, true);
-  s.heal();
-  if (r === 'lose') { await s.say(o.speaker, o.lose, 'smirk'); return; }
+  if (r === 'lose') {
+    const c = s.state.char(s.hero);
+    c.hp = Math.max(1, Math.floor(c.hpMax / 2));
+    await s.say(o.speaker, o.lose, 'smirk');
+    const out = dojoExit(s);
+    await s.warp(out.map, out.x, out.y, out.dir);
+    return;
+  }
   await s.say(o.speaker, o.win, 'happy');
   s.set(o.beaten);
   await s.give(o.reward);

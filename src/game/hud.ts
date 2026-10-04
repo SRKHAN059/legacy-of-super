@@ -5,6 +5,9 @@ import { font } from '../engine/gfx';
 import type { Field } from './field';
 import { expFraction } from './leveling';
 
+/** Top of the survival countdown: below the HUD panel (y 4-26) and the boss bar (y 4-19). */
+export const TIMER_Y = 28;
+
 /** Draw a tiny icon for a technique kind inside a 18x8 box. */
 function techIcon(ctx: CanvasRenderingContext2D, kind: TechKind | 'Z', color: string, x: number, y: number, dim: boolean, glow: boolean): void {
   ctx.globalAlpha = dim ? 0.35 : 1;
@@ -133,11 +136,14 @@ export function drawHud(ctx: CanvasRenderingContext2D, f: Field): void {
     ctx.fillRect(ix + 2, iy + 6, 2, 2);
   }
 
-  // Countdown timer.
+  // Countdown timer: its own strip under the HUD panel, clear of the technique box and the boss name.
   if (f.timer) {
     const s = Math.ceil(f.timer.frames / 60);
     const txt = `${f.timer.label} ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-    font.drawCentered(ctx, txt, SCREEN_W / 2, 6, s <= 10 && f.tick % 30 < 15 ? '#f84040' : PAL.white, '#000');
+    const w = font.drawWidth(txt) + 8;
+    ctx.fillStyle = 'rgba(8,12,28,0.6)';
+    ctx.fillRect(Math.round((SCREEN_W - w) / 2), TIMER_Y - 2, w, 11);
+    font.drawCentered(ctx, txt, SCREEN_W / 2, TIMER_Y, s <= 10 && f.tick % 30 < 15 ? '#f84040' : PAL.white, '#000');
   }
 
   // Grab escape prompt.

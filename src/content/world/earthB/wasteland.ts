@@ -1,6 +1,7 @@
 import { registerMaps } from '../../registry';
 import { registerScripts } from '../../../game/script';
 import { GRIDS } from './grids';
+import { heroTalk } from './talk';
 
 /*
  * ROCKY WASTELAND (region 'Rocky Wasteland', hostile, T2-T4):
@@ -141,6 +142,16 @@ registerScripts({
       ]);
       return;
     }
+    if (await heroTalk(s, 'eb_waste_geologist', {
+      goku: 'You\'re the fellow who keeps "training" out here, aren\'t you? Half my new craters have your name written all over them. Figuratively.',
+      vegeta: 'Whatever you do, please don\'t blast the mesas. They\'re sixty million years old. Some of us have papers to write about them.',
+      gohan: 'Excuse me... Son Gohan? I read your paper in the university journal! What is a scholar doing out in the wasteland in a fighting gi?',
+      piccolo: s.check('chapter>=6')
+        ? 'You! Tall, green, cape... I have a photo of someone just like you on the Great Mesa holding off an entire army. My colleagues say it\'s a lens flare.'
+        : 'A Namekian! Is it true you live on water alone? The wasteland would be paradise for you. Apart from the wolves.',
+      trunks: 'That sword has seen real fighting. Out here, a blade is handy for rock samples too. ...You don\'t want to hear about rock samples, do you.',
+      satan: 'Mr. Satan?! The Champion, out here? Are you here to... punch a mesa? Please don\'t. Please don\'t punch the mesa.',
+    })) return;
     if (s.check('chapter>=6')) {
       await s.talk([
         ['eb_waste_geologist', 'The Great Mesa is unrecognizable. New craters everywhere, scorch glass, a trench that goes on for kilometres!', 'shock'],

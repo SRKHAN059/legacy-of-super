@@ -6,6 +6,8 @@ import { registerEnemies, type EnemyDef } from './enemies';
  * T4 L21-28 HP 800-1200 STR 28-36 END 22-30 | T5 L29-36 HP 1400-2200 STR 36-46 END 30-40
  * T6 L37-44 HP 2500-4000 STR 46-58 END 40-50 | T7 L45-50 HP 4500-6500 STR 58-70 END 50-62
  * Chapter files add story enemies and bosses with `registerEnemies`.
+ * The engine keeps late tiers dangerous on its own (Guide §6): damage scales with the attacking stat above 28
+ * (`enemyPowerScale`) and regular enemies above STR/POW 44 spawn with up to 25% less HP (`enemyMaxHp`).
  */
 const SHARED: EnemyDef[] = [
   // Wolves (rusher packs).

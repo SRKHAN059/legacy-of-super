@@ -19,6 +19,8 @@ const VAULT = { hero: { x: 12, y: 12 }, seal: { x: 12, y: 5 }, copy: { x: 12, y:
 const YARD = { hero: { x: 23, y: 13 }, rematch: { x: 23, y: 23 }, fake: { x: 23, y: 19 } } as const;
 /** Invisible arena walls: Capsule Corp's door (21,7) and the west exit stay out of reach during the Monaka match. */
 const YARD_ARENA = { x0: 6, y0: 11, x1: 42, y1: 30 } as const;
+/** The boys' camp in the mushroom forest: the south exit (row 31) and the save point (18,5) stay out of reach. */
+const CAMP_ARENA = { x0: 1, y0: 7, x1: 16, y1: 21 } as const;
 /** The vault's exit (row 17) stays out of reach while the copies fight. */
 const VAULT_ARENA = { x0: 1, y0: 3, x1: 24, y1: 15 } as const;
 
@@ -141,17 +143,19 @@ registerScripts({
     const r = await inArena(s, s.fight('c08_monakaBeerus', { x: YARD.fake.x, y: YARD.fake.y, uid: 'c08_monakaF', loseOk: true }), YARD_ARENA);
     bossExp(s, 'c08_monakaBeerus', r === 'lose' ? 'end' : r);
     s.letterbox(true);
-    cast(s, 'c08_monakaF', 'c08_monakaCostume', YARD.fake.x, YARD.fake.y, 'down', 'Monaka');
+    // The fight leaves its boss on the lawn as an enemy puppet: swap it for a costume NPC (named, with a portrait).
+    dismiss(s, 'c08_monakaF');
+    cast(s, 'c08_monakaN', 'c08_monakaCostume', YARD.fake.x, YARD.fake.y, 'down', 'Monaka');
     s.pose('hero', null);
-    await s.say('c08_monakaF', 'Enough. *flick*', 'neutral');
+    await s.say('c08_monakaN', 'Enough. *flick*', 'neutral');
     s.flash('#ffffff', 10);
     await knockOut(s, 'hero', 23, 25);
     s.pose('hero', null);
     await s.talk([
       ['goku', 'WOW! One flick and I flew across the lawn! That\'s Monaka for ya! I gotta train harder!', 'happy'],
-      ['c08_monakaF', 'Yes. Train. Far away. For a long time.', 'neutral'],
+      ['c08_monakaN', 'Yes. Train. Far away. For a long time.', 'neutral'],
     ]);
-    dismiss(s, 'c08_monakaF');
+    dismiss(s, 'c08_monakaN');
     s.set('c08_monakaDone');
     await s.done('c08_monaka', false);
     await s.give('pow1');
@@ -254,7 +258,7 @@ registerScripts({
     s.spawnEnemy('c08_gooBlob', 6, 13, uids[2]);
     s.letterbox(false);
     s.free();
-    await s.waitDefeat(uids);
+    await inArena(s, s.waitDefeat(uids), CAMP_ARENA);
     s.lock();
     s.letterbox(true);
     cast(s, 'c08_potageA', 'c08_potage', 8, 18, 'up', 'Potage');

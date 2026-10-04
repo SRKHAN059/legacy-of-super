@@ -1,6 +1,6 @@
 import { registerScripts, type ScriptApi } from '../../../game/script';
 import { ensureChapterState, force, unforce } from '../common';
-import { battle, bossFight, freeNear, handOff, heroTile, readyGuest, removeAll, stage, stageOrReuse, sweepRivals, warpTo } from './helpers';
+import { battle, bossFight, freeNear, handOff, heroTile, readyGuest, refresh, removeAll, stage, sweepRivals, warpTo } from './helpers';
 import { HUB } from './hubs';
 
 /**
@@ -144,7 +144,7 @@ registerScripts({
     for (const [id, sp, x, y] of rivals) stage(s, id, sp, x, y, 'down');
     await s.pan(22, 13, 40);
     await s.talk([
-      ['grandPriest', 'Fighters of eight universes, welcome to the Null Realm! The Tournament of Power begins now.', 'happy'],
+      ['grandPriest', 'Fighters of eight universes, welcome to the World of Void! The Tournament of Power begins now.', 'happy'],
       ['grandPriest', 'Forty-eight minutes. Knock your opponents off the stage. The last universe standing wins. The others...', 'neutral'],
       ['zeno', 'Erase! Hehe!', 'happy'],
       ['vegeta', 'Kakarot. Don\'t you dare lose before I settle things with you.', 'smirk'],
@@ -202,20 +202,8 @@ registerScripts({
     wave(s, [['c14_u4Fighter', 22, 11], ['c14_u2Fighter', 15, 16], ['c14_pride', 29, 16], ['c14_u3Robot', 22, 22]]);
     await battle(s);
     s.letterbox(true);
-    const [hx, hy] = heroTile(s);
-    stage(s, 'c14_krillinA', 'krillinGi', hx - 3, hy - 2, 'left', 'Krillin');
-    stage(s, 'c14_frostA', 'frost', hx - 6, hy - 2, 'right', 'Frost');
-    await s.talk([
-      ['krillin', 'Ha! I\'ve taken out two already! I\'m on fire tod-', 'happy'],
-      ['frost', 'How nice for you.', 'smirk'],
-    ]);
-    await s.blast('c14_frostA', 'c14_krillinA', '#a0d0f0');
-    await ringOut(s, 'c14_krillinA', 1, 6);
-    await eliminated(s, 'Krillin has been eliminated! Universe 7: nine fighters remain.');
-    await s.say('krillin', '(from the stands) Why is it ALWAYS me?!', 'sad');
-    removeAll(s, 'c14_frostA');
 
-    // --- 2. The Trio de Dangers: Gohan hands over to Vegeta.
+    // --- 2. The Trio de Dangers (eps 97-98): Gohan hands over to Vegeta.
     await handOff(s, 'vegeta', { out: { id: 'c14_gohanA', name: 'Gohan' } });
     await s.talk([
       ['gohan', 'Vegeta! Universe 9 is regrouping - all three of them are coming this way!', 'shock'],
@@ -265,7 +253,22 @@ registerScripts({
     await erased(s, 'Zeno raises his hand... and Universe 9 vanishes. Its fighters, its gods, its stars. Gone.');
     await s.say('goku', '...', 'sad');
 
-    // --- 3. Kale goes berserk: Vegeta hands over to Goku, who has to survive.
+    // --- 3. Krillin is Universe 7's first elimination (ep 99), right in front of the two Saiyans.
+    const [kx0, ky0] = heroTile(s);
+    stage(s, 'c14_krillinA', 'krillinGi', kx0 - 3, ky0 - 2, 'left', 'Krillin');
+    stage(s, 'c14_frostA', 'frost', kx0 - 6, ky0 - 2, 'right', 'Frost');
+    await s.talk([
+      ['krillin', 'Ha! I\'ve taken out two already! I\'m on fire tod-', 'happy'],
+      ['frost', 'How nice for you.', 'smirk'],
+    ]);
+    await s.blast('c14_frostA', 'c14_krillinA', '#a0d0f0');
+    await ringOut(s, 'c14_krillinA', 1, 6);
+    await eliminated(s, 'Krillin has been eliminated! Universe 7: nine fighters remain.');
+    await s.say('krillin', '(from the stands) Why is it ALWAYS me?!', 'sad');
+    if (s.exists('c14_frostA')) await s.walk('c14_frostA', kx0 - 12, ky0 - 4, 3);
+    removeAll(s, 'c14_frostA');
+
+    // --- 4. Kale goes berserk (eps 100-101): Vegeta hands over to Goku, who has to survive.
     await handOff(s, 'goku', { out: { id: 'c14_vegetaA', name: 'Vegeta' }, at: 'c14_gokuA' });
     await s.talk([
       ['vegeta', 'Don\'t lose focus, Kakarot. That\'s what happens to the losers.', 'angry'],
@@ -309,15 +312,56 @@ registerScripts({
       ['caulifla', 'Kale! ...We\'ll be back for you, Universe 7. Count on it!', 'angry'],
     ]);
     removeAll(s, 'c14_kale1', 'c14_cauliflaA');
+    if (s.exists('c14_jirenA')) await s.walk('c14_jirenA', gx + 12, gy - 6, 2);
+    removeAll(s, 'c14_jirenA');
+    await s.say('goku', 'Jiren... I have to fight him. But not yet. Not like this.', 'neutral');
 
-    // --- 4. Goku vs Jiren: the Spirit Bomb and the first sign of Ultra Instinct.
+    // --- 5. Twenty minutes pass in the dark (eps 103-107), then Frieza vs Frost (ep 108; Frieza is a guest).
+    readyGuest(s, 'frieza', 47);
+    await s.fadeOut(20);
+    await erased(s, 'Twenty minutes in. Gohan outlasts Universe 10\'s last fighter, Obuni... and Zeno erases Universe 10.');
+    await s.narrate('Tien takes Universe 2\'s sniper out of the ring with him; Master Roshi frees Vegeta from Frost\'s trap, then retires on his own two feet.');
+    force(s, 'frieza');
+    refresh(s, 'frieza');
+    await s.fadeIn(20);
+    const [fhx, fhy] = heroTile(s);
+    stage(s, 'c14_frostB', 'frost', fhx + 4, fhy - 2, 'left', 'Frost');
+    await s.talk([
+      ['frost', 'Frieza. You and I are the same. Help me knock out Universe 7 and we\'ll split the universe between us.', 'smirk'],
+      ['frieza', 'Why, what a generous offer. I accept.', 'happy'],
+      ['frost', 'Excellent. Then-', 'happy'],
+      ['frieza', '...said no one with any taste. You\'re a cheap copy, Frost.', 'smirk'],
+    ]);
+    s.letterbox(false);
+    s.music('frieza');
+    const [fx, fy] = freeNear(s, fhx + 4, fhy - 2);
+    removeAll(s, 'c14_frostB');
+    await bossFight(s, 'c14_frost', { x: fx, y: fy, uid: 'c14_frost1' });
+    removeAll(s, 'c14_frost1');
+    s.letterbox(true);
+    await eliminated(s, 'Frost has been eliminated by Frieza!');
+    await s.say('frieza', 'Hohoho. Whose side am I on? Mine, as always. It simply happens to be yours today.', 'smirk');
+
+    // --- 6. Goku vs Jiren (eps 109-110): Frieza hands back to Goku. The Spirit Bomb and the first sign of Ultra Instinct.
+    await handOff(s, 'goku', { out: { id: 'c14_friezaA', name: 'Frieza' } });
+    await s.talk([
+      ['frieza', 'Your turn, Goku. Jiren hasn\'t moved a muscle all this time. Go and find out what he is hiding.', 'smirk'],
+    ]);
+    if (s.exists('c14_friezaA')) {
+      const [ex, ey] = heroTile(s);
+      await s.walk('c14_friezaA', ex - 9, ey + 1, 3);
+      removeAll(s, 'c14_friezaA');
+    }
     s.music('jiren');
+    const [jgx, jgy] = heroTile(s);
+    stage(s, 'c14_jirenA', 'jiren', jgx + 4, jgy - 3, 'left', 'Jiren');
+    s.face('hero', 'c14_jirenA');
     await s.talk([
       ['goku', 'Jiren! Fight me!', 'shout'],
       ['jiren', 'Your strength is not enough. But come, if you must.', 'neutral'],
     ]);
     s.letterbox(false);
-    const [jx, jy] = freeNear(s, gx + 4, gy - 4);
+    const [jx, jy] = freeNear(s, jgx + 4, jgy - 3);
     removeAll(s, 'c14_jirenA');
     await bossFight(s, 'c14_jiren1', { x: jx, y: jy, uid: 'c14_jiren1', loseOk: true });
     s.letterbox(true);
@@ -357,7 +401,8 @@ registerScripts({
     await s.narrate('Meanwhile, Hit traps Jiren in a "Time Cage" for a single breath - and is thrown out of the ring for it. Universe 6 fights on without him.');
     s.set('c14_stageA');
     s.clear(QUIET);
-    s.heal();
+    // Goku gets back up after the scripted loss (a 1 HP hero is never handed back to a hostile stage).
+    refresh(s, 'goku');
     unforce(s);
     s.music('tournament');
     await s.narrate('The west ring is crumbling. Save if you like - fighters from every universe still prowl the stage - then head east to the central ring.');
@@ -370,47 +415,14 @@ registerScripts({
     s.clear('c14_reactorDown');
     s.letterbox(true);
     await clearStage(s);
-    // --- 1. Twenty minutes pass in the dark, then Frieza vs Frost (guest).
-    readyGuest(s, 'frieza', 47);
-    await s.fadeOut(20);
-    await erased(s, 'Twenty minutes in. Gohan outlasts Universe 10\'s last fighter, Obuni... and Zeno erases Universe 10.');
-    await s.narrate('Tien takes Universe 2\'s sniper out of the ring with him; Master Roshi frees Vegeta from Frost\'s trap, then retires on his own two feet.');
-    force(s, 'frieza');
-    s.heal();
-    await s.fadeIn(20);
-    const [hx, hy] = heroTile(s);
-    stage(s, 'c14_frostB', 'frost', hx + 4, hy - 2, 'left', 'Frost');
-    await s.talk([
-      ['frost', 'Frieza. You and I are the same. Help me knock out Universe 7 and we\'ll split the universe between us.', 'smirk'],
-      ['frieza', 'Why, what a generous offer. I accept.', 'happy'],
-      ['frost', 'Excellent. Then-', 'happy'],
-      ['frieza', '...said no one with any taste. You\'re a cheap copy, Frost.', 'smirk'],
-    ]);
-    s.letterbox(false);
-    s.music('frieza');
-    const [fx, fy] = freeNear(s, hx + 4, hy - 2);
-    removeAll(s, 'c14_frostB');
-    await bossFight(s, 'c14_frost', { x: fx, y: fy, uid: 'c14_frost1' });
-    removeAll(s, 'c14_frost1');
-    s.letterbox(true);
-    await eliminated(s, 'Frost has been eliminated by Frieza!');
-    await s.say('frieza', 'Hohoho. Whose side am I on? Mine, as always. It simply happens to be yours today.', 'smirk');
-
-    // --- 2. Caulifla and Kale fuse: Kefla. Frieza hands over to Goku; Ultra Instinct -Sign- returns.
-    await handOff(s, 'goku', { out: { id: 'c14_friezaB', name: 'Frieza' } });
-    await s.talk([
-      ['frieza', 'Your turn, Goku. Those Saiyan girls have been staring at you for minutes. Children bore me.', 'smirk'],
-    ]);
-    if (s.exists('c14_friezaB')) {
-      const [ex, ey] = heroTile(s);
-      await s.walk('c14_friezaB', ex - 9, ey + 1, 3);
-      removeAll(s, 'c14_friezaB');
-    }
+    // --- 1. Caulifla and Kale fuse: Kefla (eps 112-116). Goku takes the central ring; Ultra Instinct -Sign- returns.
+    await handOff(s, 'goku');
     s.music('tense');
     const [gx, gy] = heroTile(s);
     stage(s, 'c14_cauliflaB', 'caulifla', gx - 2, gy - 4, 'down', 'Caulifla');
     stage(s, 'c14_kaleB', 'kale', gx + 2, gy - 4, 'down', 'Kale');
     await s.talk([
+      ['caulifla', 'Told you we\'d be back, Universe 7! Kale\'s got that power under control now.', 'smirk'],
       ['caulifla', 'Earrings from our Supreme Kai. Put one on, Kale. Let\'s see how he handles two of us... as ONE.', 'smirk'],
       ['goku', 'Potara?! Uh oh.', 'shock'],
     ]);
@@ -445,12 +457,12 @@ registerScripts({
     await eliminated(s, 'Kefla is knocked out of the ring - and splits back into Caulifla and Kale as she falls!');
     await erased(s, 'Before long, Universe 6 and Universe 2 have no fighters left. Champa waves goodbye to Beerus with a grin. Then they are gone.');
 
-    // --- 3. Universe 3's fusion robot: time passes in the dark, Android 17 (guest) takes over.
+    // --- 2. Universe 3's fusion robot (eps 119-121): time passes in the dark, Android 17 (guest) takes over.
     readyGuest(s, 'android17', 46);
     await s.fadeOut(20);
     await erased(s, 'Universe 4\'s tricksters fall too - but they take Piccolo with them. Universe 4 is erased.');
     force(s, 'android17');
-    s.heal();
+    refresh(s, 'android17');
     await s.fadeIn(20);
     s.music('tense');
     const [ax, ay] = heroTile(s);
@@ -511,45 +523,17 @@ registerScripts({
     if (s.flag('c14_stageC')) return;
     s.letterbox(true);
     await clearStage(s);
-    // --- 1. Toppo, God of Destruction vs Vegeta (SSB Evolved + Final Flash). The relay picks up in the dark.
-    await handOff(s, 'vegeta');
-    s.music('tense');
-    const [hx, hy] = heroTile(s);
-    stage(s, 'c14_toppoC', 'toppo', hx + 4, hy - 2, 'left', 'Toppo');
-    await s.talk([
-      ['toppo', 'To protect my universe, I cast aside justice itself. I am a God of Destruction now.', 'angry'],
-    ]);
-    await s.powerUp('c14_toppoC', '#b040f0', 60);
-    await s.talk([
-      ['vegeta', 'So you threw away your pride for power. Pathetic. I\'ll show you what pride is worth!', 'shout'],
-      ['vegeta', 'I am Vegeta, prince of a fallen race... and a prince kneels to no god!', 'shout'],
-    ]);
-    await s.powerUp('hero', '#3058d8', 70);
+    // --- 1. Vegeta vs Jiren (eps 122-123), told in the dark: Vegeta first reaches SSB Evolved. Spent, he hands the
+    //        relay to Gohan for Dyspo (ep 124).
+    await s.fadeOut(20);
+    await s.narrate('The east ring. Goku throws himself at Jiren again and again... until Vegeta shoves him aside and takes Jiren on himself.');
+    await s.narrate('A Final Flash at point-blank range. Then the prince breaks through his own limits: Super Saiyan Blue, Evolved!');
     await s.setForm('vegeta', 'ssbe');
-    s.transformNow('ssbe');
     await s.learn('vegeta', 'finalFlash');
-    s.letterbox(false);
-    s.music('battle');
-    const [tx, ty] = freeNear(s, hx + 4, hy - 2);
-    removeAll(s, 'c14_toppoC');
-    await bossFight(s, 'c14_toppoGoD', { x: tx, y: ty, uid: 'c14_toppo1' });
-    s.letterbox(true);
-    if (s.exists('c14_toppo1')) { s.show('c14_toppo1', true); s.place('c14_toppo1', tx, ty, 'left'); } else stage(s, 'c14_toppo1', 'toppo', tx, ty, 'left', 'Toppo');
-    await s.talk([
-      ['toppo', 'Hakai!', 'shout'],
-      ['vegeta', 'Erase THIS. FINAL... FLASH!', 'shout'],
-    ]);
-    await s.beamStruggle('vegetaSSBE', 'toppo', '#f8f080', '#b040f0', [
-      'Final Flash against the Energy of Destruction!',
-      'Vegeta pours his whole life into the beam!',
-    ], 0.24);
-    await ringOut(s, 'c14_toppo1', 25, 13);
-    s.transformNow(null);
-    await eliminated(s, 'Toppo is blasted clean off the stage! Vegeta eliminated a God of Destruction candidate.');
+    await handOff(s, 'gohan', { out: { id: 'c14_vegetaC', name: 'Vegeta', pose: 'hurt', sprite: 'vegeta' }, dx: 2 });
+    await s.say('vegeta', 'Hah... hah... Jiren took everything I had. Gohan... the fast one is yours. Don\'t you dare lose.', 'hurt');
 
-    // --- 2. Dyspo: an exhausted Vegeta hands over to Gohan (and Frieza).
-    await handOff(s, 'gohan', { out: { id: 'c14_vegetaC', name: 'Vegeta', pose: 'hurt' }, dx: 2 });
-    await s.say('vegeta', 'Hah... hah... That took everything I had. Gohan... the fast one is yours. Don\'t you dare lose.', 'hurt');
+    // --- 2. Gohan and Frieza vs Dyspo (ep 124): Frieza cages Dyspo and blasts him off the stage, Gohan with him.
     const [gx, gy] = heroTile(s);
     stage(s, 'c14_friezaC', 'goldenFrieza', gx - 2, gy - 1, 'right', 'Frieza');
     stage(s, 'c14_dyspoC', 'dyspo', gx + 4, gy - 2, 'left', 'Dyspo');
@@ -583,9 +567,44 @@ registerScripts({
     await s.say('frieza', 'A necessary sacrifice. You may thank me later. Or never.', 'smirk');
     removeAll(s, 'c14_friezaC', 'c14_vegetaC');
 
-    // --- 3. Goku vs Jiren: Mastered Ultra Instinct (god-mode). Time passes in the dark.
+    // --- 3. Toppo, God of Destruction vs Vegeta (eps 125-126): back on his feet, Vegeta returns to SSB Evolved.
+    await handOff(s, 'vegeta');
+    s.music('tense');
+    const [hx, hy] = heroTile(s);
+    stage(s, 'c14_toppoC', 'toppo', hx + 4, hy - 2, 'left', 'Toppo');
+    await s.talk([
+      ['toppo', 'Dyspo... I will not let his fall be for nothing.', 'angry'],
+      ['toppo', 'To protect my universe, I cast aside justice itself. I am a God of Destruction now.', 'angry'],
+    ]);
+    await s.powerUp('c14_toppoC', '#b040f0', 60);
+    await s.talk([
+      ['vegeta', 'So you threw away your pride for power. Pathetic. I\'ll show you what pride is worth!', 'shout'],
+      ['vegeta', 'I am Vegeta, prince of a fallen race... and a prince kneels to no god!', 'shout'],
+    ]);
+    await s.powerUp('hero', '#3058d8', 70);
+    s.transformNow('ssbe');
+    s.letterbox(false);
+    s.music('battle');
+    const [tx, ty] = freeNear(s, hx + 4, hy - 2);
+    removeAll(s, 'c14_toppoC');
+    await bossFight(s, 'c14_toppoGoD', { x: tx, y: ty, uid: 'c14_toppo1' });
+    s.letterbox(true);
+    if (s.exists('c14_toppo1')) { s.show('c14_toppo1', true); s.place('c14_toppo1', tx, ty, 'left'); } else stage(s, 'c14_toppo1', 'toppo', tx, ty, 'left', 'Toppo');
+    await s.talk([
+      ['toppo', 'Hakai!', 'shout'],
+      ['vegeta', 'Erase THIS. FINAL... FLASH!', 'shout'],
+    ]);
+    await s.beamStruggle('vegetaSSBE', 'toppo', '#f8f080', '#b040f0', [
+      'Final Flash against the Energy of Destruction!',
+      'Vegeta pours his whole life into the beam!',
+    ], 0.24);
+    await ringOut(s, 'c14_toppo1', 25, 13);
+    s.transformNow(null);
+    await eliminated(s, 'Toppo is blasted clean off the stage! Vegeta eliminated a God of Destruction candidate.');
+
+    // --- 4. Goku vs Jiren (eps 127-129): Mastered Ultra Instinct (god-mode). Time passes in the dark.
     await s.fadeOut(20);
-    await s.narrate('The fight with Jiren rages on. Vegeta gives Goku the last of his energy and is thrown out of the ring. Android 17 vanishes in an explosion shielding them both.');
+    await s.narrate('Jiren unleashes his full power. Android 17 vanishes in an explosion shielding Goku and Vegeta; then Vegeta gives Goku the last of his energy and is thrown out of the ring.');
     await handOff(s, 'goku');
     s.music('jiren');
     const [jx0, jy0] = heroTile(s);
@@ -611,7 +630,7 @@ registerScripts({
     s.pose('hero', 'ko');
     s.music('tense');
 
-    // --- 4. The last stand: Frieza stands over the fallen Goku, then Android 17 returns.
+    // --- 5. The last stand (eps 130-131): Frieza stands over the fallen Goku, then Android 17 returns.
     readyGuest(s, 'frieza', 47);
     await handOff(s, 'frieza', { out: { id: 'c14_gokuKO', name: 'Goku', pose: 'ko' }, dx: 1, form: 'goldenFrieza' });
     if (s.exists('c14_jiren2')) s.face('hero', 'c14_jiren2');
@@ -672,7 +691,7 @@ registerScripts({
     ]);
     await erased(s, 'Universe 11 has no fighters left. Zeno raises his hand... and Jiren, Toppo and Belmod vanish along with their universe.');
 
-    // --- 5. The wish.
+    // --- 6. The wish.
     stage(s, 'c14_shenron', 'c14_superShenron', sx + 2, sy - 6, 'down', 'Super Shenron');
     s.flash('#f8d040', 30);
     s.shake(30, 3);
@@ -700,57 +719,15 @@ registerScripts({
     s.letterbox(false);
     await s.call('c14_epilogue');
   },
-  // ================================================================ Epilogue + credits
+  // ================================================================ Epilogue: back to Earth, then free roam
+  /**
+   * LoG2 (§14.10, §16): after the final battle the game hands control back for free roam; the canonical ending (the
+   * epilogue scenes and the credits) plays only when the player talks to the hub NPC, here Beerus and Whis at the
+   * Capsule Corp garden table (`post_beerus_talk`). Mr. Satan's ZTV press conference is the alternative ending.
+   */
   c14_epilogue: async (s) => {
     await s.narrate('For Frieza\'s "help", Whis restores his life on Beerus\'s grudging order. Frieza flies off to rebuild his army - and to train.');
-    await s.narrate('Days later, on Monster Island...');
-    await s.warp('c13_monster_hut', 16, 12, 'up');
-    s.letterbox(true);
-    s.music('peaceful');
-    // 17 already stands at his ranger station (map NPC); the family drops by.
-    const temp17 = stageOrReuse(s, 'c13_17', 'android17', 16, 10, 'down', 'Android 17');
-    stage(s, 'c14_e18', 'android18', 18, 11, 'left', 'Android 18');
-    stage(s, 'c14_eKrillin', 'krillinGi', 19, 12, 'left', 'Krillin');
-    stage(s, 'c14_eMarron', 'c13_marron', 14, 12, 'right', 'Marron');
-    await s.talk([
-      ['c13_marron', 'Uncle 17! Where\'s the boat?', 'happy'],
-      ['android17', 'There is no boat, Marron. I wished for something better.', 'smirk'],
-      ['krillin', 'Ten million zeni each, though! Bulma paid up!', 'happy'],
-      ['android18', '...After I reminded her. Twice.', 'smirk'],
-      ['android17', 'Ten million zeni. Hm. I could buy a really nice boat with that.', 'happy'],
-    ]);
-    removeAll(s, 'c14_e18', 'c14_eKrillin', 'c14_eMarron');
-    if (temp17) removeAll(s, 'c13_17');
-    await s.narrate('And somewhere in the wilderness...');
-    await s.warp('c13_training_wilds', 16, 13, 'right');
-    stage(s, 'c14_eGoku', 'gokuSSB', 15, 12, 'right', 'Goku');
-    stage(s, 'c14_eVegeta', 'vegetaSSB', 20, 12, 'left', 'Vegeta');
-    s.show('hero', false);
-    await s.talk([
-      ['vegeta', 'Kakarot. You reached Ultra Instinct before me. That changes nothing. I WILL surpass you.', 'angry'],
-      ['goku', 'Heh. I know you will, Vegeta. That\'s why it\'s so much fun!', 'happy'],
-    ]);
-    await s.clash('c14_eGoku', 'c14_eVegeta', 120);
-    s.flash('#ffffff', 20);
-    await s.narrate('The gods watched. The universes lived. And two Saiyans kept on fighting, just because they could.');
-    removeAll(s, 'c14_eGoku', 'c14_eVegeta');
-    s.show('hero', true);
-    await s.credits([
-      '#Universe 7: The Mighty Ten',
-      'Son Goku', 'Vegeta', 'Son Gohan', 'Piccolo', 'Android 17', 'Android 18', 'Krillin', 'Tien Shinhan', 'Master Roshi', 'Frieza',
-      '',
-      '#Also starring',
-      'Future Trunks', 'Bulma', 'Chi-Chi', 'Videl and Pan', 'Goten and Trunks', 'Mr. Satan (World Champion)', 'Majin Buu (asleep)',
-      '',
-      '#Gods and Angels',
-      'Beerus and Whis', 'Champa and Vados', 'Grand Priest', 'Lord Zeno and Future Zeno',
-      '',
-      '#Worthy opponents',
-      'Hit', 'Toppo', 'Dyspo', 'Kefla', 'Jiren',
-      '',
-      '#Special thanks',
-      'The seven animals of Monster Island', 'Barry Kahn\'s stunt double', 'Super Shenron', 'Everyone who lent their energy',
-    ]);
+    await s.narrate('And Universe 7\'s fighters go home to Earth, to their families... and to a very large victory dinner.');
     if (s.hasScript('post_start')) await s.call('post_start');
   },
 
@@ -769,7 +746,7 @@ registerScripts({
       return;
     }
     if (s.flag('post_game')) {
-      const c = await s.ask('grandPriest', 'The tournament stage still floats in the Null Realm. Lord Zeno lets fighters train there. Shall I send you?', ['Take me there', 'No thank you']);
+      const c = await s.ask('grandPriest', 'The tournament stage still floats in the World of Void. Lord Zeno lets fighters train there. Shall I send you?', ['Take me there', 'No thank you']);
       if (c === 0) await warpTo(s, 'top_arena_a', 3, 15, 'right');
       return;
     }
