@@ -176,23 +176,67 @@ own.
 
 ### Chapter 13 — "Universe Survival" (L42→45) — LoG2 parallel: the pre-Cell-Games collection chapter
 - Zeno Expo: Goku vs **Toppo** exhibition (`endAt` 0.5); Zeno announces the **Tournament of Power**.
-- Recruit Team U7 (gold quest with sub-objectives): Krillin & 18; Tien & Roshi; **Gohan** trains with Piccolo
-  (`setForm('gohan','ultimate')`, learns `kamehameha`; spar Piccolo); **Android 17** on Monster Island (your maps
-  `c13_monster_*`, Galactic Poachers mooks + Poacher boss; Goku vs 17 spar); **Frieza** revived from `hell_lake`
-  for 24 hours (spar Golden Frieza). Buu falls asleep → Frieza takes his place. Piccolo learns `hellzoneGrenade`.
-- Side: **7 escaped Monster Island animals** (LoG2's Missing Namekians) — find and return them to 17 → reward
-  (post-game) unlocks an optional superboss.
+- Recruit Team U7 (gold `c13_team` with four silver sub-objectives, any order): Krillin & 18; Tien & Roshi;
+  **Gohan** trains with Piccolo (`setForm('gohan','ultimate')`, learns `kamehameha`; spar Piccolo); **Android 17**
+  on Monster Island (`c13_monster_*`, Galactic Poachers mooks + Poacher boss; Goku vs 17 spar). Piccolo learns
+  `hellzoneGrenade`. Then Buu falls asleep → the tenth warrior: **Frieza** revived from `hell_lake` for 24 hours
+  (U9 assassins, spar Golden Frieza) → `c13_finish` → `c14_start`.
+- **Goku vs. Gohan** (ep 90, silver `c13_leader`, `c13_leader.ts`): plays inside `c13_check` the moment Tien and
+  Gohan are both done (either order; from the dojo it moves to `c13_training_wilds`). Forced Goku: 2-on-2 round
+  (Tien's Tri-Beam blocked, Goku vs `c13_gohanTag` while Piccolo charges, `survive` 30 / `endAt` 0.6), Piccolo's
+  full-body wave ends it, Senzu Beans, then Goku vs `c13_gohanUltimate` (`endAt` 0.4, `loseOk`), Blue Kaio-ken
+  finish; Goku picks Gohan as leader (announced to the team at the Chapter 14 gathering). The hero who started
+  the beat is restored.
+- **"Meanwhile, in Universe 6"** (eps 88-93, gold `c13_u6`, `c13_u6.ts`): runs inside `c13_whis_frieza`, between
+  Goku's Frieza pitch to Beerus and his visit to Hell (ep 93 cuts between them). Played as **Cabba** (an outfit over
+  a forced Vegeta: his level and techniques, Z forms set aside, HP/EP stashed and restored afterwards; the episode's
+  EXP stays with Vegeta). Champa's planet (`c13_champa_terrace`) → Sadala old quarter (`c13_sadala_quarter`: Renso,
+  a street brawl with Caulifla's gang, the hideout, Cabba's Super Saiyan) → the crags (`c13_sadala_crags`):
+  Caulifla's first Super Saiyan, spar vs `c13_cauliflaSSJ` (`endAt` 0.5, `loseOk`, ends as a draw), Kale's first
+  berserk Legendary form (`c13_kaleBerserk`, invulnerable: `survive` 40, or reach Caulifla and press A on the
+  `c13_u6ShoutT` trigger to make her step in), Caulifla's SSJ2 save → Champa's verdict → back to Goku. Goku never
+  meets Caulifla and Kale before the tournament (Chapter 14 is their first meeting, as in the anime).
+- Side: **7 escaped Monster Island animals** (LoG2's Missing Namekians, bronze `c13_animals`): beach, poacher camp,
+  Baba's palace, Mt. Paozu (`paozu_home`), and three in old regions behind coloured gates like LoG2's gated Nameks:
+  the Cliff Bat in the sealed canyon cave (Vegeta 25, `waste_canyon`), the Baby Dino in the Highland Peak dino park
+  (Goku 40, `snow_peak`), the Emerald Kite in the Paozu Peaks shrine hollow (Goku 15, `paozu_peaks`). 17 names the
+  region of the next missing one. All seven → reward; post-game → Jiren's rematch.
+- Post-game (bronze `c13_sadala`): Cabba visits Capsule Corp, Sadala (U6) opens on the space map
+  (`c13_spot_sadala`); Caulifla (SSJ2) and Kale tag-team rematch in her yard; Sadala townsfolk, Renso and the gang
+  react; the crags become a T7 hunting ground.
 
 ### Chapter 14 — "The Tournament of Power" (L45→48 + god-mode finale) — LoG2 parallel: the Cell Games gauntlet
-- `top_arena_a/b/c` (`ringOut` maps). Opening melee with waves of fighters from many universes (`universeFighter`,
-  `prideTrooper`, register more), Gohan leads (forced) with swaps. Bosses in order (relay, each with a forced
-  character): U9 trio (Basil/Lavender/Bergamo), Kale berserk (`survive`), Goku's first clash with **Jiren** (eps
-  109-110: Goku learns `spiritBomb` for the big clash, **beam struggle**; Jiren throws it back and Goku first awakens
-  Ultra Instinct -Sign-: `transformNow('ui')`), Caulifla & Kale → **Kefla** (-Sign- *returns* mid-fight, eps 115-116),
-  U3's robot, **Toppo (God of Destruction)** vs Vegeta (`setForm('vegeta','ssbe')`), **Dyspo** (Gohan + Frieza),
-  **Jiren** again — Goku masters Ultra Instinct (god-mode, like LoG2's SSJ2 Gohan; `transformNow('ui')`), then the
-  last stand: Frieza → Android 17 vs Jiren, ring-out of all three, 17 is the last one standing. Vegeta learns
-  `finalFlash`. 17's wish restores the erased universes → credits.
+- Files: `c14.ts` (start, departure, the three stage relays, epilogue hand-off), `c14_setpieces.ts` (the set pieces
+  with their own mechanics), `c14_assist.ts` (fighting partner, invisibility cues, twin boss), `c14_kit.ts` (ring-out
+  staging), `c14_enemies.ts`, `c14_cast.ts` (sprites + Scouter entries). Stage maps: `world/farC/top.ts`.
+- Capsule Corp gathering (gold `c14_ready`), Beerus departs → `top_arena_a/b/c` (`ringOut` maps, gold `c14_top`).
+  Three relays, one per ring, each run inline (LoG2 hand-offs: fade, the outgoing fighter stays on stage, the next
+  forced fighter steps in fresh); a relay left before it is won restarts from its top. Order follows the anime:
+  - **Stage A** (west ring, runs on arrival): opening melee waves (Gohan) → Trio de Dangers, U9 erased (Vegeta) →
+    Krillin out → berserk Kale (`survive`, Goku), Jiren stops her → **Pride Trooper squad** (ep 101, Goku: Kahseral is
+    `vulnerableIf: c14_squadDown` until his four troopers are down; Kale takes control and blasts him out) →
+    **Kamikaze Fireballs** (ep 102, guest Android 17: Kakunsa plus Ribrianne and Rozie untouchable in the back; all
+    three transform at Kakunsa's first phase change; 17 throws Kakunsa out) → U10 erased → **Goku & Hit vs Dyspo and
+    K'nsi** (ep 104, Goku in SSG; Hit is an AI partner whose Time-Skip freezes his target; K'nsi out, Dyspo retreats) →
+    Tien/Roshi in the dark → Frieza (guest) vs Frost → Goku vs **Jiren** (`spiritBomb`, beam struggle, UI -Sign-) →
+    **Hit vs Jiren** (ep 111, cutscene: Time-Skips read, Time Release on one spot, Time Prison, Hit out).
+  - **Stage B** (central ring, trigger band): **Kefla** (-Sign- returns) → **17 & 18 vs Ribrianne** (eps 117-118, 18 as
+    AI partner; Super Ribrianne at her phase change; 18 knocks her out; Goku, 17 and 18 throw Rozie out) → **Gohan &
+    Piccolo vs Saonel and Pirina** (ep 118, Piccolo as AI partner; twin boss: a downed twin regenerates to 60% unless
+    the other falls within 10 s (HUD `REGEN`); canon's twist at the phase change: every Namekian of their world fused
+    into them) → U6 and U2 erased → **Gamisalas** (ep 119, Piccolo: invisible except for dust footprints, a shimmer
+    before each strike, a flicker, a reveal after each landed blow, and Piccolo's hearing while the hero stands still;
+    then Damom eliminates Piccolo, Gohan avenges him, U4 erased) → **Anilaza** (17; reactor puzzle, 18 out, U3 erased).
+  - **Stage C** (east ring, trigger band): Vegeta reaches SSB Evolved (`finalFlash`) → Gohan & Frieza vs **Dyspo**
+    (Gohan out) → **Toppo (God of Destruction)** vs Vegeta → Goku masters Ultra Instinct vs **Jiren** (god-mode) →
+    the last stand (Frieza → Android 17), triple ring-out, 17 is the last one standing → Super Shenron, the wish.
+- Set-piece flags: `c14_prideDone`, `c14_fireballsDone`, `c14_dyspoTagDone`, `c14_hitOut`, `c14_ribrianneDone`,
+  `c14_namekDone`, `c14_gamisalasDone`. Every set-piece boss is tuned to a LoG2 hits ratio ≤ 4 for its forced fighter
+  (twins ≤ 2.5 each) and stays below Kefla. Partners add only a small share of the damage, so the hero still wins
+  the fight; Hit's real help is the opening his freeze gives.
+- Free roam between relays (LoG2 hostile zone, 10-12 rivals per ring, T7): between stages A and B fighters of
+  Universes 2, 3, 4 and 11 (U9 and U10 are already erased); after stage B only Universe 11's Pride Troopers; in the
+  post-game every restored universe trains on all three rings. Relays sweep them first (`fc_topQuiet` during stage A).
 
 ### Epilogue & Post-game (`post_` prefix)
 - After credits: free roam continues (LoG2 post-game), talk to Whis/Beerus to see the "true ending" scene.

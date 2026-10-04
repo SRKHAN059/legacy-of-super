@@ -15,15 +15,17 @@ import { heroTalk } from './talk';
  *      g50_goku    {x:15,y:3,w:3,h:1} → chest trophy_goku    (16,1)
  *      g50_trunks  {x:21,y:3,w:3,h:1} → chest trophy_trunks  (22,1)
  *      g50_piccolo {x:27,y:3,w:3,h:1} → chest trophy_piccolo (28,1)
- *    Dino park (warm hot-spring valley) x 1-13 rows 12-30 behind g40_goku {x:14,y:18,w:1,h:3}.
- *    Mech alcove (goldMech + redMech, STR+5 chest) x 34-43 rows 19-30 via the corridor x 30-35 rows 23-25.
+ *    Dino park (warm hot-spring valley) x 1-13 rows 12-30 behind g40_goku {x:14,y:18,w:1,h:3}: LoG2's Goku-40
+ *    "dino park" grinding ground (Trihorns at 35,000 EXP and Blue T-Rexes at 36,900, LoG2's own values).
+ *    Ice cave x 34-43 rows 19-30 behind eb_g45_vegeta {x:33,y:23,w:1,h:3} (corridor x 30-33 rows 23-25): the L45-50
+ *    grinding pocket (Gold/Red Destroyers + Void Oozes, 43,000-59,000 EXP) and the STR+5 chest.
  */
 
 const SNOW = { n: 'snow', i: 'ice', r: 'rock', '#': 'cliff', D: 'deep', '.': 'grass', ',': 'darkGrass', '~': 'water' } as const;
 
 registerMaps([
   {
-    id: 'snow_entry', name: 'Snowy Highlands', music: 'field', hostile: true, region: 'Snowy Highlands',
+    id: 'snow_entry', name: 'Snowy Highlands', music: 'snow', hostile: true, region: 'Snowy Highlands',
     legend: SNOW,
     grid: GRIDS.snow_entry,
     props: [
@@ -61,7 +63,7 @@ registerMaps([
     ],
   },
   {
-    id: 'snow_peak', name: 'Highland Peak', music: 'field', hostile: true, region: 'Snowy Highlands',
+    id: 'snow_peak', name: 'Highland Peak', music: 'snow', hostile: true, region: 'Snowy Highlands',
     legend: SNOW,
     grid: GRIDS.snow_peak,
     props: [
@@ -83,15 +85,18 @@ registerMaps([
       { type: 'iceSabertooth', x: 17, y: 19 }, { type: 'iceSabertooth', x: 25, y: 28 },
       { type: 'stormPtero', x: 21, y: 15 }, { type: 'stormPtero', x: 28, y: 22 },
       { type: 'snowWolf', x: 22, y: 29 },
-      // Dino park.
+      // Dino park (Goku L40).
       { type: 'blueTRex', x: 5, y: 22 }, { type: 'blueTRex', x: 8, y: 27 },
+      { type: 'eb_trihorn', x: 7, y: 13 }, { type: 'eb_trihorn', x: 3, y: 24 }, { type: 'eb_trihorn', x: 7, y: 29 },
       { type: 'redRaptor', x: 4, y: 15 }, { type: 'redRaptor', x: 10, y: 18 }, { type: 'redRaptor', x: 10, y: 23 },
-      // Mech alcove.
+      // Ice cave (Vegeta L45).
       { type: 'redMech', x: 37, y: 23 }, { type: 'goldMech', x: 40, y: 26 },
+      { type: 'voidSlime', x: 38, y: 20 }, { type: 'voidSlime', x: 37, y: 28 },
     ],
     exits: { south: { to: 'snow_entry' } },
     barriers: [
       { id: 'g40_goku', x: 14, y: 18, w: 1, h: 3, level: 40, character: 'goku' },
+      { id: 'eb_g45_vegeta', x: 33, y: 23, w: 1, h: 3, level: 45, character: 'vegeta' },
       { id: 'g50_goku', x: 15, y: 3, w: 3, h: 1, level: 50, character: 'goku' },
       { id: 'g50_trunks', x: 21, y: 3, w: 3, h: 1, level: 50, character: 'trunks' },
       { id: 'g50_piccolo', x: 27, y: 3, w: 3, h: 1, level: 50, character: 'piccolo' },
@@ -105,6 +110,7 @@ registerMaps([
       { type: 'chest', x: 22, y: 1, id: 'trophy_trunks', item: 'trophyTrunks' },
       { type: 'chest', x: 28, y: 1, id: 'trophy_piccolo', item: 'trophyPiccolo' },
       { type: 'sign', x: 15, y: 17, text: 'Steam drifts through the gap: a warm valley full of dinosaurs. The orange barrier hums with Goku\'s colour.' },
+      { type: 'sign', x: 30, y: 22, text: 'An ice cave behind a dark-blue barrier. Something metal clanks in the dark, and something else gurgles. The barrier knows a prince\'s pride.' },
       { type: 'chest', x: 4, y: 28, id: 'eb_cap_snow_dino', item: 'str3' },
       { type: 'chest', x: 41, y: 27, id: 'eb_cap_snow_mech', item: 'str5' },
       { type: 'breakable', x: 16, y: 16, size: 2 },
@@ -129,6 +135,10 @@ registerScripts({
     }
     if (n % 3 === 2) {
       await s.say('eb_snow_climber', 'See that ledge above the pines to the north-east? There\'s a glowing circle in the forest that\'ll fly you up there. Something shiny on top.');
+      return;
+    }
+    if (n % 3 === 0) {
+      await s.say('eb_snow_climber', 'Up on the peak there\'s an ice cave behind a dark-blue barrier. Machines in there, and one of them is solid gold, apparently. My cousin also says he saw a yeti.', 'smirk');
       return;
     }
     await s.say('eb_snow_climber', s.check('chapter>=13')

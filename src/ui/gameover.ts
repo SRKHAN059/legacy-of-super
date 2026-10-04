@@ -13,7 +13,8 @@ export class GameOverScene implements Scene {
   private sel = 0;
 
   constructor(private readonly game: Game) {
-    audio.stopMusic();
+    // The field track gives way to the one-shot Game Over jingle.
+    game.playMusic('gameover');
   }
 
   update(input: Input): void {

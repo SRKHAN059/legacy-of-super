@@ -194,7 +194,7 @@ registerMaps([
 
   // ------------------------------------------------------------------ Hideout entrance
   {
-    id: 'future_hideout_out', name: 'Resistance Hideout', music: 'tense', region: 'Future Earth',
+    id: 'future_hideout_out', name: 'Resistance Hideout', music: 'futureWorld', region: 'Future Earth',
     tint: 'rgba(60,30,20,0.10)',
     legend: { '#': 'cliff', 'r': 'ruins', 'k': 'rock', 'd': 'dirt', 'w': 'wasteland' },
     grid: [
@@ -248,7 +248,7 @@ registerMaps([
 
   // ------------------------------------------------------------------ Hideout interior
   {
-    id: 'future_hideout_in', name: 'Resistance Hideout', music: 'sad', indoor: true, region: 'Future Earth',
+    id: 'future_hideout_in', name: 'Resistance Hideout', music: 'futureWorld', indoor: true, region: 'Future Earth',
     legend: { 'W': 'wall', 'm': 'metal', 'o': 'wood', 't': 'tile' },
     grid: [
       'WWWWWWWWWWWWWWWWWWWW',

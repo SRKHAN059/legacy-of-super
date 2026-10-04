@@ -51,7 +51,7 @@ registerMaps([
     ],
   },
   {
-    id: 'c00_tunnel', name: 'Collapsed Service Tunnel', music: 'tense', hostile: true, region: 'Future Earth',
+    id: 'c00_tunnel', name: 'Collapsed Service Tunnel', music: 'future', hostile: true, region: 'Future Earth',
     tint: 'rgba(10,10,30,0.30)',
     legend: { '#': 'cliff', 'm': 'metal', 'r': 'ruins', 'k': 'rock', 'a': 'asphalt', '~': 'water', 'D': 'deep' },
     grid: [
@@ -125,7 +125,7 @@ registerMaps([
     onEnter: 'c00_tunnel_enter',
   },
   {
-    id: 'c00_depot', name: 'Capsule Corp Depot No. 4', music: 'tense', hostile: true, region: 'Future Earth',
+    id: 'c00_depot', name: 'Capsule Corp Depot No. 4', music: 'future', hostile: true, region: 'Future Earth',
     tint: 'rgba(10,10,30,0.22)',
     legend: { '#': 'cliff', 'W': 'wall', 'm': 'metal', 't': 'tile' },
     grid: [

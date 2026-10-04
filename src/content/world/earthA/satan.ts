@@ -263,7 +263,7 @@ registerMaps([
 
   // ---------------------------------------------------------------- dojo (sparring arena)
   {
-    id: 'satan_dojo', name: 'Satan Dojo', music: 'town', region: 'Satan City', indoor: true, hostile: true,
+    id: 'satan_dojo', name: 'Satan Dojo', music: 'training', region: 'Satan City', indoor: true, hostile: true,
     legend: { ...IN },
     grid: [
       'RRRRRRRRRRRRRRRRRRRR',

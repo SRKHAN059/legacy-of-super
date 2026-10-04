@@ -49,7 +49,7 @@ registerScripts({
     if (s.flag(SEALED) || s.flag('c02_intro')) return;
     s.set('c02_gravityOn');
     s.letterbox(true);
-    s.music('battle');
+    s.music('training');
     await s.narrate('West City. Capsule Corporation\'s gravity room, set to one hundred and fifty times Earth\'s gravity.');
     s.pose('hero', 'charge');
     s.shake(20, 1);
@@ -138,7 +138,7 @@ registerScripts({
     s.set('ea_buuAway');
     await s.wait(16);
     s.letterbox(true);
-    s.music('town');
+    s.music('party');
     const p = s.field.player;
     const hx = Math.round((p.x - 8) / TILE);
     const hy = Math.round((p.y - 14) / TILE);
@@ -583,7 +583,7 @@ registerScripts({
     s.shake(20, 2);
     s.follow();
     s.letterbox(false);
-    s.music('battle');
+    s.music('boss');
     await arenaFight(s, 'c02_pilafMachine', { x: 34, y: 9, uid: 'c02_machine' });
     s.letterbox(true);
     s.music('tense');
@@ -698,7 +698,9 @@ registerScripts({
     s.transformNow('ssj');
     s.letterbox(false);
     s.remove('c02_beerus');
+    s.music('beerus');
     await arenaFight(s, 'c01_beerus', { x: bx + 1, y: by, uid: 'c02_beerusW', survive: 15, loseOk: true, label: 'HOLD ON' });
+    s.music('godly');
 
     s.letterbox(true);
     s.transformNow(null);

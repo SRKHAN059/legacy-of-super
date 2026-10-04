@@ -257,8 +257,8 @@ describe('act 5 chain (Ch12 → Ch14 → post-game)', () => {
 
     // Bronze: the seven escaped animals.
     const animals: Array<[string, string]> = [
-      ['c13_monster_beach', 'c13_ani1'], ['c13_monster_jungle', 'c13_ani2'], ['c13_monster_camp', 'c13_ani3'], ['c13_tien_dojo', 'c13_ani4'],
-      ['c13_training_wilds', 'c13_ani5'], ['c13_baba_lake', 'c13_ani6'], ['paozu_home', 'c13_ani7'],
+      ['c13_monster_beach', 'c13_ani1'], ['snow_peak', 'c13_ani2'], ['c13_monster_camp', 'c13_ani3'], ['paozu_peaks', 'c13_ani4'],
+      ['waste_canyon', 'c13_ani5'], ['c13_baba_lake', 'c13_ani6'], ['paozu_home', 'c13_ani7'],
     ];
     for (const [map, id] of animals) {
       sim.start(map);
@@ -1158,6 +1158,768 @@ describe('act 5 audit fixes', () => {
         }
       }
       expect(empty, `${id}: bare ${N}x${N} stretches`).toEqual([]);
+    }
+  });
+});
+
+// ------------------------------------------------------------------------------------------------ Chapter 13 interludes
+
+/** BFS over open tiles of the current field from a seed; returns the set of reached "x,y" keys. */
+function reachable(sim: Sim, sx: number, sy: number): Set<string> {
+  const f = sim.game.field;
+  if (!f) throw new Error('no field');
+  const open = (x: number, y: number) => !f.col.blocked({ x: x * 16 + 3, y: y * 16 + 8, w: 10, h: 6 });
+  const seen = new Set<string>([`${sx},${sy}`]);
+  const queue: Array<[number, number]> = [[sx, sy]];
+  while (queue.length) {
+    const next = queue.shift();
+    if (!next) break;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = next[0] + dx;
+      const ny = next[1] + dy;
+      const k = `${nx},${ny}`;
+      if (seen.has(k) || nx < 0 || ny < 0 || nx >= f.map.cols || ny >= f.map.rows || !open(nx, ny)) continue;
+      seen.add(k);
+      queue.push([nx, ny]);
+    }
+  }
+  return seen;
+}
+
+/** True when a tile or one of its four neighbours was reached (NPCs and props block their own tile). */
+function near(seen: Set<string>, x: number, y: number): boolean {
+  return [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => seen.has(`${x + dx},${y + dy}`));
+}
+
+/** A Chapter 13 save with every recruit in and the tenth warrior still to find. */
+function friezaReady(level = 44): Sim {
+  const sim = freshSim(13, level);
+  const st = sim.game.state;
+  for (const id of ['vegeta', 'gohan', 'piccolo', 'trunks'] as const) st.join(id, level - 2);
+  st.char('vegeta').form = 'ssb';
+  st.char('gohan').form = 'ultimate';
+  st.set('c13_expoSeen');
+  st.addQuest('c13_team');
+  for (const q of ['c13_krillin', 'c13_tien', 'c13_gohan', 'c13_17', 'c13_leader']) { st.addQuest(q); st.completeQuest(q); }
+  st.set('c13_friezaIntro');
+  st.addQuest('c13_frieza');
+  return sim;
+}
+
+describe('Chapter 13 interludes: Goku vs. Gohan, Universe 6, the gated animals', () => {
+  it('Goku vs. Gohan (ep 90) plays as Goku the moment Tien and Gohan are both in, and Gohan leads the team', async () => {
+    // Tien first, then Gohan's training (played from Piccolo's side): the spar follows on the plateau.
+    const sim = freshSim(13, 44);
+    const st = sim.game.state;
+    st.join('gohan', 42);
+    st.join('piccolo', 42);
+    st.addQuest('c13_tien');
+    st.completeQuest('c13_tien');
+    st.addQuest('c13_gohan');
+    st.data.active = 'piccolo';
+    const log = record(sim);
+    await beat(sim, 'lookout', 'c13_gohanL_talk', 26, 23);
+    expect(st.data.journal.c13_gohan).toBe('done');
+    expect(st.data.journal.c13_leader).toBe('done');
+    expect(QUESTS.c13_leader.star).toBe('silver');
+    expect(sim.game.field?.def.id).toBe('c13_training_wilds');
+    // Played as Goku, then handed back to the hero who started it, free to switch again.
+    const leader = log.find((l) => /Gohan is the leader of Team Universe 7/.test(l.text));
+    expect(leader?.hero).toBe('goku');
+    expect(log.findIndex((l) => /Two on two/.test(l.text))).toBeGreaterThan(log.findIndex((l) => /The Gohan I remember/.test(l.text)));
+    expect(log.findIndex((l) => /Senzu Bean/.test(l.text))).toBeGreaterThan(log.findIndex((l) => /Two on two/.test(l.text)));
+    expect(st.data.active).toBe('piccolo');
+    expect(st.flag('noSwitch')).toBe(false);
+    expect(st.flag('act5_busy')).toBe(false);
+    for (const id of ['c13_gohanR', 'c13_gohanR2', 'c13_piccoloR', 'c13_tienR']) expect(sim.game.field?.npcs.some((n) => n.def.id === id), id).toBe(false);
+    expect(log.some((l) => /wants him to lead the team/.test(l.text))).toBe(true);
+
+    // Gohan first, then Tien: the dojo hands over to the plateau.
+    const sim2 = freshSim(13, 44);
+    const st2 = sim2.game.state;
+    st2.join('gohan', 42);
+    st2.join('piccolo', 42);
+    st2.addQuest('c13_gohan');
+    st2.completeQuest('c13_gohan');
+    st2.addQuest('c13_tien');
+    await beat(sim2, 'c13_tien_dojo', 'c13_dojo_event', 18, 20);
+    expect(st2.data.journal.c13_tien).toBe('done');
+    expect(st2.data.journal.c13_leader).toBe('done');
+    expect(sim2.game.field?.def.id).toBe('c13_training_wilds');
+    expect(st2.data.active).toBe('goku');
+
+    // Only one of the two in: no spar yet.
+    const sim3 = freshSim(13, 44);
+    const st3 = sim3.game.state;
+    st3.addQuest('c13_tien');
+    await beat(sim3, 'c13_tien_dojo', 'c13_dojo_event', 18, 20);
+    expect(st3.data.journal.c13_tien).toBe('done');
+    expect(st3.data.journal.c13_leader).toBeUndefined();
+    expect(sim3.game.field?.def.id).toBe('c13_tien_dojo');
+  });
+
+  it('Universe 6 (eps 88-93) cuts in between Goku\'s Frieza plan and Hell: Cabba recruits Caulifla and Kale', async () => {
+    const sim = friezaReady();
+    const st = sim.game.state;
+    const veg = st.char('vegeta');
+    const before = { str: veg.str, pow: veg.pow, end: veg.end };
+    const log = record(sim);
+    const said = (re: RegExp) => log.findIndex((l) => re.test(l.text));
+    await beat(sim, 'cc_yard', 'act5_beerus_talk', 25, 17);
+
+    // Gold story beat, recorded in the Journal; the chapter still hands over to the tournament.
+    expect(QUESTS.c13_u6.star).toBe('gold');
+    expect(st.data.journal.c13_u6).toBe('done');
+    expect(st.flag('c13_u6Done')).toBe(true);
+    expect(st.flag('c13_u6KaleCalmed')).toBe(true);
+    expect(st.data.journal.c13_frieza).toBe('done');
+    expect(st.data.chapter).toBe(14);
+    // Canon order: the plan, Universe 6 (Renso, the gang, the hideout, Caulifla's Super Saiyan, the spar, Kale), Hell.
+    const order = [/Frieza!$/, /Meanwhile, in Universe 6/, /Seventy rival fighters/, /her potential is bigger/, /Fresh meat/, /your hair just turned GOLD/,
+      /Like\.\.\. THIS/, /We'll call this one a draw/, /TAKE YOU AWAY/, /Super Saiyan\.\.\. TWO/, /Cabbage, Cauliflower and Kale/,
+      /presents himself at King Yemma/, /Come to gloat/];
+    const idx = order.map((re) => said(re));
+    for (const [i, re] of order.entries()) expect(idx[i], String(re)).toBeGreaterThan(-1);
+    for (let i = 1; i < idx.length; i++) expect(idx[i], `${order[i]} after ${order[i - 1]}`).toBeGreaterThan(idx[i - 1]);
+    // The episode visits three places, all played as Cabba (Vegeta's stand-in); Goku never meets the U6 Saiyans
+    // before the tournament.
+    const u6 = log.slice(0, idx[idx.length - 2]).filter((l) => /^c13_(champa_terrace|sadala_quarter|sadala_crags)$/.test(l.map));
+    expect(new Set(u6.map((l) => l.map))).toEqual(new Set(['c13_champa_terrace', 'c13_sadala_quarter', 'c13_sadala_crags']));
+    expect(u6.every((l) => l.hero === 'vegeta')).toBe(true);
+    expect(log.some((l) => /^c13_sadala/.test(l.map) && l.hero === 'goku')).toBe(false);
+    // Vegeta gets his own look, form and stats back (the EXP Cabba earned stays, so stats can only have grown).
+    expect(veg.outfit).toBeUndefined();
+    expect(veg.form).toBe('ssb');
+    expect(veg.level).toBeGreaterThanOrEqual(42);
+    for (const k of ['str', 'pow', 'end'] as const) expect(veg[k] - before[k], k).toBeGreaterThanOrEqual(0);
+    for (const f of ['c13_u6Stash', 'c13_u6Boost', 'c13_u6Rampage', 'act5_busy']) expect(st.flag(f), f).toBe(false);
+    expect(sim.errors).toEqual([]);
+
+    // The episode on its own: Cabba steps in fresh, and Vegeta's HP and EP are what they were; Goku is forced for Hell.
+    const sim2 = friezaReady();
+    const st2 = sim2.game.state;
+    const v2 = st2.char('vegeta');
+    v2.hp = Math.round(v2.hpMax * 0.6);
+    v2.ep = Math.round(v2.epMax * 0.5);
+    const [hp, ep, str] = [v2.hp, v2.ep, v2.str];
+    sim2.start('cc_yard', 25, 17);
+    await settle(sim2);
+    expect(await sim2.run('c13_u6_episode', {}, TICKS)).toBe(true);
+    expect([v2.hp, v2.ep, v2.outfit, v2.form]).toEqual([hp, ep, undefined, 'ssb']);
+    expect(v2.str).toBeGreaterThanOrEqual(str);
+    expect(st2.data.active).toBe('goku');
+    expect(st2.flag('noSwitch')).toBe(true);
+    expect(sim2.errors).toEqual([]);
+    // Asking again never replays it.
+    const log2 = record(sim2);
+    expect(await sim2.run('c13_u6_episode', {}, TICKS)).toBe(true);
+    expect(log2.length).toBe(0);
+  });
+
+  it('berserk Kale cannot be hurt; reaching Caulifla and pressing A makes her step in', async () => {
+    const { SADALA } = await import('../../src/content/chapters/act5/c13_maps');
+    const sim = freshSim(13, 44);
+    const st = sim.game.state;
+    st.join('vegeta', 42);
+    st.data.active = 'vegeta';
+    sim.start('c13_sadala_crags', 13, 14);
+    await settle(sim);
+    let done = false;
+    void sim.game.runScript('c13_u6_kale').then(() => { done = true; });
+    await driveUntil(sim, 'Kale rampage', () => st.flag('c13_u6Rampage') && midFight(sim));
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    const kale = f.enemies.find((e) => e.uid === 'c13_kale1');
+    expect(kale).toBeTruthy();
+    if (!kale) return;
+    const hp = kale.hp;
+    expect(f.applyDamage(kale, 99, 400, { x: 0, y: 0 }, 0, false)).toBe(0);
+    expect(kale.hp).toBe(hp);
+    // Caulifla stands at the east rim inside the A-trigger; a press beside her ends the rampage before the timer.
+    const caul = f.npcs.find((n) => n.def.id === 'c13_cauliflaC2');
+    expect(caul).toBeTruthy();
+    const [cx, cy] = SADALA.crags.caulifla;
+    expect([Math.floor((caul?.x ?? 0) / 16), Math.floor(((caul?.y ?? 0) - 14) / 16)]).toEqual([cx, cy]);
+    put(sim, cx - 1, cy, 'right');
+    expect(f.timer && f.timer.frames > 0).toBe(true);
+    expect(f.tryInteract()).toBe(true);
+    expect(st.flag('c13_u6Shouted')).toBe(true);
+    for (let i = 0; i < 40000 && !done; i += 5) await drive(sim, 5);
+    expect(done).toBe(true);
+    expect(st.flag('c13_u6KaleCalmed')).toBe(true);
+    expect(st.flag('act5_busy')).toBe(false);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('seven escaped animals in all; three fled into old regions, behind gates only one fighter can break', async () => {
+    const { ANIMALS } = await import('../../src/content/chapters/act5/c13');
+    const { MAPS } = await import('../../src/content/registry');
+    const found = new Map<string, string>();
+    for (const id of Object.keys(MAPS)) {
+      for (const n of resolveMap(id)?.npcs ?? []) {
+        if (n.talk !== 'c13_animal_talk') continue;
+        expect(found.has(n.id), `${n.id} placed twice`).toBe(false);
+        found.set(n.id, id);
+      }
+    }
+    expect([...found.keys()].sort()).toEqual(Object.keys(ANIMALS).sort());
+    // Four stay on Chapter 13's own maps and Mt. Paozu; three sit behind old hubs' coloured gates.
+    const GATED: Array<[string, string, string, string, number, [number, number]]> = [
+      ['c13_ani5', 'waste_canyon', 'eb_g25_vegeta', 'vegeta', 25, [3, 13]],
+      ['c13_ani2', 'snow_peak', 'g40_goku', 'goku', 40, [18, 30]],
+      ['c13_ani4', 'paozu_peaks', 'g15', 'goku', 15, [20, 30]],
+    ];
+    for (const [ani, map, gate, who, level, [sx, sy]] of GATED) {
+      expect(found.get(ani), ani).toBe(map);
+      const def = resolveMap(map);
+      const npc = def?.npcs?.find((n) => n.id === ani);
+      const bar = def?.barriers?.find((b) => b.id === gate);
+      expect(npc && bar, `${ani} / ${gate}`).toBeTruthy();
+      if (!npc || !bar) continue;
+      expect([bar.character, bar.level]).toEqual([who, level]);
+      expect(npc.showIf).toBe('c13_animalsLoose');
+      const sim = freshSim(13, 44);
+      sim.game.state.set('c13_animalsLoose');
+      sim.start(map, sx, sy);
+      await settle(sim);
+      const f = sim.game.field;
+      if (!f) throw new Error(map);
+      expect(f.npcs.some((n) => n.def.id === ani && !n.hidden), `${ani} visible`).toBe(true);
+      expect(near(reachable(sim, sx, sy), npc.x, npc.y), `${ani} sealed behind ${gate}`).toBe(false);
+      const g = f.map.gates.find((x) => x.def.id === gate);
+      if (g) f.map.openGate(g);
+      expect(near(reachable(sim, sx, sy), npc.x, npc.y), `${ani} reachable once ${gate} is broken`).toBe(true);
+    }
+    // 17 points at the region and the barrier's colour.
+    const sim = freshSim(13, 44);
+    const st = sim.game.state;
+    for (const f of ['c13_17met', 'c13_bossDone', 'c13_17Joined', 'c13_animalsLoose', 'c13_ani_c13_ani1']) st.set(f);
+    const log = record(sim);
+    await beat(sim, 'c13_monster_hut', 'c13_17_talk', 16, 11);
+    expect(log.some((l) => /Baby Dino: in a warm valley full of dinosaurs on Highland Peak/.test(l.text))).toBe(true);
+  });
+
+  it('post-game: Cabba visits Capsule Corp, Sadala opens on the space map, and Caulifla and Kale get their rematch', async () => {
+    const sim = freshSim(15, 50);
+    const st = sim.game.state;
+    st.set('post_game');
+    st.join('vegeta', 49);
+    // Before the tournament nobody from Universe 6 is on Sadala's streets or at Capsule Corp.
+    for (const id of ['c13_sadala_quarter', 'c13_sadala_crags']) {
+      for (const n of resolveMap(id)?.npcs ?? []) expect(n.showIf, `${id} ${n.id}`).toBe('post_game');
+      for (const e of resolveMap(id)?.enemies ?? []) expect(e.showIf, `${id} ${e.type}`).toBe('post_game');
+      for (const ex of Object.values(resolveMap(id)?.exits ?? {})) expect(ex?.showIf).toBe('post_game&!act5_busy');
+    }
+    expect(resolveMap('cc_yard')?.npcs?.find((n) => n.id === 'c13_cabbaCC')?.showIf).toBe('post_game');
+
+    await beat(sim, 'cc_yard', 'c13_cabba_cc', 29, 18);
+    expect(st.data.regions).toContain('c13_spot_sadala');
+    expect(st.data.journal.c13_sadala).toBe('active');
+    expect(QUESTS.c13_sadala.star).toBe('bronze');
+    expect(SPOTS.c13_spot_sadala.world).toBe('space');
+    expect(resolveMap(SPOTS.c13_spot_sadala.map)?.region).toBe(SPOTS.c13_spot_sadala.name);
+
+    const spot = SPOTS.c13_spot_sadala;
+    sim.start(spot.map, spot.tx, spot.ty);
+    await settle(sim);
+    for (const id of ['c13_caulifla', 'c13_kale', 'c13_renso', 'c13_guard']) expect(sim.game.field?.npcs.some((n) => n.def.id === id && !n.hidden), id).toBe(true);
+    const pow = st.count('pow3');
+    await beat(sim, null, 'c13_sadala_caulifla');
+    expect(st.data.journal.c13_sadala).toBe('done');
+    expect(st.count('pow3')).toBe(pow + 1);
+    expect(sim.game.field?.enemies.filter((e) => !e.dead).length).toBe(0);
+    for (const id of ['c13_caulifla', 'c13_kale']) expect(sim.game.field?.npcs.some((n) => n.def.id === id && !n.hidden), id).toBe(true);
+    expect(st.flag('act5_busy')).toBe(false);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('new Chapter 13 sprites have scouter readings, and the new maps are open, connected and dressed', async () => {
+    const { SCANS } = await import('../../src/content/scans');
+    const { SADALA } = await import('../../src/content/chapters/act5/c13_maps');
+    for (const id of ['c13_cauliflaSSJ', 'c13_kaleBerserk', 'c13_renso', 'c13_gangPunk', 'c13_gangBrute', 'c13_gangSlinger', 'c13_sadalan',
+      'c13_sadalanF', 'c13_sadalaGuard', 'c13_sadalaPtero', 'c13_cragHound', 'caulifla', 'kale']) {
+      expect(SCANS[id], id).toBeTruthy();
+      expect(!!(CAST[id] || CREATURES[id]), `${id} sprite`).toBe(true);
+    }
+    const CASES: Array<[string, [number, number], Array<[number, number]>]> = [
+      ['c13_champa_terrace', SADALA.terrace.arrive, [SADALA.terrace.champa, SADALA.terrace.vados]],
+      ['c13_sadala_quarter', SADALA.quarter.arrive, [SADALA.quarter.renso, SADALA.quarter.gate, SADALA.quarter.throne, SADALA.quarter.kale,
+        SADALA.quarter.henchman, ...SADALA.quarter.gang, [45, 15], [26, 30]]],
+      ['c13_sadala_crags', SADALA.crags.arrive, [SADALA.crags.centre, SADALA.crags.caulifla, SADALA.crags.kaleHide, [0, 14]]],
+    ];
+    for (const [id, [sx, sy], goals] of CASES) {
+      const sim = freshSim(15, 50);
+      sim.game.state.set('post_game');
+      sim.start(id, sx, sy);
+      const f = sim.game.field;
+      const def = resolveMap(id);
+      if (!f || !def) throw new Error(id);
+      const open = (x: number, y: number) => !f.col.blocked({ x: x * 16 + 3, y: y * 16 + 8, w: 10, h: 6 });
+      for (const n of def.npcs ?? []) {
+        expect(open(n.x, n.y), `${id}: npc ${n.id}`).toBe(true);
+        if (CAST[n.sprite]) expect(SCANS[n.sprite], `${id}: scan for ${n.sprite}`).toBeTruthy();
+      }
+      for (const e of def.enemies ?? []) expect(open(e.x, e.y), `${id}: enemy ${e.type}`).toBe(true);
+      const seen = reachable(sim, sx, sy);
+      for (const [gx, gy] of goals) {
+        expect(open(gx, gy) || near(seen, gx, gy), `${id}: ${gx},${gy} open`).toBe(true);
+        expect(near(seen, gx, gy), `${id}: ${gx},${gy} reachable`).toBe(true);
+      }
+    }
+    // The set-piece trigger wraps Caulifla's tile.
+    const t = resolveMap('c13_sadala_crags')?.triggers?.find((x) => x.id === 'c13_u6ShoutT');
+    const [cx, cy] = SADALA.crags.caulifla;
+    expect(t && cx >= t.x && cx < t.x + t.w && cy >= t.y && cy < t.y + t.h).toBe(true);
+    // No screen-sized stretch of bare ground in Sadala (the camp / film lot rule).
+    const N = 6;
+    for (const id of ['c13_sadala_quarter', 'c13_sadala_crags']) {
+      const sim = new Sim();
+      sim.start(id);
+      const f = sim.game.field;
+      const def = resolveMap(id);
+      if (!f || !def) throw new Error(id);
+      const terrain = parseGrid(def);
+      const busy = new Set<string>();
+      for (const p of f.map.props) {
+        for (let y = Math.floor(p.y / 16); y <= Math.floor((p.y + p.art.bmp.height - 1) / 16); y++) {
+          for (let x = Math.floor(p.x / 16); x <= Math.floor((p.x + p.art.bmp.width - 1) / 16); x++) busy.add(`${x},${y}`);
+        }
+      }
+      for (const o of def.objects ?? []) busy.add(`${o.x},${o.y}`);
+      for (const n of def.npcs ?? []) busy.add(`${n.x},${n.y}`);
+      const bare = (x: number, y: number) => !busy.has(`${x},${y}`) && !f.col.blocked({ x: x * 16 + 3, y: y * 16 + 8, w: 10, h: 6 });
+      const empty: string[] = [];
+      for (let y = 0; y + N <= terrain.length; y++) {
+        for (let x = 0; x + N <= terrain[0].length; x++) {
+          let all = true;
+          for (let dy = 0; dy < N && all; dy++) for (let dx = 0; dx < N && all; dx++) all = bare(x + dx, y + dy) && terrain[y + dy][x + dx] === terrain[y][x];
+          if (all) empty.push(`${x},${y}`);
+        }
+      }
+      expect(empty, `${id}: bare ${N}x${N} stretches`).toEqual([]);
+    }
+  });
+});
+
+// ============================================================================================ Chapter 14 set pieces
+
+/** An enemy by uid on the current field. */
+type C14Foe = import('../../src/game/enemy').Enemy;
+
+/** Chapter 14 mid-tournament state for running one set piece on its own: the party at the band, guests ready. */
+function c14Sim(active: 'goku' | 'gohan' | 'piccolo' | 'android17'): Sim {
+  const sim = freshSim(14, 45);
+  const st = sim.game.state;
+  for (const id of ['vegeta', 'gohan', 'piccolo'] as const) st.join(id, 45);
+  st.join('android17', 46);
+  st.join('frieza', 47);
+  // Departed but no relay on the way (so the west ring's onEnter does not restart stage A), rivals cleared.
+  st.set('c14_departed');
+  st.set('fc_topQuiet');
+  st.addQuest('c14_top');
+  st.data.active = active;
+  return sim;
+}
+
+/** Start a set piece the way its relay does, then read dialogue (never attacking) until its fight is on. */
+async function c14IntoFight(sim: Sim, map: string, script: string): Promise<() => boolean> {
+  sim.start(map, 22, 16);
+  await settle(sim);
+  let finished = false;
+  void sim.game.runScript(script).then(() => { finished = true; });
+  await driveUntil(sim, `${script} fight`, () => midFight(sim));
+  return () => finished;
+}
+
+function c14Foe(sim: Sim, uid: string): C14Foe {
+  const e = sim.game.field?.enemies.find((x) => x.uid === uid);
+  if (!e) throw new Error(`no enemy ${uid} on ${sim.game.field?.def.id}`);
+  return e;
+}
+
+/** A blow big enough to bring an enemy to its scripted end (or knock it out). */
+function c14Finish(sim: Sim, e: C14Foe): void {
+  sim.game.field?.applyDamage(e, 255, 400, { x: 0, y: 0 }, 0, false);
+}
+
+/** Set-piece cutscene actors (and living enemies) still standing on the field. */
+function c14Leftovers(sim: Sim): string[] {
+  const f = sim.game.field;
+  if (!f) return [];
+  return [
+    ...f.npcs.filter((n) => /^c14_/.test(n.def.id)).map((n) => n.def.id),
+    ...f.enemies.filter((e) => !e.dead && e.state !== 'dying').map((e) => e.uid ?? e.def.id),
+  ];
+}
+
+describe('Chapter 14 set pieces (eps 101-119)', () => {
+  it('the relays play every set piece in anime order, each with its own fighter, and clean up after themselves', async () => {
+    const sim = freshSim(13, 45);
+    const st = sim.game.state;
+    const log = record(sim);
+    const said = (re: RegExp) => log.findIndex((l) => re.test(l.text));
+    sim.start('cc_yard', 22, 20);
+    await settle(sim);
+    await beat(sim, null, 'c14_start');
+    await beat(sim, null, 'act5_beerus_talk');
+    // Stage A (eps 98-111) ran inline from the departure.
+    for (const f of ['c14_stageA', 'c14_prideDone', 'c14_fireballsDone', 'c14_dyspoTagDone', 'c14_hitOut']) expect(st.flag(f), f).toBe(true);
+    expect(st.data.journal.c14_top).toBe('active');
+    const chronoA = [/He stopped her\.\.\. with one shot/, /Justice is efficient today/, /Universe 11 has lost five Pride Troopers/,
+      /Kakunsa has been eliminated/, /erases Universe 10/, /A team-up with Hit/, /K'nsi has been eliminated/, /Master Roshi frees Vegeta/,
+      /Frost has been eliminated by Frieza/, /^Ultra Instinct -Sign-\./, /Hit traps Jiren in a Time Prison/, /Hit has been eliminated/];
+    const idxA = chronoA.map(said);
+    for (const [i, re] of chronoA.entries()) expect(idxA[i], String(re)).toBeGreaterThan(-1);
+    for (let i = 1; i < idxA.length; i++) expect(idxA[i], `${chronoA[i]} after ${chronoA[i - 1]}`).toBeGreaterThan(idxA[i - 1]);
+    // Each set piece is played by the fighter canon gives it.
+    expect(log[said(/^Sweetheart\. Right\./)]?.hero).toBe('android17');
+    expect(log[said(/A team-up with Hit/)]?.hero).toBe('goku');
+    expect(log[said(/^Back off, red suits!/)]?.hero).toBe('goku');
+    expect(log[said(/Rest, Goku\. This one is my job/)]?.npcs).toContain('c14_hitJ');
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(st.flag('act5_busy') || st.flag('noSwitch')).toBe(false);
+    expect(sim.game.field?.player.formActive).toBeNull();
+
+    // Stage B (eps 113-121).
+    sim.start('top_arena_b', 3, 15);
+    await settle(sim);
+    await beat(sim, null, 'c14_stageB');
+    for (const f of ['c14_stageB', 'c14_ribrianneDone', 'c14_namekDone', 'c14_gamisalasDone']) expect(st.flag(f), f).toBe(true);
+    expect(st.data.journal.c14_top).toBe('active');
+    const chronoB = [/Told you we'd be back/, /Kefla is knocked out/, /Don't lecture me about love/, /Android 18 kicks Ribrianne out/,
+      /blast Rozie off the stage/, /Our universe needs you gone/, /Saonel and Pirina are blasted off/, /Universe 6 and Universe 2/,
+      /You breathe far too loudly/, /Gamisalas has been eliminated/, /eliminated by Damom/, /Universe 4 is erased/, /Universe 3 is erased/];
+    const idxB = chronoB.map(said);
+    for (const [i, re] of chronoB.entries()) expect(idxB[i], String(re)).toBeGreaterThan(-1);
+    for (let i = 1; i < idxB.length; i++) expect(idxB[i], `${chronoB[i]} after ${chronoB[i - 1]}`).toBeGreaterThan(idxB[i - 1]);
+    expect(log[said(/Don't lecture me about love/)]?.hero).toBe('android17');
+    expect(log[said(/Neither can we\. Piccolo, together!/)]?.hero).toBe('gohan');
+    expect(log[said(/You breathe far too loudly/)]?.hero).toBe('piccolo');
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(st.data.active).toBe('goku');
+    expect(sim.game.field?.player.hidden).toBe(false);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Pride Troopers (ep 101): Kahseral cannot be hurt until his four troopers fall', async () => {
+    const { SQUAD } = await import('../../src/content/chapters/act5/c14_enemies');
+    const sim = c14Sim('goku');
+    const st = sim.game.state;
+    const done = await c14IntoFight(sim, 'top_arena_a', 'c14_pride');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    const boss = c14Foe(sim, 'c14_kahseral1');
+    expect(f.applyDamage(boss, 255, 400, { x: 0, y: 0 }, 0, false)).toBe(0);
+    expect(boss.hp).toBe(boss.maxHp);
+    for (const uid of SQUAD) c14Finish(sim, c14Foe(sim, uid));
+    await driveUntil(sim, 'formation broken', () => st.flag('c14_squadDown'));
+    await driveUntil(sim, 'fight resumes', () => midFight(sim));
+    expect(f.applyDamage(boss, 40, 1, { x: 0, y: 0 }, 0, false)).toBeGreaterThan(0);
+    c14Finish(sim, boss);
+    await driveUntil(sim, 'Kale finishes it', done, 60000);
+    expect(st.flag('c14_prideDone')).toBe(true);
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Kamikaze Fireballs (ep 102): all three transform at the first phase change; the two in the back cannot be hit', async () => {
+    const sim = c14Sim('goku');
+    const st = sim.game.state;
+    const done = await c14IntoFight(sim, 'top_arena_a', 'c14_fireballs');
+    expect(st.data.active).toBe('android17');
+    const kak = c14Foe(sim, 'c14_kakunsa1');
+    const bri = c14Foe(sim, 'c14_brianneE');
+    const roz = c14Foe(sim, 'c14_sankaE');
+    expect(bri.def.invulnerable && roz.def.invulnerable).toBe(true);
+    expect([kak.spriteId, bri.spriteId, roz.spriteId]).toEqual(['c14_suroas', 'c14_brianne', 'c14_sanka']);
+    kak.hp = Math.floor(kak.maxHp * 0.8);
+    await driveUntil(sim, 'transformation', () => st.flag('c14_fireballsUp'));
+    expect([kak.spriteId, bri.spriteId, roz.spriteId]).toEqual(['c14_kakunsa', 'ribrianne', 'c14_rozie']);
+    await driveUntil(sim, 'fight resumes', () => midFight(sim));
+    c14Finish(sim, kak);
+    await driveUntil(sim, 'Kakunsa thrown out', done, 60000);
+    expect(st.flag('c14_fireballsDone')).toBe(true);
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Goku and Hit vs Dyspo (ep 104): Hit fights on his own, freezing K\'nsi first, and Goku fights in Super Saiyan God', async () => {
+    const sim = c14Sim('android17');
+    const st = sim.game.state;
+    const done = await c14IntoFight(sim, 'top_arena_a', 'c14_dyspoTag');
+    expect(st.data.active).toBe('goku');
+    expect(sim.game.field?.player.formActive).toBe('ssg');
+    expect(sim.game.field?.npcs.some((n) => n.def.id === 'c14_hitD')).toBe(true);
+    const knsi = c14Foe(sim, 'c14_knsi1');
+    const dyspo = c14Foe(sim, 'c14_dyspoA1');
+    let froze = false;
+    for (let i = 0; i < 1200 && !froze; i += 2) {
+      await drive(sim, 2);
+      froze = knsi.frozen > 0;
+    }
+    // The hero never attacked: Hit's Time-Skip landed on K'nsi (his preferred target) and froze him in time.
+    expect(froze).toBe(true);
+    expect(knsi.hp < knsi.maxHp || knsi.dead || knsi.state === 'dying').toBe(true);
+    expect(dyspo.hp).toBe(dyspo.maxHp);
+    c14Finish(sim, dyspo);
+    await driveUntil(sim, 'Dyspo pulls back', done, 60000);
+    expect(st.flag('c14_dyspoTagDone')).toBe(true);
+    expect(sim.game.field?.player.formActive).toBeNull();
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Saonel and Pirina (ep 118): a downed twin regenerates unless the other falls in time; the twist is revealed', async () => {
+    const { TWIN } = await import('../../src/content/chapters/act5/c14_assist');
+    const { TWIN_EXP } = await import('../../src/content/chapters/act5/c14_enemies');
+    const sim = c14Sim('android17');
+    const st = sim.game.state;
+    const log = record(sim);
+    const done = await c14IntoFight(sim, 'top_arena_b', 'c14_namek');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    expect(st.data.active).toBe('gohan');
+    expect(f.npcs.some((n) => n.def.id === 'c14_piccoloN')).toBe(true);
+    const sao = c14Foe(sim, 'c14_saonel1');
+    const pir = c14Foe(sim, 'c14_pirina1');
+    // Canon's twist at the first phase change: every Namekian of their world fused into the two of them.
+    sao.hp = Math.floor(sao.maxHp * 0.6);
+    await driveUntil(sim, 'the twist', () => st.flag('c14_namekTwist'));
+    expect(log.some((l) => /every warrior of our planet fused into the two of us/.test(l.text))).toBe(true);
+    await driveUntil(sim, 'fight resumes', () => midFight(sim));
+    // One twin down alone: a regeneration window opens, and the bar shows the twin still standing.
+    c14Finish(sim, sao);
+    expect(sao.ended).toBe(true);
+    await drive(sim, 2);
+    expect(f.timer?.label).toBe(TWIN.label);
+    expect(f.boss).toBe(pir);
+    await driveUntil(sim, 'Saonel regenerates', () => !sao.ended, 1200);
+    expect(sao.hp).toBe(Math.round(sao.maxHp * TWIN.regen));
+    expect(f.timer).toBeNull();
+    // Both down together: the fight ends, and the pair pays one reward.
+    const exp0 = st.char('gohan').exp;
+    c14Finish(sim, sao);
+    c14Finish(sim, pir);
+    await driveUntil(sim, 'blasted off together', done, 60000);
+    expect(st.char('gohan').exp - exp0).toBeGreaterThanOrEqual(TWIN_EXP);
+    expect(st.flag('c14_namekDone')).toBe(true);
+    expect(log.some((l) => /Universe 6 and Universe 2 have no fighters left/.test(l.text))).toBe(true);
+    // Piccolo stays on the stage for the next set piece (Gamisalas takes over from him).
+    expect(c14Leftovers(sim)).toEqual(['c14_piccoloN']);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Ribrianne (eps 117-118): Android 18 fights alongside 17, and Ribrianne grows into Super Ribrianne', async () => {
+    const sim = c14Sim('goku');
+    const st = sim.game.state;
+    const done = await c14IntoFight(sim, 'top_arena_b', 'c14_ribrianne');
+    expect(st.data.active).toBe('android17');
+    expect(sim.game.field?.npcs.some((n) => n.def.id === 'c14_18R')).toBe(true);
+    const rib = c14Foe(sim, 'c14_ribrianne1');
+    // The hero never attacks: Android 18 wears Ribrianne down on her own.
+    for (let i = 0; i < 1500 && rib.hp === rib.maxHp; i += 5) await drive(sim, 5);
+    expect(rib.hp).toBeLessThan(rib.maxHp);
+    rib.hp = Math.floor(rib.maxHp * 0.7);
+    await driveUntil(sim, 'Super Ribrianne', () => rib.spriteId === 'c14_superRibrianne');
+    await driveUntil(sim, 'fight resumes', () => midFight(sim));
+    c14Finish(sim, rib);
+    await driveUntil(sim, 'Ribrianne and Rozie out', done, 60000);
+    expect(st.flag('c14_ribrianneDone')).toBe(true);
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Gamisalas (ep 119): invisible except for his cues; standing still lets Piccolo hear him; the cloak drops when he falls', async () => {
+    const { CLOAK, cloakLevel } = await import('../../src/content/chapters/act5/c14_assist');
+    // The cue rules: unseen by default; the strongest current cue wins.
+    const quiet = { windup: false, reveal: 0, listen: 0, flicker: 0 };
+    expect(cloakLevel(quiet)).toBe(1);
+    expect(cloakLevel({ ...quiet, flicker: 2 })).toBeLessThan(1);
+    expect(cloakLevel({ ...quiet, windup: true })).toBeLessThanOrEqual(0.5);
+    expect(cloakLevel({ ...quiet, listen: CLOAK.listen - 1 })).toBe(1);
+    expect(cloakLevel({ ...quiet, listen: CLOAK.listen })).toBeLessThan(0.5);
+    expect(cloakLevel({ ...quiet, reveal: 1, windup: true })).toBeLessThanOrEqual(0.2);
+
+    const sim = c14Sim('gohan');
+    const st = sim.game.state;
+    const log = record(sim);
+    const done = await c14IntoFight(sim, 'top_arena_b', 'c14_gamisalas');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    expect(st.data.active).toBe('piccolo');
+    const gam = c14Foe(sim, 'c14_gamisalas1');
+    expect(gam.cloak).toBeGreaterThanOrEqual(0.5);
+    // Hold him in place so nothing interrupts the hero standing still; after a second Piccolo hears him.
+    gam.frozen = 100000;
+    await drive(sim, CLOAK.listen + 4);
+    expect(gam.cloak).toBeLessThan(0.5);
+    // A landed blow shows where he is...
+    expect(f.applyDamage(gam, 30, 1, { x: 0, y: 0 }, 0, false)).toBeGreaterThan(0);
+    await drive(sim, 1);
+    expect(gam.cloak).toBeLessThanOrEqual(0.2);
+    // ...but once the hero is on the move again and the reveal has passed, he is hard to see.
+    await drive(sim, CLOAK.reveal + 4, ['right']);
+    expect(gam.cloak).toBeGreaterThanOrEqual(0.5);
+    gam.frozen = 0;
+    c14Finish(sim, gam);
+    await drive(sim, 1);
+    expect(gam.cloak).toBe(0);
+    await driveUntil(sim, 'Gamisalas, then Piccolo, out', done, 60000);
+    expect(st.flag('c14_gamisalasDone')).toBe(true);
+    for (const re of [/Gamisalas has been eliminated/, /Piccolo has been eliminated by Damom/, /Universe 4 is erased/]) {
+      expect(log.some((l) => re.test(l.text)), String(re)).toBe(true);
+    }
+    expect(f.player.hidden).toBe(false);
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('a cloaked enemy is drawn without its ground shadow and at the cloak\'s opacity; a hit flash shows through', async () => {
+    const { Enemy } = await import('../../src/game/enemy');
+    const e = new Enemy('c14_gamisalas', 100, 100);
+    const ops: Array<{ op: string; alpha: number }> = [];
+    const target: Record<string, unknown> = { globalAlpha: 1 };
+    const ctx = new Proxy(target, {
+      get(t, p: string) {
+        if (p in t) return t[p];
+        return () => { ops.push({ op: p, alpha: Number(t.globalAlpha) }); };
+      },
+      set(t, p: string, v) { t[p] = v; return true; },
+    }) as unknown as CanvasRenderingContext2D;
+    const drawn = (): number | undefined => {
+      ops.length = 0;
+      e.draw(ctx, 0, 0);
+      return ops.filter((o) => o.op === 'drawImage').at(-1)?.alpha;
+    };
+    const shadow = (): boolean => {
+      ops.length = 0;
+      e.drawShadow(ctx, 0, 0);
+      return ops.some((o) => o.op === 'fill');
+    };
+    expect(drawn()).toBe(1);
+    expect(shadow()).toBe(true);
+    e.cloak = 1;
+    expect(drawn()).toBe(0);
+    expect(shadow()).toBe(false);
+    e.cloak = 0.4;
+    expect(drawn()).toBeCloseTo(0.6);
+    expect(shadow()).toBe(true);
+    e.cloak = 1;
+    e.flash = 3;
+    expect(drawn()).toBe(1);
+    expect(e.alpha).toBe(1);
+  });
+
+  it('set-piece bosses are fair for the fighter the story forces into them (LoG2 boss hit ratios)', async () => {
+    const { CHARACTERS, FORMS } = await import('../../src/content/characters');
+    const { CHAPTER_MIN_LEVEL, FORCED_LEVEL_GAP } = await import('../../src/content/chapters/common');
+    const { damage, ENEMY_POWER, MELEE_POWER, enemyPowerScale } = await import('../../src/game/leveling');
+    type Who = 'goku' | 'gohan' | 'piccolo' | 'android17';
+    const avg = (power: number, mult: number, stat: number, end: number): number => {
+      let sum = 0;
+      for (let r = 0; r < 26; r++) sum += damage({ power, mult, stat, end, res: 1, crit: false, r26: r });
+      return sum / 26;
+    };
+    /** Mean-roll stats of a character at a level (LoG2 level-up growth means). */
+    const statsAt = (id: Who, lv: number) => {
+      const d = CHARACTERS[id];
+      let hp = d.base.hp;
+      for (let l = 1; l < lv; l++) hp += Math.floor((hp * (3604 + 655)) / 65536);
+      const g = (k: 'str' | 'end') => d.base[k] + Math.floor(((lv - 1) * (d.growth[k][0] + d.growth[k][1])) / 2 / 256);
+      return { hp, str: g('str'), end: g('end') };
+    };
+    const band = CHAPTER_MIN_LEVEL[14];
+    const forced = band - FORCED_LEVEL_GAP;
+    // [boss, fighter, level, form, max ratio]: twins must fall together, so each half gets half the budget.
+    const cases: Array<[string, Who, number, string | null, number]> = [
+      ['c14_kahseral', 'goku', band, 'ssb', 4], ['c14_kakunsa', 'android17', 46, null, 4], ['c14_dyspoA', 'goku', band, 'ssg', 4],
+      ['c14_ribrianne', 'android17', 46, null, 4], ['c14_gamisalas', 'piccolo', forced, 'unweighted', 4],
+      ['c14_saonel', 'gohan', forced, 'ultimate', 2.5], ['c14_pirina', 'gohan', forced, 'ultimate', 2.5],
+    ];
+    for (const [id, who, lv, form, max] of cases) {
+      const b = ENEMIES[id];
+      const h = statsAt(who, lv);
+      const bonus = form ? Number(FORMS[form].bonus) : 0;
+      const hitsToEnd = (b.hp * (1 - (b.boss?.endAt ?? 0))) / avg(MELEE_POWER, 1, h.str + bonus, b.end);
+      const hitsToKo = h.hp / avg(ENEMY_POWER, enemyPowerScale(b.str), b.str, h.end + bonus);
+      const ratio = hitsToEnd / hitsToKo;
+      expect(ratio, `${id} vs ${who} L${lv}`).toBeLessThanOrEqual(max);
+      expect(ratio, `${id} vs ${who} L${lv}`).toBeGreaterThan(1);
+      // Headliners stay above them: every set-piece boss is weaker than Kefla.
+      expect(b.str + b.pow + b.end, id).toBeLessThan(ENEMIES.c14_kefla.str + ENEMIES.c14_kefla.pow + ENEMIES.c14_kefla.end);
+    }
+  });
+
+  it('the stage is a LoG2 hostile zone populated by the universes still standing', () => {
+    const U11 = ['c14_pride', 'fc_topGunner', 'c14_prideLancer'];
+    const ERASED_IN_A = ['c14_u9Wolf', 'c14_u10Fighter'];
+    const roster = (map: string, chapter: number, flags: string[]): string[] => {
+      const sim = new Sim();
+      sim.game.state.data.chapter = chapter;
+      for (const fl of flags) sim.game.state.set(fl);
+      sim.start(map);
+      return (sim.game.field?.enemies ?? []).filter((e) => !e.uid).map((e) => e.def.id);
+    };
+    // Between the first two relays: Universes 2, 3, 4 and 11, never the erased 9 and 10.
+    for (const map of ['top_arena_a', 'top_arena_b']) {
+      const mid = roster(map, 14, ['c14_departed', 'c14_stageA']);
+      expect(mid.length, map).toBeGreaterThanOrEqual(10);
+      expect(mid.filter((t) => ERASED_IN_A.includes(t)), map).toEqual([]);
+      expect(new Set(mid).size, map).toBeGreaterThanOrEqual(4);
+    }
+    // After the central ring: only Universe 11's Pride Troopers (stage C's are west of its trigger band).
+    for (const [map, min] of [['top_arena_a', 8], ['top_arena_b', 8], ['top_arena_c', 3]] as const) {
+      const late = roster(map, 14, ['c14_departed', 'c14_stageA', 'c14_stageB']);
+      expect(late.length, map).toBeGreaterThanOrEqual(min);
+      expect(late.filter((t) => !U11.includes(t)), map).toEqual([]);
+    }
+    const bandC = resolveMap('top_arena_c')?.triggers?.find((t) => t.id === 'c14_stageC_t');
+    for (const e of resolveMap('top_arena_c')?.enemies ?? []) if (e.showIf?.includes('c14_stageB')) expect(e.x, `${e.type}@${e.x},${e.y}`).toBeLessThan(bandC?.x ?? 0);
+    // Post-game: every restored universe trains on all three rings.
+    const post = ['top_arena_a', 'top_arena_b', 'top_arena_c'].map((m) => roster(m, 15, ['post_game', 'c14_won']));
+    for (const r of post) expect(r.length).toBeGreaterThanOrEqual(12);
+    for (const t of ERASED_IN_A) expect(post.flat()).toContain(t);
+    // Staged fights still clear the stage.
+    expect(roster('top_arena_b', 14, ['fc_topQuiet'])).toEqual([]);
+    // Every spawn stands on open ground, at least five tiles from the ring's save disc.
+    for (const map of ['top_arena_a', 'top_arena_b', 'top_arena_c']) {
+      const sim = new Sim();
+      sim.game.state.data.chapter = 14;
+      sim.game.state.set('fc_topQuiet');
+      sim.start(map);
+      const f = sim.game.field;
+      const def = resolveMap(map);
+      if (!f || !def) throw new Error(map);
+      const saves = (def.objects ?? []).filter((o) => o.type === 'save');
+      expect(saves.length, map).toBeGreaterThan(0);
+      for (const e of def.enemies ?? []) {
+        const where = `${map} ${e.type}@${e.x},${e.y}`;
+        expect(f.col.blocked({ x: e.x * 16 + 3, y: e.y * 16 + 8, w: 10, h: 6 }), where).toBe(false);
+        for (const o of saves) expect(Math.hypot(e.x - o.x, e.y - o.y), where).toBeGreaterThanOrEqual(5);
+      }
+    }
+  });
+
+  it('every new Chapter 14 sprite has a Scouter entry', async () => {
+    const { SCANS } = await import('../../src/content/scans');
+    const sprites = ['c14_kahseral', 'c14_tupper', 'c14_zoiray', 'c14_kettle', 'c14_vewon', 'c14_knsi', 'c14_brianne', 'c14_sanka', 'c14_suroas',
+      'c14_rozie', 'c14_kakunsa', 'c14_superRibrianne', 'c14_saonel', 'c14_pirina', 'c14_damom', 'ribrianne', 'gamisalas'];
+    for (const id of sprites) {
+      expect(CAST[id], id).toBeTruthy();
+      expect(SCANS[id]?.name, id).toBeTruthy();
+      expect(SCANS[id]?.desc.length, id).toBeGreaterThan(20);
+    }
+    // A fighter's cutscene actor reads exactly like the fighter itself (regular troopers at their trimmed HP).
+    const { enemyMaxHp } = await import('../../src/game/enemy');
+    const looks: Array<[string, string]> = [
+      ['c14_kahseral', 'c14_kahseral'], ['c14_tupper', 'c14_tupper'], ['c14_zoiray', 'c14_zoiray'], ['c14_kettle', 'c14_kettle'],
+      ['c14_vewon', 'c14_vewon'], ['c14_knsi', 'c14_knsi'], ['c14_kakunsa', 'c14_kakunsa'], ['c14_ribrianne', 'ribrianne'],
+      ['c14_saonel', 'c14_saonel'], ['c14_pirina', 'c14_pirina'], ['c14_gamisalas', 'gamisalas'],
+    ];
+    for (const [id, sprite] of looks) {
+      const e = ENEMIES[id];
+      const sc = SCANS[sprite];
+      expect([sc?.name, sc?.hp, sc?.str, sc?.pow, sc?.end], id).toEqual([e.name, enemyMaxHp(e), e.str, e.pow, e.end]);
     }
   });
 });

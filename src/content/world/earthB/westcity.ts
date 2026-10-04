@@ -51,7 +51,7 @@ const PANCHY_ON_LAWN = 'chapter==7&c07_champaDone&!c07_departed';
 
 registerMaps([
   {
-    id: 'wc_streets', name: 'West City', music: 'town', region: 'West City',
+    id: 'wc_streets', name: 'West City', music: 'westCity', region: 'West City',
     legend: CITY,
     grid: GRIDS.wc_streets,
     props: [
@@ -124,7 +124,7 @@ registerMaps([
     ],
   },
   {
-    id: 'wc_shops', name: 'Food Street Eateries', music: 'town', region: 'West City', indoor: true,
+    id: 'wc_shops', name: 'Food Street Eateries', music: 'westCity', region: 'West City', indoor: true,
     legend: { '#': 'wall', t: 'tile', w: 'wood', f: 'floor' },
     grid: GRIDS.wc_shops,
     props: [
@@ -152,7 +152,7 @@ registerMaps([
     objects: [{ type: 'chest', x: 1, y: 3, id: 'del_wc_shops_1', item: 'delicacy' }],
   },
   {
-    id: 'cc_yard', name: 'Capsule Corporation', music: 'town', region: 'West City',
+    id: 'cc_yard', name: 'Capsule Corporation', music: 'westCity', region: 'West City',
     legend: { ...CITY, x: 'metal', p: 'arena', d: 'dirt' },
     grid: GRIDS.cc_yard,
     props: [
@@ -213,7 +213,7 @@ registerMaps([
     ],
   },
   {
-    id: 'cc_inside', name: 'Capsule Corp. HQ', music: 'town', region: 'West City', indoor: true,
+    id: 'cc_inside', name: 'Capsule Corp. HQ', music: 'westCity', region: 'West City', indoor: true,
     legend: { '#': 'wall', x: 'metal', t: 'tile', c: 'carpet', f: 'floor', w: 'wood' },
     grid: GRIDS.cc_inside,
     props: [
@@ -243,7 +243,7 @@ registerMaps([
     objects: [{ type: 'chest', x: 1, y: 6, id: 'eb_cap_cclab', item: 'end1' }],
   },
   {
-    id: 'cc_gravity', name: 'Gravity Room', music: 'battle', region: 'West City', indoor: true, hostile: true,
+    id: 'cc_gravity', name: 'Gravity Room', music: 'training', region: 'West City', indoor: true, hostile: true,
     legend: { '#': 'wall', x: 'metal' },
     grid: GRIDS.cc_gravity,
     props: [['eb_gravityConsole', 7.25, 3.6], ['tv', 4, 1.2], ['tv', 10.5, 1.2]],

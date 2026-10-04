@@ -4,14 +4,27 @@ import { CHARACTERS } from '../content/characters';
 import { MAPS } from '../content/registry';
 import { audio } from '../engine/audio';
 import { SCREEN_H, SCREEN_W } from '../engine/constants';
+import { wrap } from '../engine/fontdata';
 import { font, makeBitmap, type Bitmap } from '../engine/gfx';
-import type { Input } from '../engine/input';
+import { BUTTONS, type Input } from '../engine/input';
 import type { Scene } from '../engine/scene';
 import type { Game } from '../game/game';
-import type { SaveData } from '../game/state';
+import { decodeSaveCode, SaveCodeError, type SaveData } from '../game/state';
+import { IntroScene } from './intro';
 import { drawWindow } from './window';
 
-type Mode = 'press' | 'menu' | 'files' | 'fileAction' | 'confirmDelete' | 'confirmNew' | 'options' | 'credits';
+/** Which screen of the title is up. */
+export type TitleMode =
+  | 'press' | 'menu' | 'files' | 'fileAction' | 'confirmDelete' | 'confirmNew' | 'confirmImport' | 'code' | 'message'
+  | 'options' | 'credits';
+
+/** Frames the title waits at PRESS START with no input before replaying the opening (LoG2's attract loop). */
+export const ATTRACT_IDLE_FRAMES = 30 * 60;
+/** Frames a file-screen message stays up unless dismissed. */
+const MESSAGE_FRAMES = 300;
+const RED = '#f86060';
+/** Shown on the title and file screens when browser storage is blocked. */
+const STORAGE_NOTICE = 'No browser storage: saves end with this tab';
 
 let logoCache: Bitmap | null = null;
 
@@ -34,22 +47,240 @@ function logo(): Bitmap {
   return bmp;
 }
 
-/** Title screen, file select and title options. */
+/** What the file screen shows about a save. */
+function describe(d: SaveData): { name: string; level: number; chapter: string; area: string; time: string } {
+  const secs = Math.floor(d.playFrames / 60);
+  return {
+    name: CHARACTERS[d.active].name,
+    level: d.chars[d.active].level,
+    chapter: d.chapter === 0 ? 'Prologue' : `Ch.${d.chapter}`,
+    area: MAPS[d.map]?.name ?? d.map,
+    time: `${Math.floor(secs / 3600)}:${String(Math.floor(secs / 60) % 60).padStart(2, '0')}`,
+  };
+}
+
+// ------------------------------------------------------------------------------------------------ save-code panel
+
+/**
+ * Copy / paste panel for save codes. A code is far too long for the 240x160 screen and has to reach the system
+ * clipboard, so it is an HTML overlay; the title screen waits on it and ignores game input meanwhile.
+ */
+export interface SaveCodeUi {
+  /** False when the page has no panel (headless tests, a custom embed). */
+  readonly available: boolean;
+  /** Show a code, try to copy it to the clipboard, and resolve when the player closes the panel. */
+  showExport(heading: string, code: string): Promise<void>;
+  /**
+   * Ask for a code. Each submission goes through `parse`; when it throws, its message is shown and the panel stays
+   * open for another try. Resolves with the parsed value, or null when the player cancels.
+   */
+  promptImport<T>(heading: string, parse: (code: string) => T): Promise<T | null>;
+}
+
+interface CodePanelEls {
+  root: HTMLElement;
+  form: HTMLFormElement;
+  title: HTMLElement;
+  help: HTMLElement;
+  text: HTMLTextAreaElement;
+  status: HTMLElement;
+  copy: HTMLButtonElement;
+  ok: HTMLButtonElement;
+  close: HTMLButtonElement;
+}
+
+/** The panel declared in index.html (#code-panel). */
+class DomSaveCodeUi implements SaveCodeUi {
+  private els: CodePanelEls | null | undefined;
+  private active: { submit(): void; cancel(): void } | null = null;
+
+  get available(): boolean {
+    return this.dom() !== null;
+  }
+
+  /** Look the panel up once and wire its events; null when the page has none. */
+  private dom(): CodePanelEls | null {
+    if (this.els !== undefined) return this.els;
+    const get = (id: string): HTMLElement | null => (typeof document !== 'undefined' ? document.getElementById(id) : null);
+    const root = get('code-panel');
+    const form = get('code-form');
+    const title = get('code-title');
+    const help = get('code-help');
+    const text = get('code-text');
+    const status = get('code-status');
+    const copy = get('code-copy');
+    const ok = get('code-ok');
+    const close = get('code-close');
+    if (!root || !(form instanceof HTMLFormElement) || !title || !help || !(text instanceof HTMLTextAreaElement) || !status
+      || !(copy instanceof HTMLButtonElement) || !(ok instanceof HTMLButtonElement) || !(close instanceof HTMLButtonElement)) {
+      this.els = null;
+      return null;
+    }
+    const els: CodePanelEls = { root, form, title, help, text, status, copy, ok, close };
+    // Keys typed into the panel must not reach the game's window listeners (which also swallow Space/Backspace).
+    // Releases are left alone: the A / Start that opened the panel is let go inside it, and the game has to see
+    // that, or it would treat the button as still held and drop the next press after the panel closes.
+    root.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Escape') { e.preventDefault(); this.active?.cancel(); }
+      // A code is one line (pasted line breaks are ignored), so Enter in the box submits; Shift+Enter breaks a line.
+      if (e.key === 'Enter' && e.target === text && !e.shiftKey && !e.isComposing) { e.preventDefault(); this.active?.submit(); }
+    });
+    form.addEventListener('submit', (e) => { e.preventDefault(); this.active?.submit(); });
+    close.addEventListener('click', () => this.active?.cancel());
+    copy.addEventListener('click', () => void this.copy(false));
+    text.addEventListener('focus', () => { if (text.readOnly) text.select(); });
+    this.els = els;
+    return els;
+  }
+
+  showExport(heading: string, code: string): Promise<void> {
+    const d = this.dom();
+    if (!d) return Promise.resolve();
+    return new Promise((resolve) => {
+      const done = (): void => { this.hide(d); resolve(); };
+      this.open(d, heading, 'Keep this code somewhere safe. Paste it into Import Code on the file screen (on any device) to get this file back.', code, 'export');
+      this.active = { submit: done, cancel: done };
+      d.close.focus();
+      void this.copy(true);
+    });
+  }
+
+  promptImport<T>(heading: string, parse: (code: string) => T): Promise<T | null> {
+    const d = this.dom();
+    if (!d) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      this.open(d, heading, 'Paste a save code below, then press Import or Enter. A bad or damaged code is refused, and the file is only replaced after you confirm.', '', 'import');
+      this.active = {
+        submit: () => {
+          try {
+            const v = parse(d.text.value);
+            this.hide(d);
+            resolve(v);
+          } catch (err) {
+            this.say(err instanceof Error ? err.message : 'That code could not be read.', true);
+            d.text.focus();
+          }
+        },
+        cancel: () => { this.hide(d); resolve(null); },
+      };
+      d.text.focus();
+    });
+  }
+
+  private open(d: CodePanelEls, heading: string, help: string, value: string, kind: 'export' | 'import'): void {
+    d.title.textContent = heading;
+    d.help.textContent = help;
+    d.text.value = value;
+    d.text.readOnly = kind === 'export';
+    d.text.placeholder = kind === 'import' ? 'LOS1....' : '';
+    d.copy.hidden = kind !== 'export';
+    d.ok.hidden = kind !== 'import';
+    d.close.textContent = kind === 'export' ? 'Close' : 'Cancel';
+    this.say('', false);
+    d.root.hidden = false;
+  }
+
+  private hide(d: CodePanelEls): void {
+    this.active = null;
+    d.root.hidden = true;
+    d.text.value = '';
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  }
+
+  private say(msg: string, error: boolean): void {
+    const d = this.dom();
+    if (!d) return;
+    d.status.textContent = msg;
+    d.status.classList.toggle('error', error);
+  }
+
+  /** Copy the shown code. The automatic attempt on open may be refused outside a user gesture (Safari). */
+  private async copy(auto: boolean): Promise<void> {
+    const d = this.dom();
+    if (!d) return;
+    const text = d.text.value;
+    let ok = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      }
+    } catch (err) {
+      console.info('[title] clipboard write refused', err);
+    }
+    if (!ok && !auto) {
+      try {
+        d.text.focus();
+        d.text.select();
+        ok = document.execCommand('copy');
+      } catch (err) {
+        console.info('[title] execCommand copy failed', err);
+      }
+    }
+    if (ok) this.say('Copied to the clipboard.', false);
+    else this.say(auto ? 'Press Copy, or select the code and copy it.' : 'The browser blocked copying: select the code and copy it by hand.', !auto);
+  }
+}
+
+/** The page's save-code panel. */
+export const domSaveCodeUi: SaveCodeUi = new DomSaveCodeUi();
+
+/** Decode a pasted code; anything but a SaveCodeError is logged and reported generically. */
+function parseCode(code: string): SaveData {
+  try {
+    return decodeSaveCode(code);
+  } catch (err) {
+    if (err instanceof SaveCodeError) throw err;
+    console.error('[title] save code import failed', err);
+    throw new Error('That code could not be read.');
+  }
+}
+
+// ------------------------------------------------------------------------------------------------ the title
+
+/** Title screen, file select (with save-code export / import) and title options. */
 export class TitleScene implements Scene {
   private t = 0;
-  private mode: Mode = 'press';
+  private mode: TitleMode = 'press';
   private sel = 0;
   private fileSel = 0;
   private actionSel = 0;
   private files: Array<{ slot: number; data: SaveData | null }> = [];
   private readonly heroes = ['gokuSSB', 'vegetaSSB', 'gohan', 'futureTrunksSSJ', 'piccolo'];
+  /** Frames without any button held (drives the attract loop). */
+  private idle = 0;
+  private flash = 0;
+  private flashLen = 1;
+  /** A validated save waiting for "overwrite?" confirmation. */
+  private pendingImport: SaveData | null = null;
+  private message: { text: string; color: string; t: number } | null = null;
 
-  constructor(private readonly game: Game) {
+  constructor(private readonly game: Game, private readonly codeUi: SaveCodeUi = domSaveCodeUi) {
     this.files = game.saves.summaries();
+  }
+
+  /** Current menu state (for tests and the debug harness). */
+  get state(): TitleMode {
+    return this.mode;
+  }
+
+  /** Fade in from white over `frames` (the opening ends on a white flash). */
+  flashIn(frames: number): void {
+    this.flash = Math.max(0, Math.floor(frames));
+    this.flashLen = Math.max(1, this.flash);
   }
 
   update(input: Input): void {
     this.t++;
+    if (this.flash > 0) this.flash--;
+    // The HTML code panel owns the keyboard until it resolves.
+    if (this.mode === 'code') return;
+    this.idle = BUTTONS.some((b) => input.isDown(b)) ? 0 : this.idle + 1;
+    if (this.mode === 'press' && this.idle >= ATTRACT_IDLE_FRAMES) {
+      this.game.scenes.replace(new IntroScene(this.game, { splash: false }));
+      return;
+    }
     const up = input.repeat('up');
     const down = input.repeat('down');
     const ok = input.pressed('A') || input.pressed('start');
@@ -74,7 +305,7 @@ export class TitleScene implements Scene {
         break;
       case 'fileAction': {
         const has = !!this.files[this.fileSel].data;
-        const opts = has ? ['Continue', 'New Game', 'Delete'] : ['New Game'];
+        const opts = this.fileOptions(has);
         if (up) { this.actionSel = (this.actionSel + opts.length - 1) % opts.length; audio.sfx('menuMove'); }
         if (down) { this.actionSel = (this.actionSel + 1) % opts.length; audio.sfx('menuMove'); }
         if (back) { this.mode = 'files'; audio.sfx('menuBack'); }
@@ -84,6 +315,8 @@ export class TitleScene implements Scene {
           if (o === 'Continue') this.continueFile();
           else if (o === 'New Game' && has) { this.mode = 'confirmNew'; this.actionSel = 1; }
           else if (o === 'New Game') void this.game.startNewGame(this.fileSel);
+          else if (o === 'Export Code') this.exportFile();
+          else if (o === 'Import Code') this.importFile();
           else { this.mode = 'confirmDelete'; this.actionSel = 1; }
         }
         break;
@@ -104,6 +337,21 @@ export class TitleScene implements Scene {
           if (this.actionSel === 0) { this.game.saves.erase(this.fileSel); this.files = this.game.saves.summaries(); audio.sfx('explode'); }
           this.mode = 'files';
         }
+        break;
+      case 'confirmImport': {
+        // The pasted save is already validated; the file is only written once the player says so.
+        const pending = this.pendingImport;
+        if (up || down || input.repeat('left') || input.repeat('right')) { this.actionSel ^= 1; audio.sfx('menuMove'); }
+        if (back || !pending) { this.pendingImport = null; this.mode = 'fileAction'; this.actionSel = 3; audio.sfx('menuBack'); break; }
+        if (ok) {
+          if (this.actionSel === 0) this.writeImport(pending);
+          else { this.pendingImport = null; this.mode = 'fileAction'; this.actionSel = 3; audio.sfx('menuBack'); }
+        }
+        break;
+      }
+      case 'message':
+        if (this.message) this.message.t++;
+        if (ok || back || (this.message?.t ?? MESSAGE_FRAMES) >= MESSAGE_FRAMES) { this.message = null; this.mode = 'files'; }
         break;
       case 'options': {
         const d = this.game.state.data;
@@ -130,6 +378,11 @@ export class TitleScene implements Scene {
     }
   }
 
+  /** Actions offered for a file; export needs a save, import works on any file. */
+  private fileOptions(has: boolean): string[] {
+    return has ? ['Continue', 'New Game', 'Export Code', 'Import Code', 'Delete'] : ['New Game', 'Import Code'];
+  }
+
   /** Load the selected file; a save that cannot be resumed is reported instead of freezing the title screen. */
   private continueFile(): void {
     try {
@@ -139,6 +392,64 @@ export class TitleScene implements Scene {
       audio.sfx('denied');
       this.game.toTitle();
     }
+  }
+
+  /** Show the selected file as a save code (copied to the clipboard when the browser allows it). */
+  private exportFile(): void {
+    const n = this.fileSel + 1;
+    const code = this.game.saves.exportCode(this.fileSel);
+    if (!code) { audio.sfx('denied'); this.notify(`File ${n} could not be read.`, RED); return; }
+    if (!this.codeUi.available) { audio.sfx('denied'); this.notify('Save codes are not available on this page.', RED); return; }
+    this.mode = 'code';
+    this.codeUi.showExport(`File ${n} save code`, code).then(
+      () => this.codeClosed(),
+      (err: unknown) => { console.error('[title] export panel failed', err); this.codeClosed(); },
+    );
+  }
+
+  /** Ask for a code to import into the selected file. Nothing is written until it validates (and is confirmed). */
+  private importFile(): void {
+    if (!this.codeUi.available) { audio.sfx('denied'); this.notify('Save codes are not available on this page.', RED); return; }
+    this.mode = 'code';
+    this.codeUi.promptImport(`Import a save code into File ${this.fileSel + 1}`, parseCode).then(
+      (d) => this.imported(d),
+      (err: unknown) => { console.error('[title] import panel failed', err); this.codeClosed(); },
+    );
+  }
+
+  private codeClosed(): void {
+    if (this.mode !== 'code') return;
+    this.mode = 'fileAction';
+    this.game.input.swallow();
+  }
+
+  /** A validated save came back from the panel (or null: cancelled). An occupied file asks before it is replaced. */
+  private imported(d: SaveData | null): void {
+    if (this.mode !== 'code') return;
+    this.game.input.swallow();
+    if (!d) { this.mode = 'fileAction'; return; }
+    if (this.files[this.fileSel].data) {
+      this.pendingImport = d;
+      this.mode = 'confirmImport';
+      this.actionSel = 1;
+      audio.sfx('menuOk');
+      return;
+    }
+    this.writeImport(d);
+  }
+
+  private writeImport(d: SaveData): void {
+    const n = this.fileSel + 1;
+    const ok = this.game.saves.save(this.fileSel, d);
+    this.pendingImport = null;
+    this.files = this.game.saves.summaries();
+    if (ok) { audio.sfx('save'); this.notify(`Imported into File ${n}.`, PAL.white); }
+    else { audio.sfx('denied'); this.notify(`Could not write File ${n}. Nothing was changed.`, RED); }
+  }
+
+  private notify(text: string, color: string): void {
+    this.message = { text, color, t: 0 };
+    this.mode = 'message';
   }
 
   private drawBackdrop(ctx: CanvasRenderingContext2D): void {
@@ -183,6 +494,7 @@ export class TitleScene implements Scene {
     switch (this.mode) {
       case 'press':
         if (Math.floor(this.t / 30) % 2 === 0) font.drawCentered(ctx, 'PRESS START', SCREEN_W / 2, 90, PAL.white, '#000');
+        this.renderStorageNotice(ctx);
         break;
       case 'menu': {
         drawWindow(ctx, 84, 80, 72, 34);
@@ -190,6 +502,7 @@ export class TitleScene implements Scene {
           font.draw(ctx, o, 104, 86 + i * 12, i === this.sel ? PAL.gold : PAL.white, '#000');
           if (i === this.sel) this.orb(ctx, 94, 89 + i * 12);
         });
+        this.renderStorageNotice(ctx);
         break;
       }
       case 'files':
@@ -198,12 +511,34 @@ export class TitleScene implements Scene {
       case 'confirmNew':
         this.renderFiles(ctx);
         break;
+      case 'confirmImport':
+        this.renderFiles(ctx);
+        this.renderConfirmImport(ctx);
+        break;
+      case 'code':
+        this.renderFiles(ctx);
+        ctx.fillStyle = 'rgba(0,0,10,0.6)';
+        ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+        drawWindow(ctx, 40, 66, 160, 26);
+        font.drawCentered(ctx, 'Using the save code window...', SCREEN_W / 2, 75, PAL.white, '#000');
+        break;
+      case 'message':
+        this.renderFiles(ctx);
+        this.renderMessage(ctx);
+        break;
       case 'options':
         this.renderOptions(ctx);
         break;
       case 'credits':
         this.renderCredits(ctx);
         break;
+    }
+    if (this.flash > 0) {
+      ctx.save();
+      ctx.globalAlpha = this.flash / this.flashLen;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+      ctx.restore();
     }
   }
 
@@ -212,6 +547,14 @@ export class TitleScene implements Scene {
     ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#e03020';
     ctx.fillRect(x - 1, y - 1, 2, 2);
+  }
+
+  /** Browser storage is blocked (some private modes): saves still work, but only until the tab closes. */
+  private renderStorageNotice(ctx: CanvasRenderingContext2D): void {
+    if (this.game.saves.persistent) return;
+    ctx.fillStyle = 'rgba(64,16,32,0.9)';
+    ctx.fillRect(0, 148, SCREEN_W, 12);
+    font.drawCentered(ctx, STORAGE_NOTICE, SCREEN_W / 2, 150, '#f8c060', '#000');
   }
 
   private renderFiles(ctx: CanvasRenderingContext2D): void {
@@ -223,33 +566,62 @@ export class TitleScene implements Scene {
       drawWindow(ctx, 16, y, 208, 40, { fill: i === this.fileSel ? '#203060' : undefined });
       font.draw(ctx, `FILE ${slot + 1}`, 24, y + 4, i === this.fileSel ? PAL.gold : PAL.white, '#000');
       if (!data) { font.draw(ctx, '- New Game -', 90, y + 16, '#a0a8c8', '#000'); return; }
-      const hero = data.chars[data.active];
-      const pid = CHARACTERS[data.active].sprite;
-      const por = portrait(pid);
+      const s = describe(data);
+      const por = portrait(CHARACTERS[data.active].sprite);
       if (por) ctx.drawImage(por, 0, 4, 32, 30, 24, y + 9, 32, 30);
-      font.draw(ctx, `${CHARACTERS[data.active].name}  Lv ${hero.level}`, 62, y + 14, PAL.white, '#000');
-      const area = MAPS[data.map]?.name ?? data.map;
-      font.draw(ctx, area, 62, y + 25, '#a8c8f8', '#000');
-      const secs = Math.floor(data.playFrames / 60);
-      const tm = `${Math.floor(secs / 3600)}:${String(Math.floor(secs / 60) % 60).padStart(2, '0')}`;
-      font.drawRight(ctx, data.chapter === 0 ? 'Prologue' : `Ch.${data.chapter}`, 216, y + 4, '#c8c8c8', '#000');
-      font.drawRight(ctx, tm, 216, y + 25, '#c8c8c8', '#000');
+      font.draw(ctx, `${s.name}  Lv ${s.level}`, 62, y + 14, PAL.white, '#000');
+      font.draw(ctx, s.area, 62, y + 25, '#a8c8f8', '#000');
+      font.drawRight(ctx, s.chapter, 216, y + 4, '#c8c8c8', '#000');
+      font.drawRight(ctx, s.time, 216, y + 25, '#c8c8c8', '#000');
     });
+    if (!this.game.saves.persistent) font.drawCentered(ctx, STORAGE_NOTICE, SCREEN_W / 2, 150, '#f8c060', '#000');
     if (this.mode === 'fileAction' || this.mode === 'confirmDelete' || this.mode === 'confirmNew') {
       const has = !!this.files[this.fileSel].data;
-      const opts = this.mode === 'confirmDelete' ? ['Delete', 'Cancel'] : this.mode === 'confirmNew' ? ['Start', 'Cancel']
-        : has ? ['Continue', 'New Game', 'Delete'] : ['New Game'];
+      const opts = this.mode === 'confirmDelete' ? ['Delete', 'Cancel'] : this.mode === 'confirmNew' ? ['Start', 'Cancel'] : this.fileOptions(has);
+      const w = Math.max(70, Math.max(...opts.map((o) => font.drawWidth(o))) + 26);
       const h = opts.length * 12 + 8;
-      const y = 24 + this.fileSel * 44;
-      drawWindow(ctx, 150, Math.min(SCREEN_H - h - 2, y), 70, h);
-      if (this.mode === 'confirmDelete') font.draw(ctx, 'Erase?', 154, Math.min(SCREEN_H - h - 2, y) - 10, '#f86060', '#000');
-      if (this.mode === 'confirmNew') font.drawRight(ctx, 'Start over?', 218, Math.min(SCREEN_H - h - 2, y) - 10, '#f8c060', '#000');
+      const x = SCREEN_W - 20 - w;
+      const y = Math.min(SCREEN_H - h - 2, 24 + this.fileSel * 44);
+      drawWindow(ctx, x, y, w, h);
+      if (this.mode === 'confirmDelete') font.draw(ctx, 'Erase?', x + 4, y - 10, RED, '#000');
+      if (this.mode === 'confirmNew') font.drawRight(ctx, 'Start over?', x + w - 2, y - 10, '#f8c060', '#000');
       opts.forEach((o, i) => {
-        const yy = Math.min(SCREEN_H - h - 2, y) + 5 + i * 12;
-        font.draw(ctx, o, 166, yy, i === this.actionSel ? PAL.gold : PAL.white, '#000');
-        if (i === this.actionSel) font.draw(ctx, '▶', 156, yy, PAL.gold, '#000');
+        const yy = y + 5 + i * 12;
+        font.draw(ctx, o, x + 16, yy, i === this.actionSel ? PAL.gold : PAL.white, '#000');
+        if (i === this.actionSel) font.draw(ctx, '▶', x + 6, yy, PAL.gold, '#000');
       });
     }
+  }
+
+  /** "Replace File N with ...?" for a validated import over an existing save. */
+  private renderConfirmImport(ctx: CanvasRenderingContext2D): void {
+    const d = this.pendingImport;
+    if (!d) return;
+    const s = describe(d);
+    ctx.fillStyle = 'rgba(0,0,10,0.5)';
+    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+    drawWindow(ctx, 24, 38, 192, 82);
+    font.drawCentered(ctx, `Replace File ${this.fileSel + 1} with this save?`, SCREEN_W / 2, 44, '#f8c060', '#000');
+    const por = portrait(CHARACTERS[d.active].sprite);
+    if (por) ctx.drawImage(por, 0, 4, 32, 30, 32, 58, 32, 30);
+    font.draw(ctx, `${s.name}  Lv ${s.level}`, 70, 60, PAL.white, '#000');
+    font.draw(ctx, `${s.chapter}   ${s.time}`, 70, 71, '#c8c8c8', '#000');
+    font.draw(ctx, s.area, 70, 82, '#a8c8f8', '#000');
+    ['Replace', 'Cancel'].forEach((o, i) => {
+      const x = 70 + i * 70;
+      font.draw(ctx, o, x + 10, 102, i === this.actionSel ? PAL.gold : PAL.white, '#000');
+      if (i === this.actionSel) font.draw(ctx, '▶', x, 102, PAL.gold, '#000');
+    });
+  }
+
+  private renderMessage(ctx: CanvasRenderingContext2D): void {
+    const m = this.message;
+    if (!m) return;
+    const rows = wrap(m.text, 180);
+    const h = rows.length * 11 + 12;
+    const y = Math.round((SCREEN_H - h) / 2);
+    drawWindow(ctx, 24, y, 192, h);
+    rows.forEach((r, i) => font.drawCentered(ctx, r, SCREEN_W / 2, y + 6 + i * 11, m.color, '#000'));
   }
 
   private renderOptions(ctx: CanvasRenderingContext2D): void {

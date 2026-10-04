@@ -299,6 +299,9 @@ registerMaps([
       { type: 'snake', x: 17, y: 12 }, { type: 'snake', x: 24, y: 19 }, { type: 'snake', x: 8, y: 16 },
       { type: 'hawk', x: 36, y: 4 }, { type: 'hawk', x: 41, y: 7 },
       { type: 'caveBat', x: 5, y: 5 }, { type: 'caveBat', x: 7, y: 6 }, { type: 'caveBat', x: 9, y: 4 },
+      // River wildlife: shore crabs carry the odd Fish (Korin's Senzu trade); bog slimes ooze along the south bank.
+      { type: 'crab', x: 12, y: 11 }, { type: 'crab', x: 16, y: 5 },
+      { type: 'slime', x: 14, y: 23 }, { type: 'slime', x: 14, y: 26 },
     ],
     exits: { east: { to: 'paozu_home' }, north: { to: 'paozu_peaks', offset: -2 } },
     triggers: [{ id: 'ea_pf_cave', x: 5, y: 4, w: 3, h: 1, script: 'ea_pf_cave', onAction: true }],
@@ -315,7 +318,7 @@ registerMaps([
 
   // ---------------------------------------------------------------- Paozu Peaks (hostile)
   {
-    id: 'paozu_peaks', name: 'Paozu Peaks', music: 'field', hostile: true, region: 'Mt. Paozu',
+    id: 'paozu_peaks', name: 'Paozu Peaks', music: 'snow', hostile: true, region: 'Mt. Paozu',
     legend: { ...OUT },
     grid: [
       '########~~################################',
@@ -373,6 +376,11 @@ registerMaps([
       { type: 'boar', x: 23, y: 24 }, { type: 'boar', x: 16, y: 19 },
       { type: 'hawk', x: 13, y: 5 }, { type: 'hawk', x: 31, y: 5 }, { type: 'hawk', x: 5, y: 30 },
       { type: 'timberWolf', x: 35, y: 25 },
+      // Swamp vipers hunt fish around the waterfall pool and the stream (Fish drops); a brown bear and a giant hornet
+      // claim the lower basin (kept off the plateau, where Goten's dino hunt fights Scarface).
+      { type: 'viper', x: 4, y: 19 }, { type: 'viper', x: 14, y: 20 },
+      { type: 'bear', x: 8, y: 29 },
+      { type: 'hornet', x: 20, y: 29 },
     ],
     exits: { south: { to: 'paozu_forest', offset: 2 } },
     barriers: [

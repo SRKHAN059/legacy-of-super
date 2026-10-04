@@ -113,7 +113,7 @@ registerScripts({
     s.face('hero', 'up');
     s.letterbox(false);
     clearActors(s, ['c11_bk']);
-    s.music('black');
+    s.music('zamasu');
     await bout(s, 'c11_blackRoseA', { x: 25, y: 9, uid: 'c11_roseA', survive: 30, loseOk: true, label: 'HOLD THE LINE' });
     s.letterbox(true);
     patchUp(s);
@@ -139,7 +139,7 @@ registerScripts({
     clearActors(s, ['c11_gk', 'c11_vg', 'c11_mai']);
     await timeTravel(s, 'present', 'cc_yard', HUB.ccPad.arriveX, HUB.ccPad.arriveY + 1, 'Back to the present, with a plan...');
     s.letterbox(true);
-    s.music('town');
+    s.music('westCity');
     actor(s, 'c11_gk', 'goku', 29, 10, 'up');
     actor(s, 'c11_vg', 'vegeta', 34, 10, 'up');
     await s.talk([
@@ -467,6 +467,7 @@ registerScripts({
     await s.powerUp('hero', '#88d8ff', 40);
     s.letterbox(false);
     clearActors(s, ['c11_bk']);
+    s.music('zamasu');
     await bout(s, 'c11_blackRoseB', { x: 14, y: 6, uid: 'c11_rose1' });
     s.letterbox(true);
     // With Black down, his copies flicker out like reflections in broken glass.
@@ -538,6 +539,7 @@ registerScripts({
       }
     })();
     s.letterbox(false);
+    s.music('zamasu');
     await bout(s, 'c11_zamasuSeal', { x: 15, y: 6, uid: 'c11_zseal' });
     over = true;
     await watch;
@@ -626,6 +628,7 @@ registerScripts({
     s.follow();
     s.letterbox(false);
     clearActors(s, ['c11_fz']);
+    s.music('zamasu');
     await bout(s, 'c11_fusedA', { x: 15, y: 6, uid: 'c11_fa', loseOk: true });
     s.letterbox(true);
     patchUp(s);

@@ -14,7 +14,7 @@ import { registerMaps } from '../../registry';
 registerMaps([
   // ------------------------------------------------------------------ Ch9 flashback
   {
-    id: 'c09_flash_wastes', name: 'Memory: Babidi\'s Landing Site', music: 'tense', hostile: true, region: 'Future Earth',
+    id: 'c09_flash_wastes', name: 'Memory: Babidi\'s Landing Site', music: 'future', hostile: true, region: 'Future Earth',
     tint: 'rgba(150,110,50,0.30)',
     legend: { '#': 'cliff', '.': 'wasteland', ',': 'dirt', 'k': 'rock' },
     grid: [
@@ -175,7 +175,7 @@ registerMaps([
 
   // ------------------------------------------------------------------ Ch10 Planet Babari
   {
-    id: 'c10_babari', name: 'Planet Babari', music: 'field', hostile: true, region: 'Planet Babari', backdrop: '#0c1830',
+    id: 'c10_babari', name: 'Planet Babari', music: 'alien', hostile: true, region: 'Planet Babari', backdrop: '#0c1830',
     legend: { '#': 'cliff', '.': 'alienGrass', ',': 'darkGrass', 'd': 'dirt', '=': 'path', '~': 'water', 's': 'sand' },
     grid: [
       '########################################', // 0

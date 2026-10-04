@@ -1032,8 +1032,8 @@ describe('full game: one save from newGame to the post-game', () => {
       await beat('c13_monster_camp', 'c13_camp_boss', 20, 12);
       expect(q('c13_17')).toBe('done');
       const animals: Array<[string, string]> = [
-        ['c13_monster_beach', 'c13_ani1'], ['c13_monster_jungle', 'c13_ani2'], ['c13_monster_camp', 'c13_ani3'], ['c13_tien_dojo', 'c13_ani4'],
-        ['c13_training_wilds', 'c13_ani5'], ['c13_baba_lake', 'c13_ani6'], ['paozu_home', 'c13_ani7'],
+        ['c13_monster_beach', 'c13_ani1'], ['snow_peak', 'c13_ani2'], ['c13_monster_camp', 'c13_ani3'], ['paozu_peaks', 'c13_ani4'],
+        ['waste_canyon', 'c13_ani5'], ['c13_baba_lake', 'c13_ani6'], ['paozu_home', 'c13_ani7'],
       ];
       for (const [map, id] of animals) {
         await enter(map);

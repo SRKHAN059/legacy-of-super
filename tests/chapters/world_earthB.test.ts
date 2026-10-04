@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import type { Button } from '../../src/engine/input';
 import { propArt } from '../../src/art/props';
 import { MAIN_ROSTER, type CharId } from '../../src/content/characters';
+import { BESTIARY_IDS } from '../../src/content/bestiary';
+import { ENEMIES } from '../../src/content/enemies';
 import { MAPS, resolveMap } from '../../src/content/registry';
 import { SPOTS } from '../../src/content/world';
+import { EXP_TABLE, killExp } from '../../src/game/leveling';
+import type { MapDef } from '../../src/game/mapdef';
 import { parseGrid } from '../../src/game/world';
 import type { Line } from '../../src/ui/dialogue';
 import { Sim } from '../sim';
@@ -547,5 +551,318 @@ describe('world earthB: Capsule Corp garden', () => {
     for (let i = 0; i < 3; i++) await talkTo(sim, 'eb_cc_dino');
     expect(said.some((l) => /sleeve/.test(l)), 'reacts to Goku').toBe(true);
     expect(sim.errors).toEqual([]);
+  });
+});
+
+describe('world ecology: wildlife homes, gated collectibles and grinding grounds', () => {
+  function def(id: string): MapDef {
+    const m = resolveMap(id);
+    if (!m) throw new Error(`missing map ${id}`);
+    return m;
+  }
+
+  /**
+   * Tiles reachable on foot from every way into map `id` (edge exits, door arrivals, landing spots, flights), with
+   * every gate broken (`true`), none (`false`) or just the named one.
+   */
+  async function openGround(id: string, gatesOpen: boolean | string): Promise<Set<string>> {
+    const m = def(id);
+    const sim = new Sim();
+    sim.game.state.data.chapter = 15;
+    for (const b of m.barriers ?? []) if (gatesOpen === true || gatesOpen === b.id) sim.game.state.set(`gate:${id}:${b.id}`);
+    sim.start(id);
+    await sim.tick(2);
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    const grid = parseGrid(m);
+    const W = grid[0].length;
+    const H = grid.length;
+    const free = (x: number, y: number) => x >= 0 && y >= 0 && x < W && y < H && !f.col.blocked({ x: x * 16 + 3, y: y * 16 + 8, w: 10, h: 6 });
+    const seeds: Array<[number, number]> = [];
+    for (const [side, ex] of Object.entries(m.exits ?? {})) {
+      if (!ex) continue;
+      for (let i = 0; i < (side === 'north' || side === 'south' ? W : H); i++) {
+        if (side === 'north') seeds.push([i, 0]);
+        if (side === 'south') seeds.push([i, H - 1]);
+        if (side === 'west') seeds.push([0, i]);
+        if (side === 'east') seeds.push([W - 1, i]);
+      }
+    }
+    for (const other of Object.keys(MAPS)) {
+      const o = resolveMap(other);
+      for (const w of o?.warps ?? []) if (w.to === id) seeds.push([Math.floor(w.tx), Math.floor(w.ty)]);
+      if (other !== id) for (const fl of o?.objects ?? []) if (fl.type === 'flight' && fl.to === id) seeds.push([Math.floor(fl.tx), Math.floor(fl.ty)]);
+    }
+    for (const s of Object.values(SPOTS)) if (s.map === id) seeds.push([s.tx, s.ty]);
+    const seen = new Set<string>();
+    const queue: Array<[number, number]> = [];
+    const visit = (x: number, y: number) => {
+      if (seen.has(`${x},${y}`) || !free(x, y)) return;
+      seen.add(`${x},${y}`);
+      queue.push([x, y]);
+    };
+    for (const [x, y] of seeds) visit(x, y);
+    const flights = (m.objects ?? []).flatMap((o) => (o.type === 'flight' && o.to === id ? [o] : []));
+    while (queue.length) {
+      const [x, y] = queue.shift() as [number, number];
+      visit(x + 1, y); visit(x - 1, y); visit(x, y + 1); visit(x, y - 1);
+      for (const o of flights) if (Math.abs(o.x - x) <= 1 && Math.abs(o.y - y) <= 1) visit(Math.floor(o.tx), Math.floor(o.ty));
+    }
+    return seen;
+  }
+
+  /** A pickup is collected on its tile; a chest or breakable is opened from a side. */
+  const touches = (ground: Set<string>, x: number, y: number) =>
+    [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => ground.has(`${x + dx},${y + dy}`));
+
+  it('places every shared bestiary entry on a map (the Frieza Soldier grunt only comes in story waves)', () => {
+    const placed = new Map<string, Set<string>>();
+    for (const id of Object.keys(MAPS)) {
+      for (const e of resolveMap(id)?.enemies ?? []) {
+        const at = placed.get(e.type) ?? new Set<string>();
+        at.add(id);
+        placed.set(e.type, at);
+      }
+    }
+    expect(BESTIARY_IDS.filter((id) => !placed.has(id))).toEqual(['soldier']);
+    // Homes picked from LoG2's own bestiary (§13): shore and swamp wildlife by water, bugs and bears in the woods,
+    // the T-Rex guarding a gated cave, Eggbot-tier oozes and Henchman-tier troopers where LoG2 had them.
+    const homes: Record<string, string[]> = {
+      viper: ['paozu_peaks', 'korin_base', 'desert_oasis', 'kame_reef'], crab: ['paozu_forest', 'korin_base', 'kame_reef'],
+      kingCrab: ['desert_oasis', 'kame_reef'], slime: ['paozu_forest'], mudSlime: ['kame_reef'], voidSlime: ['snow_peak'],
+      beetle: ['korin_base'], hornet: ['paozu_peaks', 'korin_base'], bear: ['paozu_peaks', 'korin_base'], tRex: ['waste_canyon'],
+      soldierB: ['waste_mesa'], soldierC: ['waste_mesa'], soldierElite: ['waste_mesa'],
+    };
+    for (const [type, maps] of Object.entries(homes)) expect([...(placed.get(type) ?? [])], type).toEqual(expect.arrayContaining(maps));
+  });
+
+  it('Ten-Palm Oasis keeps its Fish carriers on the pond banks', () => {
+    const m = def('desert_oasis');
+    const grid = parseGrid(m);
+    const shore = (m.enemies ?? []).filter((e) => ENEMIES[e.type]?.drops === 'water');
+    expect(shore.map((e) => e.type).sort()).toEqual(['kingCrab', 'viper', 'viper']);
+    for (const e of shore) {
+      let wet = false;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) wet ||= grid[e.y + dy]?.[e.x + dx] === 'water';
+      expect(wet, `${e.type} at ${e.x},${e.y}`).toBe(true);
+    }
+  });
+
+  it('five Delicacies wait behind old-hub coloured gates, and each one is reachable once its gate breaks (LoG2 §6.6)', async () => {
+    let total = 0;
+    const gated: string[] = [];
+    for (const id of Object.keys(MAPS)) {
+      const m = def(id);
+      const dels: Array<[string, number, number]> = [];
+      for (const p of m.pickups ?? []) if (p.item === 'delicacy') dels.push([p.id, p.x, p.y]);
+      for (const o of m.objects ?? []) if ((o.type === 'chest' || o.type === 'breakable') && o.item === 'delicacy') dels.push([o.id ?? '', o.x, o.y]);
+      total += dels.length;
+      if (!dels.length || !(m.barriers ?? []).some((b) => b.character)) continue;
+      const closed = await openGround(id, false);
+      const open = await openGround(id, true);
+      for (const [pid, x, y] of dels) {
+        expect(touches(open, x, y), `${pid} reachable with the gates open`).toBe(true);
+        if (touches(closed, x, y)) continue;
+        // Name the one gate that opens the way on its own.
+        const keys: string[] = [];
+        for (const b of m.barriers ?? []) if (b.character && touches(await openGround(id, b.id), x, y)) keys.push(`${b.character}${b.level}`);
+        gated.push(`${pid}:${keys.join('/')}`);
+      }
+    }
+    expect(total).toBe(25);
+    expect(gated.sort()).toEqual([
+      'del_future_cc_ruins_1:trunks34',
+      'del_kame_reef_1:gohan25',
+      'del_paozu_peaks_1:goku15',
+      'del_snow_peak_1:goku40',
+      'del_waste_canyon_1:vegeta25',
+    ]);
+  });
+
+  it('the canyon side cave: a T-Rex guards the Delicacy and the STR+3 chest behind the Vegeta 25 gate', async () => {
+    const m = def('waste_canyon');
+    const closed = await openGround('waste_canyon', false);
+    const open = await openGround('waste_canyon', true);
+    const rex = m.enemies?.find((e) => e.type === 'tRex');
+    const del = m.pickups?.find((p) => p.id === 'del_waste_canyon_1');
+    if (!rex || !del) throw new Error('cave contents missing');
+    for (const [x, y, what] of [[rex.x, rex.y, 'T-Rex'], [del.x, del.y, 'Delicacy'], [5, 5, 'chest front']] as Array<[number, number, string]>) {
+      expect(closed.has(`${x},${y}`), `${what} sealed`).toBe(false);
+      expect(open.has(`${x},${y}`), `${what} open`).toBe(true);
+    }
+    // Vegeta breaks in at 25, the T-Rex goes down, and the Delicacy is his.
+    const sim = new Sim();
+    sim.game.state.data.chapter = 8;
+    sim.game.state.join('vegeta', 25);
+    sim.game.state.data.active = 'vegeta';
+    sim.start('waste_canyon', 11, 4);
+    await sim.tick(5);
+    const f = sim.game.field;
+    const gate = f?.map.gates.find((g) => g.def.id === 'eb_g25_vegeta');
+    if (!f || !gate) throw new Error('no gate');
+    f.meleeHit(gate.rect, 10, 1);
+    expect(gate.broken).toBe(true);
+    sim.game.allowControl = true;
+    for (let i = 0; i < 120 && !sim.game.state.flag('pickup:del_waste_canyon_1'); i++) {
+      place(sim, del.x, del.y);
+      await sim.tick(1);
+    }
+    expect(sim.game.state.count('delicacy')).toBe(1);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Frieza Force remnants camp on the Great Mesa from Chapter 8, long after its battles', async () => {
+    const soldiers = async (chapter: number): Promise<string[]> => {
+      const sim = new Sim();
+      sim.game.state.data.chapter = chapter;
+      sim.start('waste_mesa', 22, 29);
+      await sim.tick(1);
+      return (sim.game.field?.enemies ?? []).map((e) => e.def.id).filter((t) => t.startsWith('soldier')).sort();
+    };
+    expect(await soldiers(5)).toEqual([]);
+    expect(await soldiers(6)).toEqual([]);
+    expect(await soldiers(7)).toEqual([]);
+    expect(await soldiers(8)).toEqual(['soldierB', 'soldierC', 'soldierC', 'soldierElite']);
+    // T4/T5 troopers for a Chapter 8+ party (L29+): LoG2's Warlord's Henchman tiers (3,200 / 16,200 EXP), each kill
+    // worth well under half a level there.
+    expect(ENEMIES.soldierC.exp).toBe(16200);
+    const span29 = EXP_TABLE[30] - EXP_TABLE[29];
+    for (const t of ['soldierB', 'soldierC', 'soldierElite']) expect(killExp(ENEMIES[t].exp, 29), t).toBeLessThan(span29 / 2);
+    const m = def('waste_mesa');
+    const pods = (m.props ?? []).filter((p) => !Array.isArray(p) && p.kind === 'pod');
+    expect(pods.length).toBe(2);
+    for (const p of pods) expect(!Array.isArray(p) && p.flag).toBe('chapter>=8');
+    expect(m.triggers?.find((t) => t.id === 'eb_mesa_pod')).toMatchObject({ onAction: true, showIf: 'chapter>=8' });
+    // Examining the pod (A from below it) follows Frieza's canon comebacks: still waiting for him through Chapter 13,
+    // Baba's 24-hour revival once Goku recruits him (ep 94), and his full revival with his army after the win (ep 131).
+    const stages: Array<[string, number, (st: Sim['game']['state']) => void, RegExp, RegExp]> = [
+      ['after Resurrection F', 8, () => undefined, /Lord Frieza will return/, /lives again/],
+      ['Mighty Ten, before the tenth warrior', 13, () => undefined, /Lord Frieza will return/, /lives again/],
+      ['Frieza\'s 24 hours', 13, (st) => { st.completeQuest('c13_frieza'); }, /Lord Frieza lives again! \.\.\.On the Saiyans' team/, /will return|army/],
+      ['after the Tournament of Power', 15, (st) => { st.completeQuest('c13_frieza'); st.set('c14_won'); st.set('post_game'); }, /reclaiming his army/, /will return|Saiyans' team/],
+    ];
+    for (const [label, chapter, story, want, not] of stages) {
+      const sim = new Sim();
+      sim.game.state.data.chapter = chapter;
+      story(sim.game.state);
+      const said = record(sim);
+      sim.start('waste_mesa', 38, 16);
+      await sim.tick(2);
+      const f = sim.game.field;
+      if (!f) throw new Error('no field');
+      place(sim, 38, 16);
+      f.player.dir = 'up';
+      expect(f.tryInteract(), `pod examined (${label})`).toBe(true);
+      for (let i = 0; i < 300 && !said.some((l) => want.test(l)); i++) await sim.tick(1);
+      expect(said.some((l) => want.test(l)), `${label}: ${want}`).toBe(true);
+      expect(said.some((l) => not.test(l)), `${label}: stale ${not}`).toBe(false);
+      expect(sim.errors).toEqual([]);
+    }
+  });
+
+  it('the Highland Peak ice cave only opens for Vegeta at level 45 and gives the STR+5 capsule', async () => {
+    const tryGate = async (who: CharId, level: number): Promise<boolean> => {
+      const sim = new Sim();
+      sim.game.state.data.chapter = 14;
+      sim.game.state.join(who, level);
+      sim.game.state.data.active = who;
+      sim.start('snow_peak', 31, 24);
+      await sim.tick(2);
+      const f = sim.game.field;
+      const gate = f?.map.gates.find((g) => g.def.id === 'eb_g45_vegeta');
+      if (!f || !gate) throw new Error('no gate');
+      f.meleeHit(gate.rect, 10, 1);
+      return gate.broken;
+    };
+    expect(await tryGate('vegeta', 44)).toBe(false);
+    expect(await tryGate('goku', 50)).toBe(false);
+    expect(await tryGate('vegeta', 45)).toBe(true);
+    const sim = new Sim();
+    sim.game.state.set('gate:snow_peak:eb_g45_vegeta');
+    sim.start('snow_peak', 41, 28);
+    await sim.tick(5);
+    place(sim, 41, 28);
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    f.player.dir = 'up';
+    expect(f.tryInteract()).toBe(true);
+    await sim.tick(60);
+    expect(sim.game.state.count('str5')).toBe(1);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('late-game grinding grounds sit behind high gates and pay LoG2-scale EXP for their level (§6.4)', async () => {
+    const pockets: Array<{ gate: string; level: number; residents: string[] }> = [
+      // LoG2: Triceratops (35,000) and blue T-Rex (36,900) behind Goku's L40 gate.
+      { gate: 'g40_goku', level: 40, residents: ['blueTRex', 'eb_trihorn', 'redRaptor'] },
+      // LoG2's trophy-gate guardians: Destroyers and the top Eggbot tier.
+      { gate: 'eb_g45_vegeta', level: 45, residents: ['goldMech', 'redMech', 'voidSlime'] },
+    ];
+    const m = def('snow_peak');
+    const closed = await openGround('snow_peak', false);
+    for (const p of pockets) {
+      const gate = m.barriers?.find((b) => b.id === p.gate);
+      expect(gate?.level, p.gate).toBe(p.level);
+      // Residents: the spawns this one gate opens up (sealed off while it stands).
+      const open = await openGround('snow_peak', p.gate);
+      const behind = (m.enemies ?? []).filter((e) => !closed.has(`${e.x},${e.y}`) && open.has(`${e.x},${e.y}`));
+      expect([...new Set(behind.map((e) => e.type))].sort(), p.gate).toEqual([...p.residents].sort());
+      expect(behind.length, p.gate).toBeGreaterThanOrEqual(4);
+      const span = EXP_TABLE[p.level + 1] - EXP_TABLE[p.level];
+      const mean = behind.reduce((a, e) => a + killExp(ENEMIES[e.type].exp, p.level), 0) / behind.length;
+      const killsPerLevel = span / mean;
+      expect(killsPerLevel, `${p.gate}: kills per level at L${p.level}`).toBeGreaterThanOrEqual(10);
+      expect(killsPerLevel, `${p.gate}: kills per level at L${p.level}`).toBeLessThanOrEqual(60);
+      expect(Math.max(...behind.map((e) => ENEMIES[e.type].exp)), p.gate).toBeGreaterThanOrEqual(35000);
+    }
+    // The L45 cave still beats the engine's 1/128-of-a-level floor through the L48 post-game push.
+    const floor48 = (EXP_TABLE[49] - EXP_TABLE[48]) >> 7;
+    for (const t of ['goldMech', 'redMech', 'voidSlime']) expect(ENEMIES[t].exp, t).toBeGreaterThan(floor48);
+    // The Trihorn is LoG2's Triceratops, value for value.
+    expect(ENEMIES.eb_trihorn).toMatchObject({ hp: 870, str: 40, end: 40, exp: 35000, ai: 'charger' });
+  });
+});
+
+describe('world ecology: wildlife homed this round keeps its LoG2 ROM stat row (research/rom/enemy_stats.csv)', () => {
+  it('HP and EXP (and the stat block where the role is the same) match the ROM entry each one stands in for', () => {
+    // [our id, ROM stat_idx and name, HP, EXP, STR/POW/END when the stat block is carried over unchanged]
+    const rows: Array<[string, string, number, number, [number, number, number]?]> = [
+      ['kingCrab', '1 Alligator', 600, 5400, [29, 1, 20]],
+      ['bear', '69 Kuma Mercenary', 125, 250, [17, 1, 15]],
+      ['viper', '83 Snake', 275, 600],
+      ['tRex', '99 T-Rex', 1750, 3750, [40, 1, 30]],
+      ['mudSlime', '37 Eggbot', 250, 875, [19, 25, 18]],
+      ['voidSlime', '39 Eggbot', 1349, 46200, [47, 53, 52]],
+      ['soldierB', '12 Warlord\'s Henchman', 900, 3200],
+      ['soldierC', '51 Warlord\'s Henchman', 1100, 16200],
+      ['eb_trihorn', '54 Triceratops', 870, 35000, [40, 1, 40]],
+    ];
+    for (const [id, rom, hp, exp, stats] of rows) {
+      const e = ENEMIES[id];
+      expect(e, id).toBeTruthy();
+      expect([e.hp, e.exp], `${id} = ROM ${rom}`).toEqual([hp, exp]);
+      if (stats) expect([e.str, e.pow, e.end], `${id} = ROM ${rom}`).toEqual(stats);
+    }
+  });
+});
+
+describe('world ecology: Dr. Sekimura points the way to the remnant camp', () => {
+  it('a player who keeps one character hears every line of the geologist\'s chatter, the remnant news included', async () => {
+    const cases: Array<[number, RegExp[]]> = [
+      [2, [/Wolves in the north/, /delivery boy crashed/]],
+      [8, [/never went home/, /Great Mesa is unrecognizable/]],
+    ];
+    for (const [chapter, lines] of cases) {
+      for (const hero of MAIN_ROSTER) {
+        const sim = playing(hero, chapter);
+        const said = record(sim);
+        sim.start('waste_entry', 6, 15);
+        await sim.tick(3);
+        for (let k = 0; k < 7; k++) await talkTo(sim, 'eb_waste_geologist');
+        for (const want of lines) expect(said.some((l) => want.test(l)), `ch${chapter} as ${hero}: ${want}`).toBe(true);
+        if (chapter < 8) expect(said.some((l) => /never went home/.test(l)), `ch${chapter}: no remnants yet`).toBe(false);
+        expect(sim.errors).toEqual([]);
+      }
+    }
   });
 });

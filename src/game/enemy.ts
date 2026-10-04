@@ -86,6 +86,11 @@ export class Enemy extends Actor {
   armorT = 0;
   /** The current stun came from a stun technique / punish: the boss breaks free when it ends. */
   private heldByTech = false;
+  /**
+   * Cloak strength 0..1 (an invisible fighter such as Gamisalas): drawn at (1 - cloak) of its opacity, with no
+   * ground shadow while mostly cloaked. A hit flash always shows through. Scripts set it each frame from their cues.
+   */
+  cloak = 0;
 
   constructor(type: string, x: number, y: number) {
     const def = ENEMIES[type];
@@ -729,6 +734,21 @@ export class Enemy extends Actor {
     this.move = null;
     this.alpha = 1;
     this.pose = 'idle';
+  }
+
+  /** Ground shadow, left out while the enemy is mostly cloaked. */
+  override drawShadow(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
+    if (this.cloak > 0.5) return;
+    super.drawShadow(ctx, cx, cy);
+  }
+
+  /** Sprite at the cloak's opacity; a hit flash always shows at full strength. */
+  override draw(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
+    if (this.cloak <= 0 || this.flash > 0) { super.draw(ctx, cx, cy); return; }
+    const alpha = this.alpha;
+    this.alpha = alpha * (1 - Math.min(1, this.cloak));
+    super.draw(ctx, cx, cy);
+    this.alpha = alpha;
   }
 
   /** Render pending boss ki-rain target markers. */

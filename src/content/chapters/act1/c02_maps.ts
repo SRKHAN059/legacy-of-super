@@ -29,7 +29,7 @@ function crateCol(x: number, y0: number, y1: number): PropPlacement[] {
 
 registerMaps([
   {
-    id: 'c02_pier', name: 'West City Marina', music: 'town', region: 'West City',
+    id: 'c02_pier', name: 'West City Marina', music: 'party', region: 'West City',
     legend: { 'D': 'deep', '~': 'water', 'o': 'wood', '=': 'path', '.': 'grass', 'a': 'asphalt', '#': 'cliff' },
     grid: [
       'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD',
@@ -73,7 +73,7 @@ registerMaps([
     warps: [{ x: 17, y: 4, w: 2, h: 1, to: 'c02_deck', tx: 19.5, ty: 21, dir: 'up', lockedScript: 'c02_gangway_locked', showIf: 'chapter>=2' }],
   },
   {
-    id: 'c02_deck', name: 'Princess Bulma - Party Deck', music: 'town', region: 'West City',
+    id: 'c02_deck', name: 'Princess Bulma - Party Deck', music: 'party', region: 'West City',
     legend: { 'D': 'deep', 'o': 'wood', 'c': 'carpet', 't': 'tile', '~': 'water', 'W': 'wall', 'R': 'roof' },
     grid: [
       'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD',
@@ -148,7 +148,7 @@ registerMaps([
     onEnter: 'c02_deck_enter',
   },
   {
-    id: 'c02_galley', name: 'Ship\'s Galley', music: 'town', indoor: true, region: 'West City',
+    id: 'c02_galley', name: 'Ship\'s Galley', music: 'party', indoor: true, region: 'West City',
     legend: { 'W': 'wall', 't': 'tile' },
     grid: [
       'WWWWWWWWWWWWWWWW',

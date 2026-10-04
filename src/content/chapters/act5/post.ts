@@ -153,7 +153,7 @@ registerScripts({
       ]);
       await s.narrate('THE END. ...But the adventure never really ends. Free roam continues.');
       s.letterbox(false);
-      s.music('town');
+      s.music('westCity');
       await s.done('post_trueEnd', false);
       await s.give('end3');
     } finally {
@@ -269,6 +269,7 @@ registerScripts({
       ['jiren', 'Take these. Toppo insists they are a "proper Pride Trooper gift".', 'neutral'],
     ]);
     removeAll(s, 'post_jirenE');
+    s.music(s.field.def.music);
     s.letterbox(false);
     await s.done('post_jiren', false);
     await s.give('pow5');
@@ -292,7 +293,7 @@ registerScripts({
     const c = await s.ask('hit', 'Begin?', ['Fight Hit', 'Not tonight']);
     if (c !== 0) { await s.say('hit', 'Then watch your back.', 'neutral'); s.letterbox(false); return; }
     s.letterbox(false);
-    s.music('battle');
+    s.music('hit');
     const [hx, hy] = heroTile(s);
     const [bx, by] = freeNear(s, hx + 3, hy);
     removeAll(s, 'post_hitN');
@@ -303,6 +304,7 @@ registerScripts({
       ['hit', '...Contract terminated. By the target. That has never happened before.', 'neutral'],
       ['hit', 'Keep this. Consider it my professional fee... refunded.', 'smirk'],
     ]);
+    s.music(s.field.def.music);
     s.letterbox(false);
     await s.done('post_hit', false);
     await s.give('str5');

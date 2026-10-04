@@ -250,8 +250,8 @@ registerScripts({
     s.letterbox(false);
     const [fx, fy] = tileOf(s, 'c01_fangNpc');
     s.remove('c01_fangNpc');
-    s.music('battle');
-    const r = await arenaFight(s, 'c01_fang', { x: fx, y: fy, uid: 'c01_fang1', loseOk: true });
+    s.music('boss');
+    const r = await arenaFight(s, 'c01_fang',{ x: fx, y: fy, uid: 'c01_fang1', loseOk: true });
     s.letterbox(true);
     if (r === 'lose') {
       await s.narrate('Fang bowls Goku over, snatches a mouthful of his gi and lopes off into the dark tunnels, growling.');
@@ -422,7 +422,7 @@ registerScripts({
   // ---------------------------------------------------------------- King Kai's planet
   c01_kingkai_arrive: async (s) => {
     s.letterbox(true);
-    s.music('peaceful');
+    s.music('otherworld');
     const [kx, ky] = HUB.kingKai.kingKai;
     actor(s, 'c01_kingkai', 'kingKai', kx, ky, 'down', 'King Kai');
     await s.walk('hero', kx, ky + 3, 1);
@@ -521,6 +521,7 @@ registerScripts({
     s.letterbox(false);
     const [bx, by] = tileOf(s, 'c01_beerus');
     s.remove('c01_beerus');
+    s.music('beerus');
     await arenaFight(s, 'c01_beerus', { x: bx, y: by, uid: 'c01_beerusF', survive: 40, loseOk: true, label: 'HOLD ON' });
 
     // All out: Super Saiyan isn't enough, so Goku goes to the third level.

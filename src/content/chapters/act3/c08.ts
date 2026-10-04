@@ -140,11 +140,13 @@ registerScripts({
       await s.say('goku', 'Round two, Monaka! I\'ve been training the whole time!', 'happy');
     }
     s.letterbox(false);
+    s.music('beerus');
     const r = await inArena(s, s.fight('c08_monakaBeerus', { x: YARD.fake.x, y: YARD.fake.y, uid: 'c08_monakaF', loseOk: true }), YARD_ARENA);
     bossExp(s, 'c08_monakaBeerus', r === 'lose' ? 'end' : r);
     s.letterbox(true);
     // The fight leaves its boss on the lawn as an enemy puppet: swap it for a costume NPC (named, with a portrait).
     dismiss(s, 'c08_monakaF');
+    s.music('peaceful');
     cast(s, 'c08_monakaN', 'c08_monakaCostume', YARD.fake.x, YARD.fake.y, 'down', 'Monaka');
     s.pose('hero', null);
     await s.say('c08_monakaN', 'Enough. *flick*', 'neutral');
@@ -223,7 +225,7 @@ registerScripts({
     await s.narrate('Jaco\'s ship rockets across the galaxy toward Potaufeu, a desert world covered in giant mushrooms.');
     await s.warp('c08_potaufeu_landing', 18, 13, 'up');
     s.letterbox(true);
-    s.music('space');
+    s.music('alien');
     cast(s, 'c08_jacoA', 'jaco', 16, 12, 'down', 'Jaco');
     await s.talk([
       ['jaco', 'Monaka\'s truck! But no sign of the kids. Or Monaka.', 'neutral'],
@@ -291,6 +293,7 @@ registerScripts({
     ]);
     s.remove('c08_gryllN');
     s.letterbox(false);
+    s.music('boss');
     const r = await s.fight('c08_gryll', { x: 21, y: 4, uid: 'c08_gryllF' });
     bossExp(s, 'c08_gryll', r);
     s.letterbox(true);
@@ -308,6 +311,7 @@ registerScripts({
     s.set('c08_gryllDone');
     await s.done('c08_gryll');
     await s.quest('c08_copy');
+    s.music(s.field.def.music);
     s.letterbox(false);
     await s.narrate('The seal is breaking. Something is stirring inside the vault.');
   }),
@@ -399,6 +403,7 @@ registerScripts({
     // A replayed vault (after a Game Over or reload) starts the puzzle from scratch.
     for (const f of ['c08_glyphW', 'c08_glyphE', 'c08_coreExposed']) s.clear(f);
     s.set('c08_coreHunt');
+    s.music('boss');
     const r = await inArena(s, s.fight('c08_copyVegeta', { uid: 'c08_copyF', existing: true }), VAULT_ARENA);
     for (const f of ['c08_coreHunt', 'c08_glyphW', 'c08_glyphE']) s.clear(f);
     bossExp(s, 'c08_copyVegeta', r);

@@ -289,8 +289,14 @@ a kill. Also: `refillAt/refillTo` (Perfect Cell refill), `stamina` (Golden Friez
   viper sandSnake giantSnake hawk pterodactyl stormPtero caveBat fireBat raptor redRaptor tRex blueTRex boar bear
   greyBear beetle hornet scarab crab kingCrab drone greenDrone goldDrone pilafRobot mechTrooper redMech goldMech
   slime mudSlime voidSlime bandit banditBrute soldier soldierB soldierC soldierElite.
-- **Music ids** (`src/content/music.ts`): title worldmap peaceful town field battle tense sad future godly tournament
-  cave space futureWorld frieza black jiren heroic ending victory gameover. Credits: `await s.credits([...lines])`.
+- **Music ids** (`src/content/music.ts`). World maps: worldmap futureWorld space. Hubs: peaceful (homes) town (Satan
+  City) westCity party lookout otherworld (King Kai, Hell, Baba, the Kais) training. Field regions: field (Earth
+  countryside) desert wasteland snow islands future (Future Earth ruins) alien beerusPlanet cave. Story: title tense sad
+  godly heroic frieza black jiren ending. Tournaments: tournament topArena. Fights: battle (waves, spars) boss (any boss
+  without a theme) beerus goldenFrieza hit zamasu (Goku Black and Zamasu) finale (Tournament of Power climax).
+  Jingles (play once): victory gameover. Give each map its region's theme (no track on more than 8 maps; see
+  `tests/music.test.ts`), call `s.music('<boss theme>')` just before a headline boss fight, and call `s.music(...)`
+  after `s.warp(...)`, never before it: entering a map starts that map's own track. Credits: `await s.credits([...lines])`.
 - **Items** (`src/content/items.ts`): senzu cookie fish str1/3/5 pow1/3/5 end1/3/5 delicacy whisStaff scouter
   dragonRadar db1–db7 trophyGoku trophyVegeta trophyGohan trophyTrunks trophyPiccolo. Add key items with
   `registerItems([...])` (prefix ids).

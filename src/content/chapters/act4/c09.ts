@@ -200,7 +200,7 @@ registerScripts({
     s.transformNow('ssj');
     await s.powerUp('hero', '#f8e048', 40);
     s.letterbox(false);
-    s.music('battle');
+    s.music('boss');
     s.remove('c09_dabura');
     // A memory can't kill you: if Trunks falls, he remembers it again, the way it really happened.
     let r = await bout(s, 'c09_dabura', { x: 13, y: 8, uid: 'c09_dabura1', loseOk: true });
@@ -271,7 +271,7 @@ registerScripts({
       ['c09_bulma', 'Vegeta! He woke up five minutes ago!', 'angry'],
       ['c09_vegeta', 'Saiyans heal by fighting. Up the stairs in the lab. Don\'t keep me waiting.', 'smirk'],
     ]);
-    s.music('town');
+    s.music('westCity');
     // Out through the lobby and up into the lab, where the stairs lead to the gravity room.
     await s.walk('c09_vegeta', 12, 10, 2);
     await s.walk('c09_vegeta', 7, 9, 2);
@@ -298,7 +298,7 @@ registerScripts({
     const c = await s.ask(me, 'Well? Are you ready?', ['Ready!', 'One moment']);
     if (c !== 0) { await s.say(me, 'Then warm up. Quickly.'); return; }
     s.remove('c09_vegeta');
-    s.music('battle');
+    s.music('training');
     const r = await bout(s, 'c09_vegetaSpar', { x: 10, y: 5, uid: 'c09_vegspar', loseOk: true });
     s.letterbox(true);
     if (r === 'lose') {
@@ -311,7 +311,7 @@ registerScripts({
       clearActors(s, ['c09_vegspar']);
       talker(s, 'c09_vegeta', 'vegeta', 10, 5, 'left', 'c09_vegeta_talk', 'Vegeta');
       patchUp(s);
-      s.music('battle');
+      s.music('training');
       s.letterbox(false);
       return;
     }
@@ -412,6 +412,7 @@ registerScripts({
     ]);
     s.letterbox(false);
     s.remove('c09_black');
+    s.music('zamasu');
     const r = await bout(s, 'c09_black', { x: 15, y: 8, uid: 'c09_black1' });
     s.letterbox(true);
     if (r !== 'win') s.face('c09_black1', 'hero');
@@ -450,7 +451,7 @@ registerScripts({
   c09_cell_machine: async (s) => {
     await s.warp('cc_yard', HUB.ccPad.arriveX, HUB.ccPad.arriveY + 1, 'up');
     s.letterbox(true);
-    s.music('town');
+    s.music('westCity');
     actor(s, 'c09_bulma', 'bulma', 33, 8, 'up');
     actor(s, 'c09_goku', 'goku', 29, 9, 'up');
     actor(s, 'c09_vegeta', 'vegeta', 35, 9, 'left');
@@ -561,7 +562,7 @@ registerScripts({
     await s.say('hero', 'Dr. Brief really should have unplugged this thing.', 'smirk');
     s.remove('c09_exNpc');
     s.letterbox(false);
-    s.music('battle');
+    s.music('boss');
     const r = await bout(s, 'c09_excavator', { x: 32, y: 4, uid: 'c09_excavator1' });
     if (r !== 'win') s.set('defeated:c09_excavator1');
     clearActors(s, ['c09_excavator1']);

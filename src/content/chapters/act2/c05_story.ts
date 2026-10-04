@@ -165,7 +165,7 @@ async function waveOne(s: ScriptApi): Promise<void> {
   ]);
   removeIf(s, ...WAVE_ALLIES.map(([id]) => id), 'c05_piccoloA');
   s.letterbox(false);
-  s.music('field');
+  s.music('wasteland');
 }
 
 // ---------------------------------------------------------------- waste_canyon
@@ -192,7 +192,7 @@ async function waveTwo(s: ScriptApi): Promise<void> {
   removeIf(s, ...WAVE_ALLIES.map(([id]) => id));
   s.letterbox(false);
   await s.say('gohan', 'That\'s the last of them here. The path north leads up to the mesa...', 'neutral');
-  s.music('field');
+  s.music('wasteland');
 }
 
 async function shisamiAndTagoma(s: ScriptApi): Promise<void> {
@@ -207,7 +207,7 @@ async function shisamiAndTagoma(s: ScriptApi): Promise<void> {
   ]);
   s.remove('c05_shisamiA');
   s.letterbox(false);
-  s.music('battle');
+  s.music('boss');
   const r = await s.fight('c05_shisami', { x: 28, y: 4, uid: 'c05_shisami1' });
   if (r === 'win' || r === 'end') s.exp(5000);
   s.letterbox(true);
@@ -266,7 +266,7 @@ async function shisamiAndTagoma(s: ScriptApi): Promise<void> {
   await s.setForm('piccolo', 'unweighted');
   s.letterbox(false);
   await s.narrate('Follow Tagoma north to the Great Mesa.');
-  s.music('field');
+  s.music('wasteland');
 }
 
 // ---------------------------------------------------------------- waste_mesa
@@ -329,7 +329,7 @@ async function ginyuScene(s: ScriptApi): Promise<void> {
   await s.say('piccolo', '...Somewhere, a frog is very confused right now.', 'smirk');
   removeIf(s, 'c05_tagomaNpc');
   s.letterbox(false);
-  s.music('battle');
+  s.music('boss');
   const r = await s.fight('c05_ginyuTagoma', { x: 24, y: 13, uid: 'c05_ginyu1' });
   if (r !== 'end' && r !== 'win') return;
   s.exp(9000);

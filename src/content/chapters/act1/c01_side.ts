@@ -187,7 +187,7 @@ registerScripts({
     s.follow();
     s.letterbox(false);
     s.remove('c01_rexNpc');
-    s.music('battle');
+    s.music('boss');
     const r = await arenaFight(s, 'c01_scarface', { x: fx, y: fy, uid: 'c01_rex', loseOk: true });
     s.letterbox(true);
     if (r === 'lose') {
@@ -195,7 +195,7 @@ registerScripts({
       await s.say('goku', 'Heh. Still got it, old timer. I\'ll be back once I\'m a little stronger!', 'happy');
       s.heal();
       if (s.exists('c01_rex')) s.remove('c01_rex');
-      s.music('field');
+      s.music('snow');
       s.letterbox(false);
       return;
     }
@@ -213,7 +213,7 @@ registerScripts({
     if (s.exists('c01_rex')) s.remove('c01_rex');
     await s.say('goku', 'It grows back, I promise! And go easy on the kids from now on, okay?', 'happy');
     s.set('c01_scarfaceBeaten');
-    s.music('field');
+    s.music('snow');
     s.letterbox(false);
   },
 
@@ -407,7 +407,7 @@ registerScripts({
     const a = s.actor('c01_serpentNpc');
     const fx = Math.round((a.x - 8) / TILE);
     s.remove('c01_serpentNpc');
-    s.music('battle');
+    s.music('boss');
     const r = await arenaFight(s, 'c01_serpent', { x: fx, y: 6, uid: 'c01_serpent1', loseOk: true });
     s.letterbox(true);
     if (r === 'lose') {

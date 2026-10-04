@@ -8,7 +8,8 @@ import { GRIDS } from './grids';
  *
  * Coordinates chapters need (tiles):
  *  - desert_entry: world sign (3,13), save (6,13), landing (4,15). Yamcha's old cave mouth at (12-14, 5-7).
- *  - desert_oasis: pond x 7-16 rows 10-17; bandit camp x 26-39 rows 8-21 (campfire (32,14)).
+ *  - desert_oasis: pond x 7-16 rows 10-17 (vipers + a king crab: the region's Fish source); bandit camp x 26-39
+ *    rows 8-21 (campfire (32,14)).
  *  - pilaf_castle_out: castle prop eb_pilafCastle at (15,3) (9x7 tiles), door warp (19,9), arrival outside (19,10).
  *    Courtyard x 10-29 rows 7-18, gate x 18-21 row 19, save point (15,21) outside the gate.
  *  - pilaf_castle_in: entrance warp (15-16,21), arrival (15,20). Save point (13,19) in the entry hall.
@@ -21,7 +22,7 @@ const DESERT = { s: 'sand', w: 'wasteland', d: 'dirt', r: 'rock', u: 'ruins', '#
 
 registerMaps([
   {
-    id: 'desert_entry', name: 'Diablo Desert', music: 'field', hostile: true, region: 'Diablo Desert',
+    id: 'desert_entry', name: 'Diablo Desert', music: 'desert', hostile: true, region: 'Diablo Desert',
     legend: DESERT,
     grid: GRIDS.desert_entry,
     props: [
@@ -57,7 +58,7 @@ registerMaps([
     ],
   },
   {
-    id: 'desert_oasis', name: 'Ten-Palm Oasis', music: 'field', hostile: true, region: 'Diablo Desert',
+    id: 'desert_oasis', name: 'Ten-Palm Oasis', music: 'desert', hostile: true, region: 'Diablo Desert',
     legend: DESERT,
     grid: GRIDS.desert_oasis,
     props: [
@@ -81,6 +82,9 @@ registerMaps([
       { type: 'banditBrute', x: 33, y: 11 }, { type: 'banditBrute', x: 29, y: 15 },
       { type: 'sandSnake', x: 24, y: 23 }, { type: 'sandSnake', x: 9, y: 23 },
       { type: 'scarab', x: 33, y: 4 }, { type: 'hawk', x: 12, y: 4 },
+      // Pond wildlife (Fish drops): swamp vipers on the north and east banks, a king crab sunning on the south shore.
+      { type: 'viper', x: 12, y: 9 }, { type: 'viper', x: 18, y: 13 },
+      { type: 'kingCrab', x: 12, y: 18 },
     ],
     exits: { west: { to: 'desert_entry' }, north: { to: 'pilaf_castle_out' } },
     objects: [

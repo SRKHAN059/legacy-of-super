@@ -115,8 +115,8 @@ async function whisMenu(s: ScriptApi, travel: 'space' | 'earth'): Promise<void> 
 async function hellScene(s: ScriptApi): Promise<void> {
   s.letterbox(true);
   await s.fadeOut(30);
-  s.music('tense');
   await s.warp('pilaf_castle_out', 20, 24, 'up');
+  s.music('tense');
   s.show('hero', false);
   s.letterbox(true);
   await s.narrate('Meanwhile, on Earth, outside a certain desert castle...');
@@ -182,8 +182,8 @@ async function hellScene(s: ScriptApi): Promise<void> {
   await s.narrate('And then the cocoon fell silent. Its occupant was gone.');
   await s.fadeOut(20);
   // Back on Earth: the regeneration tank.
-  s.music('frieza');
   await s.warp('pilaf_castle_out', 20, 24, 'up');
+  s.music('frieza');
   s.show('hero', false);
   s.letterbox(true);
   addProp(s, 'spaceship', 26, 21.5, 'h_ship');

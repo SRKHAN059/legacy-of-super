@@ -5,18 +5,21 @@
 
 /** A music track: tempo plus one pattern string per channel. */
 export interface Track {
-  /** Rows per second. */
+  /** Tempo in beats per minute. */
   bpm: number;
   /** Rows per beat (subdivision). Default 4 (16th notes). */
   rpb?: number;
   /** Whether to loop. */
   loop: boolean;
+  /** Row the loop jumps back to (default 0), so an intro before it plays only once. */
+  loopFrom?: number;
   /**
    * Channel patterns. Tokens separated by spaces; each token is one row:
    *   C4 D#5 Bb3  note (sharps '#', flats 'b')
    *   -           sustain previous note
    *   .           rest / note off
-   *   x           noise hit (drums channel), X accented, h hi-hat
+   * Drums channel: k kick, x snare, X accented snare, h closed hi-hat, o open hi-hat, c crash cymbal,
+   * t high tom, T low tom.
    * A token may carry a length multiplier: 'C4*3' spans three rows.
    */
   lead: string;
@@ -25,9 +28,14 @@ export interface Track {
   drums?: string;
   /** Pulse duty for the lead: 0.125, 0.25 or 0.5. */
   leadDuty?: number;
+  /** Pulse duty for the harmony channel (default 0.125). */
+  harmonyDuty?: number;
   /** Master volume for this track 0..1. */
   volume?: number;
 }
+
+/** Tokens the drums channel understands (plus '.' and '-'). */
+export const DRUM_TOKENS = ['k', 'x', 'X', 'h', 'o', 'c', 't', 'T'] as const;
 
 /** Sound-effect identifiers. */
 export type Sfx =
@@ -267,6 +275,22 @@ export class Audio {
     this.pendingTrack = null;
   }
 
+  /** One drums-channel hit: noise for snares, hats and cymbals, falling triangle blips for the kick and toms. */
+  private drum(tok: string, t: number): void {
+    const bus = this.musicBus;
+    if (!bus) return;
+    switch (tok) {
+      case 'k': this.tone(bus, 150, t, 0.1, { type: 'triangle', vol: 0.5, slideTo: 40 }); break;
+      case 'x': this.noise(bus, t, 0.12, 0.35, 1800, 200); break;
+      case 'X': this.noise(bus, t, 0.2, 0.5, 2400, 150); break;
+      case 'h': this.noise(bus, t, 0.04, 0.18, 9000); break;
+      case 'o': this.noise(bus, t, 0.16, 0.16, 9000, 5000); break;
+      case 'c': this.noise(bus, t, 0.6, 0.3, 9000, 2500); break;
+      case 't': this.tone(bus, 260, t, 0.12, { type: 'triangle', vol: 0.42, slideTo: 120 }); break;
+      case 'T': this.tone(bus, 170, t, 0.16, { type: 'triangle', vol: 0.46, slideTo: 70 }); break;
+    }
+  }
+
   private schedule(): void {
     const cur = this.current;
     if (!this.ctx || !this.musicBus || !cur) return;
@@ -274,17 +298,15 @@ export class Audio {
     while (cur.nextTime < this.ctx.currentTime + 0.12) {
       if (cur.row >= cur.rows.length) {
         if (!cur.track.loop) { this.stopMusic(); return; }
-        cur.row = 0;
+        const from = cur.track.loopFrom ?? 0;
+        cur.row = from > 0 && from < cur.rows.length ? from : 0;
       }
       const row = cur.rows[cur.row];
       for (let ch = 0; ch < 4; ch++) {
         const tok = row[ch];
         if (!tok || tok === '.' || tok === '-') continue;
         if (ch === 3) {
-          if (tok === 'x') this.noise(this.musicBus, cur.nextTime, 0.12, 0.35, 1800, 200);
-          else if (tok === 'X') this.noise(this.musicBus, cur.nextTime, 0.2, 0.5, 2400, 150);
-          else if (tok === 'h') this.noise(this.musicBus, cur.nextTime, 0.04, 0.18, 9000);
-          else if (tok === 'k') this.tone(this.musicBus, 150, cur.nextTime, 0.1, { type: 'triangle', vol: 0.5, slideTo: 40 });
+          this.drum(tok, cur.nextTime);
           continue;
         }
         const f = noteFreq(tok);
@@ -295,7 +317,7 @@ export class Audio {
         for (let k = cur.row + 1; k < chan.length && chan[k][ch] === '-'; k++) n++;
         const dur = n * rowDur;
         if (ch === 0) this.tone(this.musicBus, f, cur.nextTime, dur * 0.95, { duty: cur.track.leadDuty ?? 0.25, vol: 0.11, vibrato: 0.012 });
-        if (ch === 1) this.tone(this.musicBus, f, cur.nextTime, dur * 0.9, { duty: 0.125, vol: 0.06 });
+        if (ch === 1) this.tone(this.musicBus, f, cur.nextTime, dur * 0.9, { duty: cur.track.harmonyDuty ?? 0.125, vol: 0.06 });
         if (ch === 2) this.tone(this.musicBus, f, cur.nextTime, dur * 0.85, { type: 'triangle', vol: 0.3 });
       }
       cur.nextTime += rowDur;

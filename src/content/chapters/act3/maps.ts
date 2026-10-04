@@ -231,7 +231,7 @@ registerMaps([
     ],
   },
   {
-    id: 'c07_nameless_rim', name: 'Crater Rim', music: 'cave', hostile: true, region: 'Nameless Planet',
+    id: 'c07_nameless_rim', name: 'Crater Rim', music: 'alien', hostile: true, region: 'Nameless Planet',
     legend: { '#': 'cliff', '.': 'rock', ',': 'wasteland', s: 'sand', d: 'dirt' },
     grid: [
       '####################################',
@@ -295,7 +295,7 @@ registerMaps([
 
   // ------------------------------------------------------------------ Chapter 8: Potaufeu
   {
-    id: 'c08_potaufeu_landing', name: 'Potaufeu', music: 'space', region: 'Potaufeu',
+    id: 'c08_potaufeu_landing', name: 'Potaufeu', music: 'alien', region: 'Potaufeu',
     legend: { '#': 'cliff', s: 'sand', d: 'dirt', g: 'alienGrass', M: 'metal', '=': 'path', r: 'rock', '~': 'water' },
     grid: [
       '##################ddddd#################',
@@ -352,7 +352,7 @@ registerMaps([
     exits: { north: { to: 'c08_potaufeu_mushrooms' } },
   },
   {
-    id: 'c08_potaufeu_mushrooms', name: 'Mushroom Forest', music: 'tense', hostile: true, region: 'Potaufeu',
+    id: 'c08_potaufeu_mushrooms', name: 'Mushroom Forest', music: 'alien', hostile: true, region: 'Potaufeu',
     legend: { '#': 'cliff', s: 'sand', d: 'dirt', g: 'alienGrass', u: 'ruins', '~': 'water' },
     grid: [
       '############################################',

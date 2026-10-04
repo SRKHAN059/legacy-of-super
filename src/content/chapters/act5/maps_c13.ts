@@ -3,7 +3,9 @@ import { GridPainter, propsOn } from './grid';
 
 /**
  * Chapter 13 locations: the Zeno Expo arena, Monster Island (shore, jungle, ranger station + hut, poacher camp),
- * Tien's mountain dojo, the wilderness where Gohan trains, and Fortuneteller Baba's lakeside palace.
+ * Tien's mountain dojo, the wilderness where Gohan trains, and Fortuneteller Baba's lakeside palace. Three of the
+ * seven escaped animals hide on these maps; three more fled into old Earth regions, behind coloured gates
+ * (`c13_maps.ts` overlays), and the Minotaurus calf wandered to Mt. Paozu (`overlays.ts`).
  */
 
 const BRIDGE = { '~': 'w', w: 'w' };
@@ -125,7 +127,7 @@ registerMaps([
     objects: [{ type: 'breakable', x: 9, y: 19, size: 1, look: 'jar' }, { type: 'breakable', x: 24, y: 9, size: 1, look: 'jar' }],
   },
   {
-    id: 'c13_monster_beach', name: 'Monster Island Shore', music: 'peaceful', region: 'Monster Island',
+    id: 'c13_monster_beach', name: 'Monster Island Shore', music: 'islands', region: 'Monster Island',
     legend: { s: 'sand', ',': 'darkGrass', '.': 'grass', '#': 'cliff', '~': 'water', D: 'deep', d: 'dirt', w: 'wood' },
     grid: beach.rows(),
     props: [...beachProps, ['rubble', 21, 17], ['crate', 23, 16], ['barrel', 25, 17], ['rock', 30, 12], ['smallRock', 4, 17]],
@@ -145,13 +147,10 @@ registerMaps([
     onEnter: 'c13_beach_enter',
   },
   {
-    id: 'c13_monster_jungle', name: 'Monster Island Jungle', music: 'field', hostile: true, region: 'Monster Island',
+    id: 'c13_monster_jungle', name: 'Monster Island Jungle', music: 'islands', hostile: true, region: 'Monster Island',
     legend: { ',': 'darkGrass', '.': 'grass', '#': 'cliff', '~': 'water', d: 'dirt', w: 'wood' },
     grid: jungle.rows(),
     props: [...jungleProps, ['caveEntrance', 9, 20.5], ['flowers', 7, 29], ['flowers', 10, 28]],
-    npcs: [
-      { id: 'c13_ani2', sprite: 'c13_babyDino', x: 8, y: 30, talk: 'c13_animal_talk', name: 'Baby Dino', showIf: 'c13_animalsLoose', hideIf: 'c13_ani_c13_ani2' },
-    ],
     enemies: [
       { type: 'c13_poacher', x: 24, y: 8, hideIf: 'c13_poachersGone' }, { type: 'c13_poacher', x: 30, y: 26, hideIf: 'c13_poachersGone' },
       { type: 'c13_poacherBrute', x: 12, y: 10, hideIf: 'c13_poachersGone' }, { type: 'c13_poacherDrone', x: 34, y: 7, hideIf: 'c13_poachersGone' },
@@ -170,7 +169,7 @@ registerMaps([
     exits: { south: { to: 'c13_monster_beach' }, north: { to: 'c13_monster_camp' }, east: { to: 'c13_monster_hut' } },
   },
   {
-    id: 'c13_monster_hut', name: 'Ranger Station', music: 'peaceful', region: 'Monster Island',
+    id: 'c13_monster_hut', name: 'Ranger Station', music: 'islands', region: 'Monster Island',
     legend: { '.': 'grass', ',': 'darkGrass', '#': 'cliff', '~': 'water', d: 'dirt' },
     grid: station.rows(),
     props: [
@@ -253,7 +252,6 @@ registerMaps([
       { id: 'c13_yurinD', sprite: 'c13_yurin', x: 24, y: 12, talk: 'c13_yurin_talk', name: 'Yurin', showIf: 'done:c13_tien' },
       { id: 'c13_stuA', sprite: 'c13_student', x: 11, y: 12, talk: 'c13_student_talk', name: 'Student', showIf: 'done:c13_tien', wander: 2 },
       { id: 'c13_stuB', sprite: 'c13_student', x: 19, y: 15, talk: 'c13_student_talk', name: 'Student', showIf: 'done:c13_tien', wander: 2 },
-      { id: 'c13_ani4', sprite: 'c13_emeraldKite', x: 33, y: 11, talk: 'c13_animal_talk', name: 'Emerald Kite', showIf: 'c13_animalsLoose', hideIf: 'c13_ani_c13_ani4' },
     ],
     objects: [
       { type: 'save', x: 7, y: 22 }, { type: 'worldSign', x: 26, y: 23 },
@@ -268,13 +266,10 @@ registerMaps([
     triggers: [{ id: 'c13_dojoEvent', x: 14, y: 19, w: 8, h: 2, script: 'c13_dojo_event', showIf: 'quest:c13_tien&!act5_busy', hideIf: 'done:c13_tien' }],
   },
   {
-    id: 'c13_training_wilds', name: 'Wilderness Plateau', music: 'field', hostile: true, region: 'Wilderness Plateau',
+    id: 'c13_training_wilds', name: 'Wilderness Plateau', music: 'wasteland', hostile: true, region: 'Wilderness Plateau',
     legend: { '#': 'cliff', x: 'wasteland', r: 'rock', d: 'dirt', '~': 'water' },
     grid: wild.rows(),
     props: [...wildProps, ['crater', 16, 10], ['crater', 22, 14]],
-    npcs: [
-      { id: 'c13_ani5', sprite: 'c13_cliffBat', x: 33, y: 6, talk: 'c13_animal_talk', name: 'Cliff Bat', showIf: 'c13_animalsLoose', hideIf: 'c13_ani_c13_ani5' },
-    ],
     onEnter: 'c13_spot_enter',
     enemies: [{ type: 'direWolf', x: 26, y: 5 }, { type: 'direWolf', x: 9, y: 19 }, { type: 'redRaptor', x: 30, y: 15 }, { type: 'redRaptor', x: 6, y: 9 }],
     objects: [
@@ -286,7 +281,7 @@ registerMaps([
     barriers: [{ id: 'c13_g_piccolo', x: 26, y: 22, w: 1, h: 1, level: 45, character: 'piccolo' }],
   },
   {
-    id: 'c13_baba_lake', name: 'Baba\'s Palace', music: 'tense', hostile: true, region: 'Baba\'s Palace',
+    id: 'c13_baba_lake', name: 'Baba\'s Palace', music: 'otherworld', hostile: true, region: 'Baba\'s Palace',
     legend: { s: 'sand', '~': 'water', a: 'arena', w: 'wood', m: 'marble', '.': 'grass', '#': 'cliff' },
     grid: baba.rows(),
     props: [

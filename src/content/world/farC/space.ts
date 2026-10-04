@@ -20,7 +20,7 @@ function pillarRows(xs: number[], ys: number[]): PropPlacement[] {
 registerMaps([
   // ------------------------------------------------------------------ King Kai's planet
   {
-    id: 'kingkai_planet', name: 'King Kai\'s Planet', music: 'peaceful', region: 'King Kai\'s Planet', backdrop: '#05050f',
+    id: 'kingkai_planet', name: 'King Kai\'s Planet', music: 'otherworld', region: 'King Kai\'s Planet', backdrop: '#05050f',
     legend: { 'v': 'void', '.': 'grass', ',': 'darkGrass', 'p': 'path' },
     grid: [
       'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',
@@ -67,7 +67,7 @@ registerMaps([
 
   // ------------------------------------------------------------------ Beerus's planet
   {
-    id: 'beerus_grounds', name: 'Beerus\'s Planet', music: 'godly', hostile: true, region: 'Beerus\'s Planet', backdrop: '#1a0c30',
+    id: 'beerus_grounds', name: 'Beerus\'s Planet', music: 'beerusPlanet', hostile: true, region: 'Beerus\'s Planet', backdrop: '#1a0c30',
     legend: { 'v': 'void', 'g': 'alienGrass', 'k': 'rock', 'M': 'marble', 'p': 'path', 's': 'sand', '~': 'water', 'D': 'deep' },
     grid: [
       'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',
@@ -146,7 +146,7 @@ registerMaps([
 
   // ------------------------------------------------------------------ Inside the pyramid
   {
-    id: 'beerus_palace_in', name: 'Beerus\'s Palace', music: 'godly', indoor: true, region: 'Beerus\'s Planet',
+    id: 'beerus_palace_in', name: 'Beerus\'s Palace', music: 'beerusPlanet', indoor: true, region: 'Beerus\'s Planet',
     legend: { 'W': 'wall', 'M': 'marble', 'c': 'carpet' },
     grid: [
       'WWWWWWWWWWWWWWWWWWWW',
@@ -177,7 +177,7 @@ registerMaps([
 
   // ------------------------------------------------------------------ Sacred World of the Kais, Universe 10
   {
-    id: 'u10_sacred', name: 'Sacred World of the Kais (U10)', music: 'godly', region: 'Sacred World (U10)', backdrop: '#0c1830',
+    id: 'u10_sacred', name: 'Sacred World of the Kais (U10)', music: 'otherworld', region: 'Sacred World (U10)', backdrop: '#0c1830',
     legend: { 'v': 'void', 'g': 'grass', '.': 'darkGrass', ',': 'alienGrass', 'M': 'marble', '~': 'water', 'D': 'deep' },
     grid: [
       'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',
@@ -234,7 +234,7 @@ registerMaps([
 
   // ------------------------------------------------------------------ Zeno's palace
   {
-    id: 'zeno_palace', name: 'Zeno\'s Palace', music: 'space', region: 'Zeno\'s Palace', backdrop: '#180838',
+    id: 'zeno_palace', name: 'Zeno\'s Palace', music: 'godly', region: 'Zeno\'s Palace', backdrop: '#180838',
     legend: { 'v': 'void', 'M': 'marble', 'c': 'carpet', 'C': 'cloud' },
     grid: [
       'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',

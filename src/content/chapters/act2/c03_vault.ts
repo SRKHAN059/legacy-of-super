@@ -102,7 +102,7 @@ async function mk2Ambush(s: ScriptApi): Promise<void> {
   await s.say('pilaf', '(over a crackling speaker) Ha ha ha! Behold my genius! Hand over the ball, monkey boy!', 'smirk');
   removeIf(s, 'c03_mk2npc');
   s.letterbox(false);
-  s.music('battle');
+  s.music('boss');
   const r = await s.fight('c03_pilafMk2', { x: 12, y: 3, uid: 'c03_mk2' });
   if (r !== 'win' && r !== 'end') return;
   s.set('defeated:c03_mk2');

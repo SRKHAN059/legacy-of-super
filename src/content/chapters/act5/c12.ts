@@ -164,7 +164,7 @@ registerScripts({
       ['goku', 'Then come on, Hit! Show me everything!', 'shout'],
     ]);
     s.letterbox(false);
-    s.music('battle');
+    s.music('hit');
     const [bx, by] = freeNear(s, hx + 3, hy - 2);
     s.remove('c12_hitA');
     const r = await bossFight(s, 'c12_hit', { x: bx, y: by, uid: 'c12_hit1' });
@@ -427,6 +427,7 @@ registerScripts({
     s.letterbox(false);
     const [wx, wy] = freeNear(s, 20, 12);
     s.remove('c12_barryS');
+    s.music('boss');
     await bossFight(s, 'c12_watagash', { x: wx, y: wy, uid: 'c12_watagash1' });
     s.letterbox(true);
     await s.talk([['gohan', 'It just keeps mutating! Fine. No more holding back!', 'shout']]);
@@ -584,6 +585,7 @@ registerScripts({
     s.letterbox(false);
     s.remove('c12_nappaI');
     const [ax, ay] = freeNear(s, hx, hy - 3);
+    s.music('boss');
     await bossFight(s, 'c12_illNappa', { x: ax, y: ay, uid: 'c12_illNappa1' });
     removeAll(s, 'c12_illNappa1');
     s.letterbox(true);
@@ -595,6 +597,7 @@ registerScripts({
     ]);
     s.letterbox(false);
     s.remove('c12_friezaI');
+    s.music('frieza');
     await bossFight(s, 'c12_illFrieza', { x: ax, y: ay, uid: 'c12_illFrieza1' });
     removeAll(s, 'c12_illFrieza1');
     s.letterbox(true);
@@ -606,6 +609,7 @@ registerScripts({
     ]);
     s.letterbox(false);
     s.remove('c12_cellI');
+    s.music('boss');
     await bossFight(s, 'c12_illCell', { x: ax, y: ay, uid: 'c12_illCell1' });
     s.letterbox(true);
     await s.talk([

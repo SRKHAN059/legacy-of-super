@@ -110,6 +110,7 @@ async function sparAndChampa(s: ScriptApi): Promise<void> {
   await s.narrate('The weighted clothing slows every step. Land clean hits on Vegeta and stay out of his combos!');
   s.remove('c07_b_vegeta');
   s.letterbox(false);
+  s.music('training');
   const r = await s.fight('c07_sparVegeta', { x: BG.vegeta.x, y: BG.vegeta.y, uid: 'c07_sparF' });
   bossExp(s, 'c07_sparVegeta', r);
   s.letterbox(true);
@@ -125,6 +126,7 @@ async function sparAndChampa(s: ScriptApi): Promise<void> {
   s.pose('hero', null);
 
   // Champa and Vados arrive by cube.
+  s.music('godly');
   s.flash('#d0c0ff', 14);
   s.sfx('teleport');
   s.shake(16, 2);
@@ -190,7 +192,7 @@ async function sparAndChampa(s: ScriptApi): Promise<void> {
   await s.narrate('Whis\'s cube streaks back across Universe 7. That afternoon, at Capsule Corporation...');
   await s.warp('cc_yard', CC.arrive.x, CC.arrive.y, 'down');
   s.letterbox(true);
-  s.music('town');
+  s.music('westCity');
   cast(s, 'c07_c_beerus', 'beerus', CC.arrive.x + 1, CC.arrive.y + 1, 'down', 'Beerus');
   await s.walk('c07_c_beerus', CC.beerus.x, CC.beerus.y, 1.4);
   s.face('c07_c_beerus', 'left');

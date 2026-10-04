@@ -66,7 +66,7 @@ registerSky('ea_sky_korin', KORIN_TOP, 'v');
 registerSky('ea_sky_lookout', LOOKOUT, 'v');
 
 registerMaps([
-  // ---------------------------------------------------------------- Korin Forest (light hostile)
+  // ---------------------------------------------------------------- Korin Forest (hostile, T1-T2 wildlife)
   {
     id: 'korin_base', name: 'Korin Forest', music: 'field', hostile: true, region: 'The Lookout',
     legend: { ',': 'darkGrass', '.': 'grass', '=': 'path', '#': 'cliff', '~': 'water', 'r': 'rock', 'd': 'dirt', 'b': 'wood' },
@@ -130,6 +130,13 @@ registerMaps([
     enemies: [
       { type: 'snake', x: 11, y: 24 }, { type: 'snake', x: 25, y: 23 }, { type: 'snake', x: 36, y: 15 },
       { type: 'hawk', x: 12, y: 6 }, { type: 'hawk', x: 27, y: 4 },
+      // The river is where Korin's fish come from: swamp vipers and shore crabs work both banks (Fish drops).
+      { type: 'viper', x: 30, y: 22 }, { type: 'viper', x: 33, y: 8 },
+      { type: 'crab', x: 30, y: 10 }, { type: 'crab', x: 33, y: 26 },
+      // Woodland: rhino beetles in the north, a hornet over the east grove, a brown bear south of Yajirobe's camp.
+      { type: 'beetle', x: 6, y: 7 }, { type: 'beetle', x: 26, y: 5 },
+      { type: 'hornet', x: 36, y: 10 },
+      { type: 'bear', x: 5, y: 27 },
     ],
     objects: [
       { type: 'worldSign', x: 17, y: 27 },
@@ -146,7 +153,7 @@ registerMaps([
 
   // ---------------------------------------------------------------- top of Korin Tower
   {
-    id: 'korin_tower', name: 'Korin Tower', music: 'peaceful', region: 'The Lookout', backdrop: '#7ab8f0',
+    id: 'korin_tower', name: 'Korin Tower', music: 'lookout', region: 'The Lookout', backdrop: '#7ab8f0',
     legend: { 'v': 'void', 'f': 'floor' },
     grid: KORIN_TOP,
     props: [
@@ -165,7 +172,7 @@ registerMaps([
 
   // ---------------------------------------------------------------- Kami's Lookout
   {
-    id: 'lookout', name: 'The Lookout', music: 'godly', region: 'The Lookout', backdrop: '#7ab8f0',
+    id: 'lookout', name: 'The Lookout', music: 'lookout', region: 'The Lookout', backdrop: '#7ab8f0',
     legend: { 'v': 'void', 'm': 'marble', '.': 'grass', 't': 'tile' },
     grid: LOOKOUT,
     props: [
@@ -197,7 +204,7 @@ registerMaps([
 
   // ---------------------------------------------------------------- palace interior
   {
-    id: 'lookout_palace_in', name: 'Kami\'s Palace', music: 'godly', region: 'The Lookout', indoor: true,
+    id: 'lookout_palace_in', name: 'Kami\'s Palace', music: 'lookout', region: 'The Lookout', indoor: true,
     legend: { 'R': 'roof', 'W': 'wall', 'm': 'marble', 'k': 'carpet' },
     grid: [
       'RRRRRRRRRRRRRRRRRRRR',

@@ -76,8 +76,11 @@ export class SaveMenu implements Scene {
 
   render(ctx: CanvasRenderingContext2D): void {
     if (this.mode === 'saved' || this.mode === 'failed') {
-      drawWindow(ctx, 50, 60, 140, 26);
+      // With browser storage blocked the save lives in memory: say so, so nobody closes the tab trusting it.
+      const sessionOnly = this.mode === 'saved' && !this.game.saves.persistent;
+      drawWindow(ctx, 50, 60, 140, sessionOnly ? 37 : 26);
       font.drawCentered(ctx, this.mode === 'saved' ? `Saved to File ${this.game.slot + 1}.` : 'Could not save!', 120, 69, this.mode === 'saved' ? PAL.white : '#f86060', '#000');
+      if (sessionOnly) font.drawCentered(ctx, '(until this tab closes)', 120, 80, '#f8c060', '#000');
       return;
     }
     if (this.mode === 'switch') {

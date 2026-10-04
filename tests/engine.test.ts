@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CHAPTER_MIN_LEVEL, ensureChapterState, force, FORCED_LEVEL_GAP, STORY_RUN } from '../src/content/chapters/common';
 import { inArena } from '../src/content/chapters/act3/helpers';
 import { ENEMIES } from '../src/content/enemies';
@@ -16,7 +16,8 @@ import { TIMER_Y } from '../src/game/hud';
 import { damage, ENEMY_POWER, enemyPowerScale, rollToLevel } from '../src/game/leveling';
 import { Shot } from '../src/game/projectiles';
 import { registerScripts, type ScriptApi } from '../src/game/script';
-import { GameState, newChar, newGame, repairSave, type SaveData } from '../src/game/state';
+import { decodeSaveCode, encodeSaveCode, GameState, newChar, newGame, repairSave, SAVE_VERSION, SaveCodeError, SaveService, type SaveData } from '../src/game/state';
+import { BrowserStorage, type StorageHost } from '../src/game/storage';
 import { cachedGrounds, setGroundCacheLimit } from '../src/game/world';
 import { CreditsScene } from '../src/ui/credits';
 import { ChoiceScene, DialogueScene, textSettings, type Line } from '../src/ui/dialogue';
@@ -24,6 +25,10 @@ import { PauseMenu } from '../src/ui/pause';
 import { spotBiome, worldTexel } from '../src/ui/worldmap';
 import { CHARACTERS } from '../src/content/characters';
 import { Rng } from '../src/engine/math';
+import { TRACKS } from '../src/content/music';
+import { CAPTION_ROWS, IntroScene } from '../src/ui/intro';
+import { SaveMenu } from '../src/ui/savemenu';
+import { ATTRACT_IDLE_FRAMES, TitleScene, type SaveCodeUi } from '../src/ui/title';
 import { Sim } from './sim';
 
 declare const setImmediate: (cb: () => void) => void;
@@ -631,5 +636,439 @@ describe('presentation', () => {
     expect(dpadButtons(-25, -25).sort()).toEqual(['left', 'up']);
     expect(dpadButtons(25, 25).sort()).toEqual(['down', 'right']);
     expect(dpadButtons(2, 3)).toEqual([]);
+  });
+});
+
+// ------------------------------------------------------------------------------------------------ boot, title & save codes
+
+/** Press a button for one tick, then let go for one (a tap). */
+async function tap(sim: Sim, b: Button): Promise<void> {
+  await step(sim, 1, { [b]: true });
+  await step(sim, 1, { [b]: false });
+}
+
+/** A 2D context from the test canvas shim (drawing is a no-op; the code paths still run). */
+function testCtx(): CanvasRenderingContext2D {
+  const ctx = document.createElement('canvas').getContext('2d');
+  if (!ctx) throw new Error('2D context unavailable in the test shim');
+  return ctx;
+}
+
+/** A save with some of everything a code has to carry: party, forms, techniques, flags of every type, quests, items. */
+function richSave(): SaveData {
+  const st = new GameState(newGame());
+  st.join('goku', 24);
+  st.join('vegeta', 21);
+  st.learn('goku', 'kamehameha');
+  st.char('goku').form = 'ssj';
+  st.data.active = 'goku';
+  st.data.chapter = 6;
+  st.data.map = 'cc_yard';
+  st.data.x = 23 * TILE + 8;
+  st.data.y = 13 * TILE + 14;
+  st.data.dir = 'left';
+  st.data.playFrames = 60 * 60 * 95 + 17;
+  st.set('c05_done');
+  st.set('c06_counter', 42);
+  st.set('c06_note', 'Bulma’s “pudding” ✓');
+  st.addQuest('c06_main');
+  st.completeQuest('c05_main');
+  st.give('senzu', 3);
+  st.give('fish', 7);
+  st.data.scans = ['goku', 'beerus'];
+  st.data.visited = ['paozu_home', 'cc_yard'];
+  st.data.regions = ['spot_westcity'];
+  st.data.textSpeed = 3;
+  st.data.musicVol = 0.4;
+  st.data.sfxVol = 0.9;
+  return st.data;
+}
+
+/** Stand-in for the HTML code panel: hands the title queued pastes (refused ones are recorded) or records exports. */
+class FakeCodeUi implements SaveCodeUi {
+  readonly available = true;
+  readonly exported: string[] = [];
+  readonly errors: string[] = [];
+  pastes: string[] = [];
+
+  async showExport(_heading: string, code: string): Promise<void> {
+    this.exported.push(code);
+  }
+
+  async promptImport<T>(_heading: string, parse: (code: string) => T): Promise<T | null> {
+    // Like the panel: a refused paste shows its message and the player tries the next one, then gives up.
+    for (const p of this.pastes.splice(0)) {
+      try {
+        return parse(p);
+      } catch (err) {
+        this.errors.push(err instanceof Error ? err.message : String(err));
+      }
+    }
+    return null;
+  }
+}
+
+/** A localStorage stand-in. */
+function fakeLocalStorage(): Window['localStorage'] {
+  const m = new Map<string, string>();
+  return {
+    getItem: (k: string) => m.get(k) ?? null,
+    setItem: (k: string, v: string) => void m.set(k, String(v)),
+    removeItem: (k: string) => void m.delete(k),
+    clear: () => m.clear(),
+    key: (i: number) => [...m.keys()][i] ?? null,
+    get length() { return m.size; },
+  };
+}
+
+describe('save codes (export / import)', () => {
+  it('export -> import round-trips a save, and pasted line breaks or spaces do not matter', () => {
+    const d = richSave();
+    const code = encodeSaveCode(d);
+    expect(code).toMatch(/^LOS1\.[0-9a-f]{8}\.[A-Za-z0-9_-]+$/);
+    expect(decodeSaveCode(code)).toEqual(d);
+    const wrapped = `  ${(code.match(/.{1,40}/g) ?? []).join('\n ')}\n`;
+    expect(decodeSaveCode(wrapped)).toEqual(d);
+  });
+
+  it('packs a late-game save to a fraction of its JSON size', () => {
+    const st = new GameState(newGame());
+    for (const id of Object.keys(CHARACTERS) as Array<keyof typeof CHARACTERS>) st.join(id, 40);
+    for (let i = 0; i < 700; i++) st.set(`c${String(i % 15).padStart(2, '0')}_flag_${i}`, i % 3 === 0 ? i : true);
+    for (let i = 0; i < 90; i++) st.completeQuest(`c${String(i % 15).padStart(2, '0')}_quest_${i}`);
+    st.data.visited = Array.from({ length: 86 }, (_, i) => `map_${i}`);
+    const json = JSON.stringify(st.data);
+    const code = encodeSaveCode(st.data);
+    expect(code.length).toBeLessThan(json.length * 0.55);
+    expect(decodeSaveCode(code)).toEqual(st.data);
+  });
+
+  it('rejects bad codes with a reason: empty, foreign, newer, damaged, cut short, or not a valid save', () => {
+    const code = encodeSaveCode(richSave());
+    const reason = (text: string): string => {
+      try {
+        decodeSaveCode(text);
+        return 'accepted';
+      } catch (err) {
+        return err instanceof SaveCodeError ? err.reason : `threw ${String(err)}`;
+      }
+    };
+    const edit = (i: number): string => code.slice(0, i) + (code[i] === '0' ? '1' : '0') + code.slice(i + 1);
+    expect(reason('')).toBe('empty');
+    expect(reason('   \n ')).toBe('empty');
+    expect(reason('hello there')).toBe('format');
+    expect(reason(code.replace('LOS1.', 'LOX1.'))).toBe('format');
+    expect(reason(`${code}!`)).toBe('format');
+    expect(reason(code.replace(/^LOS1/, 'LOS2'))).toBe('newer');
+    expect(reason(edit(6))).toBe('checksum');
+    expect(reason(code.slice(0, Math.floor(code.length / 2)))).toMatch(/^(checksum|corrupt)$/);
+    expect(reason(code.slice(0, -1))).toMatch(/^(checksum|corrupt)$/);
+    // Every single edited character, anywhere in the code, is refused.
+    for (let i = 0; i < code.length; i++) expect(reason(edit(i)), `edit at ${i}`).not.toBe('accepted');
+    // Intact codes whose save this version cannot load.
+    expect(reason(encodeSaveCode({ ...newGame(), version: SAVE_VERSION + 1 }))).toBe('newer');
+    expect(reason(encodeSaveCode({ ...newGame(), chapter: -3 }))).toBe('invalid');
+    expect(reason(encodeSaveCode({ ...newGame(), map: '' }))).toBe('invalid');
+    expect(reason(encodeSaveCode({ ...newGame(), inv: { senzu: 'lots' } } as unknown as SaveData))).toBe('invalid');
+    expect(reason(encodeSaveCode({ ...newGame(), journal: { c01_main: 'maybe' } } as unknown as SaveData))).toBe('invalid');
+  });
+
+  it('a save made by an older build still imports: missing fields are filled in and retired ids dropped', () => {
+    const old = JSON.parse(JSON.stringify(richSave())) as SaveData;
+    delete (old as unknown as Record<string, unknown>).regions;
+    old.chars.goku.techs.push('retiredTech');
+    const back = decodeSaveCode(encodeSaveCode(old));
+    expect(back.regions).toEqual([]);
+    expect(back.chars.goku.techs).not.toContain('retiredTech');
+    expect(back.chars.goku.level).toBe(old.chars.goku.level);
+  });
+});
+
+describe('title file screen: export and import codes', () => {
+  /** A title screen using the fake code panel. */
+  function titleWith(ui: SaveCodeUi): { sim: Sim; title: TitleScene } {
+    const sim = new Sim();
+    const title = new TitleScene(sim.game, ui);
+    sim.game.scenes.replace(title);
+    return { sim, title };
+  }
+
+  it('a bad code never touches the file; a good one replaces it only after the player confirms', async () => {
+    const ui = new FakeCodeUi();
+    const { sim, title } = titleWith(ui);
+    const old = { ...newGame(), chapter: 2, map: 'cc_yard' };
+    sim.game.saves.save(0, old);
+    const before = window.localStorage.getItem('legacyOfSuper.slot0');
+    await tap(sim, 'start');
+    await tap(sim, 'A');
+    await tap(sim, 'A');
+    expect(title.state).toBe('fileAction');
+    for (let i = 0; i < 3; i++) await tap(sim, 'down');
+    // Only bad pastes, then the player gives up.
+    ui.pastes = ['', 'not a code', encodeSaveCode(richSave()).slice(0, 60)];
+    await tap(sim, 'A');
+    await step(sim, 2);
+    expect(ui.errors).toHaveLength(3);
+    expect(title.state).toBe('fileAction');
+    expect(window.localStorage.getItem('legacyOfSuper.slot0')).toBe(before);
+    // A valid code, but "Replace File 1?" defaults to Cancel.
+    const incoming = richSave();
+    ui.pastes = [encodeSaveCode(incoming)];
+    await tap(sim, 'A');
+    await step(sim, 2);
+    expect(title.state).toBe('confirmImport');
+    await tap(sim, 'A');
+    expect(title.state).toBe('fileAction');
+    expect(window.localStorage.getItem('legacyOfSuper.slot0')).toBe(before);
+    // Confirmed this time.
+    ui.pastes = [encodeSaveCode(incoming)];
+    await tap(sim, 'A');
+    await step(sim, 2);
+    await tap(sim, 'left');
+    await tap(sim, 'A');
+    expect(title.state).toBe('message');
+    expect(sim.game.saves.load(0)).toEqual(incoming);
+    sim.game.saves.erase(0);
+  });
+
+  it('Export Code hands over the file as a code, and importing it into an empty file copies the save', async () => {
+    const ui = new FakeCodeUi();
+    const { sim, title } = titleWith(ui);
+    sim.game.saves.save(0, richSave());
+    sim.game.saves.erase(1);
+    await tap(sim, 'start');
+    await tap(sim, 'A');
+    await tap(sim, 'A');
+    await tap(sim, 'down');
+    await tap(sim, 'down');
+    await tap(sim, 'A');
+    await step(sim, 2);
+    expect(ui.exported).toHaveLength(1);
+    expect(title.state).toBe('fileAction');
+    await tap(sim, 'B');
+    await tap(sim, 'down');
+    await tap(sim, 'A');
+    await tap(sim, 'down');
+    ui.pastes = [ui.exported[0]];
+    await tap(sim, 'A');
+    await step(sim, 2);
+    expect(title.state).toBe('message');
+    expect(sim.game.saves.load(1)).toEqual(sim.game.saves.load(0));
+    // Continue from the imported copy.
+    await tap(sim, 'A');
+    await tap(sim, 'A');
+    await tap(sim, 'A');
+    expect(sim.game.field?.def.id).toBe('cc_yard');
+    expect(sim.game.slot).toBe(1);
+    sim.game.saves.erase(0);
+    sim.game.saves.erase(1);
+  });
+});
+
+describe('browser storage', () => {
+  it('the first save asks the browser to keep storage, once per session, and not when already granted', async () => {
+    const persist = vi.fn(async () => true);
+    const svc = new SaveService(new BrowserStorage({ localStorage: fakeLocalStorage(), storageManager: { persist, persisted: async () => false } }));
+    expect(persist).not.toHaveBeenCalled();
+    expect(svc.save(0, newGame())).toBe(true);
+    expect(svc.save(1, newGame())).toBe(true);
+    await flush();
+    expect(persist).toHaveBeenCalledTimes(1);
+    const again = vi.fn(async () => true);
+    const granted = new SaveService(new BrowserStorage({ localStorage: fakeLocalStorage(), storageManager: { persist: again, persisted: async () => true } }));
+    granted.save(0, newGame());
+    await flush();
+    expect(again).not.toHaveBeenCalled();
+    // An older browser without a StorageManager, or one that throws, still saves.
+    expect(new SaveService(new BrowserStorage({ localStorage: fakeLocalStorage() })).save(0, newGame())).toBe(true);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const flaky = new BrowserStorage({ localStorage: fakeLocalStorage(), storageManager: { persist: async () => { throw new Error('denied'); } } });
+      expect(new SaveService(flaky).save(0, newGame())).toBe(true);
+      await expect(flaky.requestPersistence()).resolves.toBe(false);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('blocked localStorage keeps the game playable for the session and says so on the title and after saving', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const drawn: string[] = [];
+    const spy = vi.spyOn(font, 'drawCentered').mockImplementation((_ctx, text) => { drawn.push(text); });
+    try {
+      const blocked: StorageHost = { get localStorage(): Window['localStorage'] { throw new Error('SecurityError: storage disabled'); } };
+      const store = new BrowserStorage(blocked);
+      expect(store.persistent).toBe(false);
+      const svc = new SaveService(store);
+      expect(svc.persistent).toBe(false);
+      expect(svc.save(0, { ...newGame(), chapter: 4 })).toBe(true);
+      expect(svc.load(0)?.chapter).toBe(4);
+      // A localStorage that refuses writes (quota 0 in some private modes) counts as blocked too.
+      const readOnly = fakeLocalStorage();
+      readOnly.setItem = () => { throw new Error('QuotaExceededError'); };
+      expect(new BrowserStorage({ localStorage: readOnly }).persistent).toBe(false);
+      expect(new BrowserStorage({ localStorage: fakeLocalStorage() }).persistent).toBe(true);
+
+      const sim = new Sim();
+      const ctx = testCtx();
+      new TitleScene(sim.game, new FakeCodeUi()).render(ctx);
+      expect(drawn.some((t) => /saves end with this tab/.test(t))).toBe(false);
+      (sim.game as unknown as { saves: SaveService }).saves = svc;
+      new TitleScene(sim.game, new FakeCodeUi()).render(ctx);
+      expect(drawn.some((t) => /saves end with this tab/.test(t))).toBe(true);
+      const menu = new SaveMenu(sim.game);
+      (menu as unknown as { mode: string }).mode = 'saved';
+      menu.render(ctx);
+      expect(drawn).toContain('(until this tab closes)');
+    } finally {
+      spy.mockRestore();
+      warn.mockRestore();
+    }
+  });
+});
+
+describe('boot sequence (LoG2 §8.1: opening, title, attract loop)', () => {
+  it('a cold boot plays the splash, the story and the hero panels, then lands on PRESS START by itself', async () => {
+    const sim = new Sim();
+    const intro = new IntroScene(sim.game, { splash: true });
+    sim.game.scenes.replace(intro);
+    const ctx = testCtx();
+    const seen: string[] = [];
+    const tracks = new Set<string>();
+    for (let i = 0; i < intro.length + 2 && sim.game.scenes.top === intro; i++) {
+      if (seen[seen.length - 1] !== intro.shotId) seen.push(intro.shotId);
+      if (i % 9 === 0) sim.game.scenes.render(ctx);
+      if (audio.playing) tracks.add(audio.playing);
+      await step(sim);
+    }
+    expect(seen).toEqual(['splash', 'notice', 'peace', 'friends', 'space', 'wake', 'destroyer', 'heroes']);
+    expect(intro.done).toBe(true);
+    const title = sim.game.scenes.top;
+    expect(title).toBeInstanceOf(TitleScene);
+    expect((title as TitleScene).state).toBe('press');
+    expect([...tracks].filter((t) => !TRACKS[t])).toEqual([]);
+    expect(tracks.has('beerusPlanet')).toBe(true);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('every opening caption fits in one LoG2 text box', () => {
+    const layout = new IntroScene(new Sim().game, { splash: true }).captionLayout();
+    expect(layout.length).toBeGreaterThanOrEqual(10);
+    for (const c of layout) expect(c.rows, `${c.shot}: ${c.text}`).toBeLessThanOrEqual(CAPTION_ROWS);
+  });
+
+  it('A or Start skips to the title from any point, without the same press opening the title menu', async () => {
+    for (const [button, at] of [['A', 1], ['start', 40], ['A', 700], ['start', 2000]] as const) {
+      const sim = new Sim();
+      const intro = new IntroScene(sim.game, { splash: true });
+      sim.game.scenes.replace(intro);
+      await step(sim, at);
+      expect(sim.game.scenes.top).toBe(intro);
+      await step(sim, 3, { [button]: true });
+      const title = sim.game.scenes.top;
+      expect(title, `${button} at ${at}`).toBeInstanceOf(TitleScene);
+      expect((title as TitleScene).state).toBe('press');
+      await step(sim, 1, { [button]: false });
+    }
+  });
+
+  it('a returning player gets from a cold boot to Continue in five presses', async () => {
+    const sim = new Sim();
+    const save = { ...newGame(), chapter: 7, map: 'cc_yard', x: 23 * TILE + 8, y: 13 * TILE + 14 };
+    save.chars.goku.joined = true;
+    save.active = 'goku';
+    sim.game.saves.save(0, save);
+    sim.game.scenes.replace(new IntroScene(sim.game, { splash: true }));
+    await step(sim, 30);
+    for (const b of ['start', 'start', 'A', 'A', 'A'] as const) await tap(sim, b);
+    expect(sim.game.field?.def.id).toBe('cc_yard');
+    expect(sim.game.state.data.chapter).toBe(7);
+    sim.game.saves.erase(0);
+  });
+
+  it('left idle at PRESS START the title replays the opening (no splash); input or the file screen holds it', async () => {
+    const sim = new Sim();
+    sim.game.toTitle();
+    const title = sim.game.scenes.top as TitleScene;
+    await step(sim, ATTRACT_IDLE_FRAMES - 60);
+    await tap(sim, 'left');
+    await step(sim, ATTRACT_IDLE_FRAMES - 10);
+    expect(sim.game.scenes.top).toBe(title);
+    await step(sim, 20);
+    const replay = sim.game.scenes.top;
+    expect(replay).toBeInstanceOf(IntroScene);
+    expect((replay as IntroScene).shotId).toBe('peace');
+    await step(sim, (replay as IntroScene).length + 2);
+    const back = sim.game.scenes.top as TitleScene;
+    expect(back).toBeInstanceOf(TitleScene);
+    await tap(sim, 'start');
+    await tap(sim, 'A');
+    expect(back.state).toBe('files');
+    await step(sim, ATTRACT_IDLE_FRAMES + 30);
+    expect(sim.game.scenes.top).toBe(back);
+  });
+});
+
+describe('save codes and storage: hardening', () => {
+  it('an intact code whose characters carry impossible values is refused before it can reach a file', () => {
+    const reason = (d: unknown): string => {
+      try {
+        decodeSaveCode(encodeSaveCode(d as SaveData));
+        return 'accepted';
+      } catch (err) {
+        return err instanceof SaveCodeError ? err.reason : `threw ${String(err)}`;
+      }
+    };
+    const withGoku = (patch: Record<string, unknown>): SaveData => {
+      const d = richSave();
+      Object.assign(d.chars.goku, patch);
+      return d;
+    };
+    expect(reason(richSave())).toBe('accepted');
+    expect(reason(withGoku({ level: 99 }))).toBe('invalid');
+    expect(reason(withGoku({ level: 0 }))).toBe('invalid');
+    expect(reason(withGoku({ level: 12.5 }))).toBe('invalid');
+    expect(reason(withGoku({ exp: -40 }))).toBe('invalid');
+    expect(reason(withGoku({ hpMax: '900' }))).toBe('invalid');
+    expect(reason(withGoku({ joined: 'yes' }))).toBe('invalid');
+    expect(reason(withGoku({ techs: 'kamehameha' }))).toBe('invalid');
+    expect(reason(withGoku({ form: 7 }))).toBe('invalid');
+    expect(reason(withGoku({ outfit: 3 }))).toBe('invalid');
+    // A real story costume and a character missing fields added later still import.
+    expect(reason(withGoku({ outfit: 'gokuGi' }))).toBe('accepted');
+    const partial = JSON.parse(JSON.stringify(richSave())) as SaveData;
+    delete (partial.chars.goku as unknown as Record<string, unknown>).trophy;
+    expect(decodeSaveCode(encodeSaveCode(partial)).chars.goku.trophy).toBe(false);
+  });
+
+  it('a localStorage that can be read but not written keeps existing files visible and deletions real', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const ls = fakeLocalStorage();
+      const writable = new SaveService(new BrowserStorage({ localStorage: ls }));
+      const old = { ...newGame(), chapter: 9 };
+      writable.save(0, old);
+      writable.save(1, { ...newGame(), chapter: 3 });
+      const before0 = ls.getItem('legacyOfSuper.slot0');
+      // The quota fills up (or a private mode allows reads only): writes now throw.
+      const realSet = ls.setItem.bind(ls);
+      ls.setItem = () => { throw new Error('QuotaExceededError'); };
+      const store = new BrowserStorage({ localStorage: ls });
+      const svc = new SaveService(store);
+      expect(store.persistent).toBe(false);
+      expect(svc.load(0)?.chapter).toBe(9);
+      // Saving still works for the session, without touching what is stored.
+      expect(svc.save(0, { ...newGame(), chapter: 10 })).toBe(true);
+      expect(svc.load(0)?.chapter).toBe(10);
+      expect(ls.getItem('legacyOfSuper.slot0')).toBe(before0);
+      // Deleting a file removes it for good (removal frees space, so the browser allows it).
+      svc.erase(1);
+      expect(svc.load(1)).toBeNull();
+      expect(ls.getItem('legacyOfSuper.slot1')).toBeNull();
+      ls.setItem = realSet;
+      expect(new SaveService(new BrowserStorage({ localStorage: ls })).load(0)?.chapter).toBe(9);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

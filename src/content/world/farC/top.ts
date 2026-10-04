@@ -4,16 +4,28 @@ import { registerMaps } from '../../registry';
 /**
  * The Tournament of Power stage in the Null Realm: three linked sections (A west ↔ B centre ↔ C east),
  * arena tiles over the void with jagged, crumbling edges. `ringOut` lets knocked-back enemies fall out.
- * Generic rival fighters appear from Ch14; a chapter can clear them for staged fights by setting `fc_topQuiet`.
- * Central open areas (keep these clear for boss fights): A (22,16), B (22,16), C west (12,15) / east (35,15).
+ * Rival fighters roam the stage from Ch14 at LoG2 hostile-zone density; a chapter can clear them for staged fights
+ * by setting `fc_topQuiet`. Central open areas (keep these clear for boss fights): A (22,16), B (22,16),
+ * C west (12,15) / east (35,15).
  */
 
-const TOP = 'chapter>=14&!fc_topQuiet';
-const rival = (type: string, x: number, y: number): EnemySpawn => ({ type, x, y, showIf: TOP });
+/**
+ * Who roams the stage follows the tournament (dbs_story.md §7.1 D): Universes 9 and 10 fall during the west-ring
+ * relay, so between the first two relays (MID) the rivals come from Universes 2, 3, 4 and 11; once the central ring
+ * is won (LATE) only Universe 11's Pride Troopers are left; after the wish (POST) every restored universe trains on
+ * the stage. All T7 (Guide §6).
+ */
+const MID = 'chapter==14&!c14_stageB&!fc_topQuiet';
+const LATE = 'chapter==14&c14_stageB&!fc_topQuiet';
+const POST = 'post_game&!fc_topQuiet';
+const roam = (when: string) => (type: string, x: number, y: number): EnemySpawn => ({ type, x, y, showIf: when });
+const mid = roam(MID);
+const late = roam(LATE);
+const post = roam(POST);
 
 registerMaps([
   {
-    id: 'top_arena_a', name: 'Tournament Stage - West Ring', music: 'tournament', hostile: true, ringOut: true,
+    id: 'top_arena_a', name: 'Tournament Stage - West Ring', music: 'topArena', hostile: true, ringOut: true,
     region: 'Tournament of Power', backdrop: '#0a0618',
     legend: { 'v': 'void', 'A': 'arena', 'k': 'rock', 'm': 'metal' },
     grid: [
@@ -56,7 +68,16 @@ registerMaps([
       ['rubble', 9, 15], ['rubble', 34, 14], ['rubble', 31, 11.2], ['rubble', 19, 25.2], ['smallRock', 26, 9], ['smallRock', 7, 12],
       ['crater', 18, 19], ['crater', 23, 11.5],
     ],
-    enemies: [rival('fc_topBrawler', 12, 12), rival('fc_topBrawler', 31, 19), rival('fc_topGunner', 35, 11)],
+    enemies: [
+      mid('fc_topBrawler', 10, 11), mid('c14_u2Fighter', 17, 13), mid('c14_u4Fighter', 26, 14), mid('fc_topGunner', 36, 10),
+      mid('c14_u3Robot', 24, 19), mid('c14_u2Fighter', 9, 21), mid('c14_pride', 34, 24), mid('fc_topBrawler', 29, 8),
+      mid('c14_u4Fighter', 17, 6), mid('c14_u3Robot', 39, 15), mid('fc_topGunner', 21, 24),
+      late('c14_pride', 10, 11), late('fc_topGunner', 26, 14), late('c14_prideLancer', 36, 10), late('c14_pride', 24, 19),
+      late('fc_topGunner', 9, 21), late('c14_prideLancer', 34, 24), late('c14_pride', 17, 6), late('fc_topGunner', 39, 15),
+      post('c14_u9Wolf', 10, 11), post('c14_u10Fighter', 17, 13), post('c14_u4Fighter', 26, 14), post('fc_topGunner', 36, 10),
+      post('c14_u3Robot', 24, 19), post('c14_u2Fighter', 9, 21), post('c14_pride', 34, 24), post('c14_u9Wolf', 29, 8),
+      post('c14_u10Fighter', 17, 6), post('c14_prideLancer', 39, 15), post('fc_topBrawler', 21, 24), post('c14_u2Fighter', 39, 7),
+    ],
     objects: [
       { type: 'save', x: 3, y: 14 },
       { type: 'flight', x: 6, y: 8, to: 'top_arena_a', tx: 6, ty: 2, label: 'Floating rock' },
@@ -69,7 +90,7 @@ registerMaps([
     exits: { east: { to: 'top_arena_b' } },
   },
   {
-    id: 'top_arena_b', name: 'Tournament Stage - Central Ring', music: 'tournament', hostile: true, ringOut: true,
+    id: 'top_arena_b', name: 'Tournament Stage - Central Ring', music: 'topArena', hostile: true, ringOut: true,
     region: 'Tournament of Power', backdrop: '#0a0618',
     legend: { 'v': 'void', 'A': 'arena', 'k': 'rock', 'm': 'metal' },
     grid: [
@@ -113,7 +134,17 @@ registerMaps([
       ['rubble', 8, 12], ['rubble', 34, 12.2], ['rubble', 7, 19], ['rubble', 35, 19.2], ['smallRock', 17, 23], ['smallRock', 27, 9],
       ['crater', 20, 20],
     ],
-    enemies: [rival('fc_topBrawler', 10, 14), rival('fc_topBrawler', 34, 17), rival('fc_topGunner', 22, 8)],
+    enemies: [
+      mid('fc_topBrawler', 8, 11), mid('c14_u2Fighter', 7, 20), mid('c14_u4Fighter', 9, 23), mid('c14_u3Robot', 16, 15),
+      mid('fc_topGunner', 22, 12), mid('c14_u4Fighter', 24, 17), mid('c14_pride', 29, 15), mid('c14_u2Fighter', 37, 11),
+      mid('fc_topBrawler', 38, 16), mid('c14_u3Robot', 35, 23), mid('fc_topGunner', 22, 7), mid('c14_u4Fighter', 27, 20),
+      late('c14_pride', 8, 11), late('fc_topGunner', 16, 15), late('c14_prideLancer', 22, 12), late('c14_pride', 24, 17),
+      late('fc_topGunner', 29, 15), late('c14_prideLancer', 37, 11), late('c14_pride', 38, 16), late('fc_topGunner', 35, 23),
+      late('c14_pride', 9, 23),
+      post('c14_u10Fighter', 8, 11), post('c14_u9Wolf', 7, 20), post('c14_u4Fighter', 9, 23), post('c14_u3Robot', 16, 15),
+      post('fc_topGunner', 22, 12), post('c14_u2Fighter', 24, 17), post('c14_prideLancer', 29, 15), post('c14_u9Wolf', 37, 11),
+      post('fc_topBrawler', 38, 16), post('c14_u3Robot', 35, 23), post('c14_u10Fighter', 22, 7), post('c14_pride', 27, 20),
+    ],
     objects: [
       { type: 'flight', x: 36, y: 7, to: 'top_arena_b', tx: 37, ty: 2, label: 'Floating rock' },
       { type: 'flight', x: 35, y: 3, to: 'top_arena_b', tx: 36, ty: 8, label: 'Stage' },
@@ -127,7 +158,7 @@ registerMaps([
     exits: { west: { to: 'top_arena_a' }, east: { to: 'top_arena_c' } },
   },
   {
-    id: 'top_arena_c', name: 'Tournament Stage - East Ring', music: 'tournament', hostile: true, ringOut: true,
+    id: 'top_arena_c', name: 'Tournament Stage - East Ring', music: 'topArena', hostile: true, ringOut: true,
     region: 'Tournament of Power', backdrop: '#0a0618',
     legend: { 'v': 'void', 'A': 'arena', 'k': 'rock', 'm': 'metal' },
     grid: [
@@ -170,7 +201,14 @@ registerMaps([
       ['rubble', 6, 9.2], ['rubble', 17, 18.2], ['rubble', 36, 9.2], ['rubble', 37, 24], ['smallRock', 23, 15], ['smallRock', 29, 18],
       ['crater', 9, 13], ['crater', 33, 14],
     ],
-    enemies: [rival('fc_topBrawler', 10, 12), rival('fc_topBrawler', 36, 15), rival('fc_topGunner', 15, 22), rival('fc_topGunner', 34, 8)],
+    // Before the finale only the strip west of the stage C trigger band (x 8-9) is open: the last Pride Troopers
+    // hold it. East of the band, rivals roam once the tournament is over.
+    enemies: [
+      late('c14_pride', 5, 6), late('fc_topGunner', 6, 13), late('c14_prideLancer', 5, 22),
+      post('fc_topBrawler', 12, 6), post('c14_u10Fighter', 15, 12), post('c14_u9Wolf', 13, 16), post('c14_u3Robot', 22, 9),
+      post('fc_topGunner', 22, 17), post('c14_u2Fighter', 16, 23), post('c14_prideLancer', 35, 7), post('c14_u4Fighter', 36, 13),
+      post('c14_pride', 35, 17), post('c14_u3Robot', 38, 23), post('c14_u9Wolf', 28, 15), post('fc_topGunner', 5, 22),
+    ],
     objects: [
       { type: 'flight', x: 36, y: 24, to: 'top_arena_c', tx: 37, ty: 29, label: 'Floating rock' },
       { type: 'flight', x: 35, y: 29, to: 'top_arena_c', tx: 36, ty: 23, label: 'Stage' },

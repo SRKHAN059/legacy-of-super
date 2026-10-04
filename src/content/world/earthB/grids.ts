@@ -147,14 +147,14 @@ export const GRIDS: Record<string, string[]> = {
   ],
   waste_canyon: [
     '##############################dddddd########', // 0
-    '############################dddddddd########', // 1
-    '###rrrrrrr#####dddddddd##dddddddddd#########', // 2
-    '###rrrrrrrdd##dddddddddddddddddddd##########', // 3
-    '###rrrrrrrddddddddddddddddddddddd###########', // 4
-    '###rrrrrrrdddddddddddddddrrrdddd############', // 5
-    '###rrrrrrr##dddddddddddddrrrdddd############', // 6
-    '###########dddddd########rrr################', // 7
-    '###########dddddd######rrrrr################', // 8
+    '###rrrrr####################dddddddd########', // 1
+    '##rrrrrrrr#####dddddddd##dddddddddd#########', // 2
+    '##rrrrrrrrdd##dddddddddddddddddddd##########', // 3
+    '##rrrrrrrrddddddddddddddddddddddd###########', // 4
+    '##rrrrrrrrdddddddddddddddrrrdddd############', // 5
+    '##rrrrrrrr##dddddddddddddrrrdddd############', // 6
+    '##rrrrrrr##dddddd########rrr################', // 7
+    '###rrrrr###dddddd######rrrrr################', // 8
     '###########dddddd######rrrrr################', // 9
     '##########rdddddd##rrrrrrrrr################', // 10
     'dddddd#dddrdddddr#rrrrrrrrrr################', // 11

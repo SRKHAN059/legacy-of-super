@@ -12,7 +12,7 @@ const LATE = 'chapter>=13';
 
 registerMaps([
   {
-    id: 'hell_lake', name: 'Hell', music: 'tense', hostile: true, region: 'Hell', tint: 'rgba(120,20,0,0.12)',
+    id: 'hell_lake', name: 'Hell', music: 'otherworld', hostile: true, region: 'Hell', tint: 'rgba(120,20,0,0.12)',
     legend: { '#': 'cliff', 'h': 'hellRock', 'k': 'rock', 'L': 'lava' },
     grid: [
       '############################################',

@@ -53,7 +53,7 @@ async function opening(s: ScriptApi): Promise<void> {
   s.follow();
   s.letterbox(false);
   await s.quest('c04_whis');
-  s.music('town');
+  s.music('westCity');
 }
 
 /** Ramen scene: Whis falls for instant ramen and takes Vegeta to Beerus's planet. */

@@ -383,6 +383,7 @@ registerScripts({
     await s.narrate('Hit\'s Time-Skip freezes you for an instant before he strikes. Watch for the purple flash and keep moving!');
     s.remove('c07_foe');
     s.letterbox(false);
+    s.music('hit');
     const r = await s.fight('c07_hitV', { x: RING.foe.x, y: RING.foe.y, uid: 'c07_hitF1', loseOk: true, survive: 50, label: 'HOLD ON' });
     bossExp(s, 'c07_hitV', r === 'lose' ? 'timeout' : r);
     s.letterbox(true);
@@ -421,6 +422,7 @@ registerScripts({
     await s.powerUp('hero', '#40c0f8', 30);
     s.remove('c07_foe');
     s.letterbox(false);
+    s.music('hit');
     const r1 = await s.fight('c07_hit1', { x: RING.foe.x, y: RING.foe.y, uid: 'c07_hitF2' });
     bossExp(s, 'c07_hit1', r1);
     s.letterbox(true);

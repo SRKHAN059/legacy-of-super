@@ -8,7 +8,7 @@ import { HUB } from './hubs';
  */
 registerMaps([
   {
-    id: 'c04_whis_field', name: 'Whis\'s Training Field', music: 'godly', hostile: true, region: 'Beerus\'s Planet',
+    id: 'c04_whis_field', name: 'Whis\'s Training Field', music: 'training', hostile: true, region: 'Beerus\'s Planet',
     legend: { '#': 'cliff', '.': 'alienGrass', ',': 'darkGrass', '~': 'water', '=': 'path', m: 'marble', a: 'arena', r: 'rock', d: 'dirt' },
     grid: [
       '####################################',

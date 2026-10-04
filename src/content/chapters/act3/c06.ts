@@ -260,6 +260,7 @@ registerScripts({
     await s.narrate('Golden Frieza never trained to hold this form, so it drains his stamina every second. Survive his onslaught and wear him down!');
     s.remove('c06_friezaF');
     s.letterbox(false);
+    s.music('goldenFrieza');
     const r2 = await inArena(s, s.fight('c06_goldenFrieza', { x: MESA.frieza.x, y: MESA.frieza.y, uid: 'c06_goldenF' }), DUEL_ARENA);
     bossExp(s, 'c06_goldenFrieza', r2);
     s.letterbox(true);
@@ -350,6 +351,7 @@ registerScripts({
     s.letterbox(false);
     // Frieza keeps the damage from Goku's fight (LoG2-style carried-over HP).
     stageBoss(s, 'c06_goldenFrieza2', MESA.frieza.x, MESA.frieza.y, 'c06_goldenF2', 0.85);
+    s.music('goldenFrieza');
     const r = await inArena(s, s.fight('c06_goldenFrieza2', { uid: 'c06_goldenF2', existing: true }), DUEL_ARENA);
     bossExp(s, 'c06_goldenFrieza2', r);
     s.letterbox(true);

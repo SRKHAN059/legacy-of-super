@@ -1,5 +1,8 @@
-import { registerScripts, type ScriptApi } from '../../../game/script';
+import { registerScripts } from '../../../game/script';
 import { ensureChapterState, force, unforce } from '../common';
+import './c14_enemies';
+import { clearStage, eliminated, erased, QUIET, ringOut, wave } from './c14_kit';
+import './c14_setpieces';
 import { battle, bossFight, freeNear, handOff, heroTile, readyGuest, refresh, removeAll, stage, sweepRivals, warpTo } from './helpers';
 import { HUB } from './hubs';
 
@@ -7,52 +10,9 @@ import { HUB } from './hubs';
  * Chapter 14 — "The Tournament of Power" (L45→48 + god-mode finale). LoG2's Cell Games gauntlet:
  * a relay of forced characters across the three ring-out stage sections (A west → B centre → C east),
  * with save points between sections. Guests Android 17 and Frieza are playable via `switchTo`.
+ * The relays run the anime's set pieces in episode order; the ones with their own mechanics (squad formation,
+ * transformations, fighting partners, a twin boss, an invisible fighter) live in `c14_setpieces.ts`.
  */
-
-/**
- * Generic rival fighters from the world builder are hidden while the opening scene and the stage A waves run.
- * Afterwards they roam the stage again (LoG2 hostile zone for levelling), and each stage relay sweeps them away
- * before its staged fights.
- */
-const QUIET = 'fc_topQuiet';
-
-/** Clear the stage of free-roaming rivals before a staged relay. */
-async function clearStage(s: ScriptApi): Promise<void> {
-  if (sweepRivals(s) > 0) {
-    await s.wait(20);
-    await s.narrate('The stray fighters around you are blown off the stage in the crossfire!');
-  }
-}
-
-/** Announce an elimination with a ring-out flash. */
-async function eliminated(s: ScriptApi, text: string): Promise<void> {
-  s.flash('#f8e040', 8);
-  s.sfx('explode');
-  await s.narrate(text);
-}
-
-/** A universe is erased by Zeno. */
-async function erased(s: ScriptApi, text: string): Promise<void> {
-  s.flash('#ffffff', 24);
-  s.shake(20, 2);
-  await s.narrate(text);
-}
-
-/** Spawn a scripted wave at tiles snapped to the stage. */
-function wave(s: ScriptApi, list: Array<[string, number, number]>): void {
-  for (const [type, x, y] of list) {
-    const [fx, fy] = freeNear(s, x, y);
-    s.spawnEnemy(type, fx, fy);
-  }
-}
-
-/** Walk an actor off the stage edge into the void and remove it (ring-out cutscene). */
-async function ringOut(s: ScriptApi, id: string, x: number, y: number): Promise<void> {
-  if (!s.exists(id)) return;
-  await s.walk(id, x, y, 4);
-  s.remove(id);
-  s.sfx('explode');
-}
 
 registerScripts({
   // ================================================================ chapter start: the Mighty Ten assemble
@@ -101,7 +61,7 @@ registerScripts({
     removeAll(s, ...team.map((t) => t[0]), 'c14_gFrieza');
     await s.quest('c14_ready');
     await s.narrate('Save your game and finish your preparations. Talk to Beerus at the garden table when you are ready to leave for the World of Void.');
-    s.music('town');
+    s.music('westCity');
     s.letterbox(false);
   },
 
@@ -129,7 +89,7 @@ registerScripts({
     s.switchTo('goku');
     await s.warp('top_arena_a', 22, 19, 'up');
     s.letterbox(true);
-    s.music('tournament');
+    s.music('topArena');
     const team: Array<[string, string, number, number]> = [
       ['c14_tGohan', 'gohanUltimate', 18, 19], ['c14_tVegeta', 'vegeta', 20, 19], ['c14_tPiccolo', 'piccolo', 24, 19],
       ['c14_t17', 'android17Top', 26, 19], ['c14_tFrieza', 'frieza', 28, 19], ['c14_tKrillin', 'krillinGi', 17, 20],
@@ -229,8 +189,11 @@ registerScripts({
     s.spawnEnemy('c14_basil', b1x, b1y, 'c14_basil1');
     s.spawnEnemy('c14_lavender', b2x, b2y, 'c14_lavender1');
     const [bx, by] = freeNear(s, 22, 11);
+    s.music('boss');
     await bossFight(s, 'c14_bergamo', { x: bx, y: by, uid: 'c14_bergamo1' });
     removeAll(s, 'c14_basil1', 'c14_lavender1');
+    // Any Universe 9 brawlers Bergamo called in are caught in the blast that follows.
+    sweepRivals(s);
     s.letterbox(true);
     const [vx, vy] = heroTile(s);
     stage(s, 'c14_gokuA', 'gokuSSB', vx - 1, vy + 1, 'up', 'Goku');
@@ -316,10 +279,18 @@ registerScripts({
     removeAll(s, 'c14_jirenA');
     await s.say('goku', 'Jiren... I have to fight him. But not yet. Not like this.', 'neutral');
 
-    // --- 5. Twenty minutes pass in the dark (eps 103-107), then Frieza vs Frost (ep 108; Frieza is a guest).
-    readyGuest(s, 'frieza', 47);
+    // --- 5. The Pride Troopers corner the Saiyans (ep 101), then Universe 2's Kamikaze Fireballs meet 17 (ep 102).
+    await s.call('c14_pride');
+    await s.call('c14_fireballs');
+
+    // --- 6. Universe 10 falls in the dark (ep 103); Goku and Hit team up against Dyspo and K'nsi (ep 104).
     await s.fadeOut(20);
     await erased(s, 'Twenty minutes in. Gohan outlasts Universe 10\'s last fighter, Obuni... and Zeno erases Universe 10.');
+    await s.call('c14_dyspoTag');
+
+    // --- 7. More time passes in the dark (eps 105-107), then Frieza vs Frost (ep 108; Frieza is a guest).
+    readyGuest(s, 'frieza', 47);
+    await s.fadeOut(20);
     await s.narrate('Tien takes Universe 2\'s sniper out of the ring with him; Master Roshi frees Vegeta from Frost\'s trap, then retires on his own two feet.');
     force(s, 'frieza');
     refresh(s, 'frieza');
@@ -342,7 +313,7 @@ registerScripts({
     await eliminated(s, 'Frost has been eliminated by Frieza!');
     await s.say('frieza', 'Hohoho. Whose side am I on? Mine, as always. It simply happens to be yours today.', 'smirk');
 
-    // --- 6. Goku vs Jiren (eps 109-110): Frieza hands back to Goku. The Spirit Bomb and the first sign of Ultra Instinct.
+    // --- 8. Goku vs Jiren (eps 109-110): Frieza hands back to Goku. The Spirit Bomb and the first sign of Ultra Instinct.
     await handOff(s, 'goku', { out: { id: 'c14_friezaA', name: 'Frieza' } });
     await s.talk([
       ['frieza', 'Your turn, Goku. Jiren hasn\'t moved a muscle all this time. Go and find out what he is hiding.', 'smirk'],
@@ -396,15 +367,15 @@ registerScripts({
       ['jiren', 'Your power is gone. The form has abandoned you.', 'neutral'],
       ['goku', 'Heh... heh... I... almost had something there...', 'hurt'],
     ]);
-    await ringOut(s, 'c14_jiren1', jx + 6, jy - 6);
+    // --- 9. Hit steps in between them (ep 111): his Time Prison holds Jiren for a moment, then Hit is thrown out.
+    await s.call('c14_hitJiren');
     s.pose('hero', null);
-    await s.narrate('Meanwhile, Hit traps Jiren in a "Time Cage" for a single breath - and is thrown out of the ring for it. Universe 6 fights on without him.');
     s.set('c14_stageA');
     s.clear(QUIET);
     // Goku gets back up after the scripted loss (a 1 HP hero is never handed back to a hostile stage).
     refresh(s, 'goku');
     unforce(s);
-    s.music('tournament');
+    s.music('topArena');
     await s.narrate('The west ring is crumbling. Save if you like - fighters from every universe still prowl the stage - then head east to the central ring.');
     s.letterbox(false);
   },
@@ -435,7 +406,7 @@ registerScripts({
       ['kefla', 'I\'m Kefla. And you\'re finished, Goku!', 'smirk'],
     ]);
     s.letterbox(false);
-    s.music('battle');
+    s.music('boss');
     const [kx, ky] = freeNear(s, gx, gy - 4);
     removeAll(s, 'c14_keflaB');
     await bossFight(s, 'c14_kefla', { x: kx, y: ky, uid: 'c14_kefla1' });
@@ -455,12 +426,18 @@ registerScripts({
     s.letterbox(true);
     s.transformNow(null);
     await eliminated(s, 'Kefla is knocked out of the ring - and splits back into Caulifla and Kale as she falls!');
-    await erased(s, 'Before long, Universe 6 and Universe 2 have no fighters left. Champa waves goodbye to Beerus with a grin. Then they are gone.');
 
-    // --- 2. Universe 3's fusion robot (eps 119-121): time passes in the dark, Android 17 (guest) takes over.
+    // --- 2. The androids against Ribrianne and Rozie (eps 117-118).
+    await s.call('c14_ribrianne');
+    // --- 3. Gohan and Piccolo against Universe 6's Namekians (ep 118); Universe 6 and Universe 2 are erased.
+    await s.call('c14_namek');
+    // --- 4. Piccolo hunts the invisible Gamisalas; Damom takes Piccolo out; Universe 4 is erased (ep 119).
+    await s.call('c14_gamisalas');
+
+    // --- 5. Universe 3's fusion robot (eps 120-121): Android 17 (guest) takes over.
     readyGuest(s, 'android17', 46);
     await s.fadeOut(20);
-    await erased(s, 'Universe 4\'s tricksters fall too - but they take Piccolo with them. Universe 4 is erased.');
+    s.show('hero', true);
     force(s, 'android17');
     refresh(s, 'android17');
     await s.fadeIn(20);
@@ -481,13 +458,15 @@ registerScripts({
       ['android17', 'Then we find it and break it. Like any poacher\'s generator.', 'smirk'],
     ]);
     s.letterbox(false);
-    s.music('battle');
+    s.music('boss');
     const [rx, ry] = freeNear(s, 38, 22);
     const reactor = s.spawnEnemy('c14_reactor', rx, ry, 'c14_reactor1');
     reactor.onDefeat = 'c14_reactor_down';
     const [nx, ny] = freeNear(s, ax, ay - 5);
     await bossFight(s, 'c14_anilaza', { x: nx, y: ny, uid: 'c14_anilaza1' });
     removeAll(s, 'c14_reactor1');
+    // Robots Anilaza called in go down with it.
+    sweepRivals(s);
     s.letterbox(true);
     const [px, py] = heroTile(s);
     await s.narrate('Anilaza\'s giant fist slams Android 17 toward the edge of the stage!');
@@ -508,7 +487,7 @@ registerScripts({
     s.set('c14_stageB');
     await handOff(s, 'goku');
     unforce(s);
-    s.music('tournament');
+    s.music('topArena');
     await s.narrate('The central ring is breaking apart. Save if you like - Universe 11\'s troopers are still hunting - then head east for the final stand.');
     s.letterbox(false);
   },
@@ -545,6 +524,7 @@ registerScripts({
     s.letterbox(false);
     const [dx, dy] = freeNear(s, gx + 4, gy - 2);
     removeAll(s, 'c14_dyspoC');
+    s.music('boss');
     await bossFight(s, 'c14_dyspo', { x: dx, y: dy, uid: 'c14_dyspo1' });
     s.letterbox(true);
     if (!s.exists('c14_dyspo1')) stage(s, 'c14_dyspo1', 'dyspo', dx, dy, 'left', 'Dyspo');
@@ -584,7 +564,7 @@ registerScripts({
     await s.powerUp('hero', '#3058d8', 70);
     s.transformNow('ssbe');
     s.letterbox(false);
-    s.music('battle');
+    s.music('boss');
     const [tx, ty] = freeNear(s, hx + 4, hy - 2);
     removeAll(s, 'c14_toppoC');
     await bossFight(s, 'c14_toppoGoD', { x: tx, y: ty, uid: 'c14_toppo1' });
@@ -617,7 +597,7 @@ registerScripts({
     s.transformNow('ui');
     await s.narrate('Silver hair. Silver eyes. Body and mind, moving as one. Mastered Ultra Instinct!');
     s.letterbox(false);
-    s.music('heroic');
+    s.music('finale');
     const [jx, jy] = freeNear(s, jx0 + 4, jy0 - 2);
     removeAll(s, 'c14_jirenC');
     await bossFight(s, 'c14_jiren2', { x: jx, y: jy, uid: 'c14_jiren2' });
@@ -641,6 +621,7 @@ registerScripts({
     ]);
     s.letterbox(false);
     removeAll(s, 'c14_jiren2');
+    s.music('jiren');
     await bossFight(s, 'c14_jiren3', { x: jx, y: jy, uid: 'c14_jiren3', loseOk: true });
     s.letterbox(true);
     removeAll(s, 'c14_jiren3');
@@ -659,6 +640,7 @@ registerScripts({
     ]);
     s.letterbox(false);
     removeAll(s, 'c14_jirenL');
+    s.music('finale');
     await bossFight(s, 'c14_jiren4', { x: jx, y: jy, uid: 'c14_jiren4', loseOk: true });
     s.letterbox(true);
     if (!s.exists('c14_jiren4')) stage(s, 'c14_jiren4', 'jiren', jx, jy, 'left', 'Jiren');

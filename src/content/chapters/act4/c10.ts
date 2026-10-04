@@ -96,6 +96,7 @@ registerScripts({
     s.follow();
     s.letterbox(false);
     clearActors(s, ['c10_black']);
+    s.music('zamasu');
     const r = await bout(s, 'c10_black', { x: 18, y: 3, uid: 'c10_black1', loseOk: true });
     s.letterbox(true);
     if (r === 'lose') {
@@ -213,7 +214,7 @@ registerScripts({
     await s.quest('c10_q_ask');
     await timeTravel(s, 'present', 'cc_yard', HUB.ccPad.arriveX, HUB.ccPad.arriveY + 1, 'Goku rides the time machine back to the present...');
     s.letterbox(true);
-    s.music('town');
+    s.music('westCity');
     await s.talk([
       ['bulma', 'Goku? Back already? Where are Vegeta and Trunks?!', 'shock'],
       ['hero', 'Guarding the Resistance base. Vegeta got beat up pretty bad, but he\'s okay. I need to ask Beerus about a Kai called Zamasu.'],
@@ -682,6 +683,7 @@ registerScripts({
     s.follow();
     s.letterbox(false);
     clearActors(s, ['c10_black']);
+    s.music('zamasu');
     await bout(s, 'c10_black', { x: 14, y: 3, uid: 'c10_black2' });
     s.letterbox(true);
     await s.say('gokuBlack', 'Splendid. This body fights well, even against its former owner. Now see what a god makes of it.', 'smirk');
@@ -816,7 +818,7 @@ registerScripts({
     ]);
     clearActors(s, ['c10_chief']);
     s.letterbox(false);
-    s.music('battle');
+    s.music('boss');
     await bout(s, 'c10_babarianChief', { x: 30, y: 7, uid: 'c10_chief1' });
     s.letterbox(true);
     await s.say('c10_babarianChief', 'Hrrm... HOO. (He lowers his club, thumps his chest twice, and steps aside.)', 'hurt');
@@ -824,7 +826,7 @@ registerScripts({
     patchUp(s);
     s.set('c10_chiefBeaten');
     clearActors(s, ['c10_chief1']);
-    s.music('field');
+    s.music('alien');
     await s.say('hero', 'I think that means "go ahead". Thanks, big guy!', 'happy');
     s.letterbox(false);
   },

@@ -7,6 +7,7 @@ import { showCreatures, showGallery, showPortraits } from './debug/gallery';
 import { Game } from './game/game';
 import type { CharId } from './content/characters';
 import { textSettings } from './ui/dialogue';
+import { IntroScene } from './ui/intro';
 import { installHarness } from './debug/harness';
 
 const params = new URLSearchParams(location.search);
@@ -67,7 +68,7 @@ input.onFirstGesture = () => audio.unlock();
 canvas.addEventListener('pointerdown', () => audio.unlock());
 const game = new Game(input);
 
-// Dev entry: ?map=<id>&x=<tile>&y=<tile>&char=<id>&lv=<n>&chapter=<n>&flags=a,b&scouter
+// Dev entry: ?map=<id>&x=<tile>&y=<tile>&char=<id>&lv=<n>&chapter=<n>&flags=a,b&scouter ; ?nointro boots to the title.
 const devMap = params.get('map');
 if (devMap) {
   const st = game.state;
@@ -79,8 +80,11 @@ if (devMap) {
   st.data.active = ch;
   if (params.has('scouter')) st.give('scouter', 1, 1);
   game.startField(devMap, parseFloat(params.get('x') ?? '5'), parseFloat(params.get('y') ?? '5'), 'down');
-} else {
+} else if (params.has('nointro')) {
   game.toTitle();
+} else {
+  // Cold boot: fan-project splash and the story opening, then the title (A / Start skips to it at any point).
+  game.scenes.replace(new IntroScene(game, { splash: true }));
 }
 textSettings.speed = game.state.data.textSpeed;
 

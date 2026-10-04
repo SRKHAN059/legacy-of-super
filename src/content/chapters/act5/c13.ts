@@ -6,7 +6,10 @@ import { HUB } from './hubs';
 /**
  * Chapter 13 — "Universe Survival" (L42→45). Zeno Expo exhibition (Goku vs Toppo), then the LoG2
  * "collection chapter": recruit the Mighty Ten through four silver sub-objectives, then the tenth warrior
- * (Frieza from Hell). Side: Monster Island's seven escaped animals (LoG2's missing Namekians).
+ * (Frieza from Hell). Canon interludes play where the anime puts them: Goku vs. Gohan once Tien and Gohan are in
+ * (ep 90, `c13_leader.ts`), and Universe 6's Saiyans between Goku's Frieza plan and his trip to Hell (eps 88-93,
+ * `c13_u6.ts`). Side: Monster Island's seven escaped animals (LoG2's missing Namekians), three of them in old Earth
+ * regions behind coloured gates.
  */
 
 const RECRUITS = ['c13_krillin', 'c13_tien', 'c13_gohan', 'c13_17'] as const;
@@ -17,10 +20,13 @@ export const ANIMALS: Record<string, string> = {
   c13_ani5: 'Cliff Bat', c13_ani6: 'Rainbow Snake', c13_ani7: 'Minotaurus Calf',
 };
 
-/** Where 17's sensors place each missing animal. */
+/** Where 17's sensors place each missing animal (three hide in old regions, behind gates only one fighter can break). */
 const ANIMAL_HINTS: Record<string, string> = {
-  c13_ani1: 'right here on the island\'s beach, by the tide pool', c13_ani2: 'in the jungle, past the old cave in the south-west',
-  c13_ani3: 'at the wrecked poacher camp', c13_ani4: 'at Tien\'s dojo in the mountains', c13_ani5: 'up on the wilderness plateau where Gohan trained',
+  c13_ani1: 'right here on the island\'s beach, by the tide pool',
+  c13_ani2: 'in a warm valley full of dinosaurs on Highland Peak, in the Snowy Highlands. An orange barrier blocks the way in',
+  c13_ani3: 'at the wrecked poacher camp',
+  c13_ani4: 'in a shrine hollow on the Paozu Peaks, behind an orange barrier',
+  c13_ani5: 'in a sealed cave in Dragon\'s Throat Canyon, in the Rocky Wasteland. A dark blue barrier seals it',
   c13_ani6: 'by Fortuneteller Baba\'s lake', c13_ani7: 'near a farmhouse on Mt. Paozu',
 };
 
@@ -132,7 +138,7 @@ registerScripts({
       ['goku', 'Ooh, you\'re strong! Okay, let\'s go!', 'happy'],
     ]);
     s.letterbox(false);
-    s.music('battle');
+    s.music('boss');
     const [tx, ty] = freeNear(s, 18, 12);
     s.remove('c13_toppoX');
     await bossFight(s, 'c13_toppo', { x: tx, y: ty, uid: 'c13_toppo1' });
@@ -196,13 +202,20 @@ registerScripts({
     await s.say('toppo', 'Justice... RUSH!', 'shout');
   },
 
-  /** After each recruit: progress count; all four → Buu falls asleep → the tenth warrior. */
+  /**
+   * After each recruit: Goku vs. Gohan once Tien and Gohan are both in (ep 90), then the progress count; all four
+   * → Buu falls asleep → the tenth warrior.
+   */
   c13_check: async (s) => {
     if (s.state.data.chapter !== 13) return;
+    if (s.check('done:c13_tien') && s.check('done:c13_gohan') && !s.check('done:c13_leader') && s.hasScript('c13_leader_start')) {
+      await s.call('c13_leader_start');
+    }
     const n = RECRUITS.filter((q) => s.check(`done:${q}`)).length;
     if (n < 4) {
       const fighters = 5 + (s.check('done:c13_krillin') ? 2 : 0) + (s.check('done:c13_tien') ? 2 : 0) + (s.check('done:c13_17') ? 1 : 0);
-      const gohan = s.check('done:c13_gohan') ? ' Gohan is back at full strength.' : ' Gohan still needs to train with Piccolo.';
+      const gohan = s.check('done:c13_leader') ? ' Gohan is back at full strength, and Goku wants him to lead the team.'
+        : s.check('done:c13_gohan') ? ' Gohan is back at full strength.' : ' Gohan still needs to train with Piccolo.';
       await s.narrate(`The Mighty Ten: ${fighters} of 10 fighters signed up.${gohan}`);
       return;
     }
@@ -542,7 +555,7 @@ registerScripts({
         ['c13_poacherBoss', 'Every one of those beasts sells for a fortune across the galaxy. Boys! Snare them both!', 'angry'],
       ]);
       s.letterbox(false);
-      s.music('battle');
+      s.music('boss');
       const [bx, by] = freeNear(s, 20, 8);
       s.remove('c13_bossC');
       // He breaks off at a quarter of his health (scripted end) and runs for his ship.
@@ -656,9 +669,24 @@ registerScripts({
       ['beerus', '...If he betrays us, I\'m destroying him and then YOU. Go.', 'angry'],
       ['whis', 'King Yemma will want paperwork. I will tell him you said please.', 'smirk'],
     ]);
+    // Eps 92-93 cut from Goku's plan to Universe 6, where Cabba is recruiting Saiyans, and back to Goku in Hell.
+    const cutaway = !s.check('done:c13_u6') && s.hasScript('c13_u6_episode');
+    if (cutaway) {
+      await s.talk([
+        ['whis', 'Speaking of recruiting... my sister Vados tells me Universe 6 is combing its Saiyan planet for fighters.', 'smirk'],
+        ['goku', 'More Saiyans?! Aw, now I REALLY can\'t wait for the tournament!', 'happy'],
+        ['beerus', 'Go to Hell, Goku. I mean that literally. GO.', 'angry'],
+      ]);
+    }
     removeAll(s, 'act5_whisT');
-    s.letterbox(false);
-    await s.narrate('After some fast talking at King Yemma\'s check-in desk, Goku is allowed one visit to Hell.');
+    if (cutaway) {
+      s.letterbox(false);
+      await s.call('c13_u6_episode');
+      await s.narrate('Back in Universe 7, Goku presents himself at King Yemma\'s check-in desk. After some fast talking, he is allowed one visit to Hell.');
+    } else {
+      s.letterbox(false);
+      await s.narrate('After some fast talking at King Yemma\'s check-in desk, Goku is allowed one visit to Hell.');
+    }
     await s.call('c13_hell_scene');
   },
 
@@ -724,6 +752,7 @@ registerScripts({
     s.letterbox(false);
     const [fx, fy] = freeNear(s, 18, 15);
     removeAll(s, 'c13_friezaB');
+    s.music('goldenFrieza');
     await bossFight(s, 'c13_goldenFrieza', { x: fx, y: fy, uid: 'c13_frieza1' });
     removeAll(s, 'c13_frieza1');
     s.letterbox(true);

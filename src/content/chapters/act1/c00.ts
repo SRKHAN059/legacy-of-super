@@ -311,7 +311,9 @@ registerScripts({
     s.letterbox(false);
     const [fx, fy] = tileOf(s, 'c00_black');
     s.remove('c00_black');
+    s.music('zamasu');
     await arenaFight(s, 'c00_blackToy', { x: fx, y: fy, uid: 'c00_black1', survive: 25, loseOk: true, label: 'HOLD ON' });
+    s.music('black');
 
     // He was never trying.
     s.letterbox(true);

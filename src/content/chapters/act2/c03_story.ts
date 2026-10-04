@@ -62,7 +62,7 @@ async function openingScene(s: ScriptApi): Promise<void> {
   s.letterbox(false);
   unforce(s);
   await s.narrate('You can switch between Goku and Vegeta at any save point. The West City world sign is west of the Capsule Corp gate.');
-  s.music('town');
+  s.music('westCity');
 }
 
 /** The ritual: Shenron appears, five Saiyans plus Videl's unborn child turn Goku into a Super Saiyan God. */
@@ -209,7 +209,7 @@ async function godBattle(s: ScriptApi): Promise<void> {
   s.letterbox(false);
   s.remove('c03_sea_beerus');
   s.transformNow('ssg');
-  s.music('battle');
+  s.music('beerus');
   const r = await s.fight('c03_beerus', { x: 22, y: 11, uid: 'c03_beerus1' });
   if (r !== 'end' && r !== 'win') return;
   s.set('c03_beerusDone');
