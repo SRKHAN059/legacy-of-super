@@ -1,6 +1,6 @@
 import { PAL } from '../art/color';
 import { CHARACTERS, type CharId } from '../content/characters';
-import { MAPS } from '../content/registry';
+import { MAPS, resolveMap } from '../content/registry';
 import { audio } from '../engine/audio';
 import { SCREEN_H, SCREEN_W, TILE } from '../engine/constants';
 import { font } from '../engine/gfx';
@@ -57,7 +57,7 @@ export class RegionMapScene implements Scene {
   constructor(private readonly game: Game) {
     this.done = new Promise((r) => (this.resolve = r));
     const f = game.field;
-    this.blocks = f ? layoutRegion(f.def) : [];
+    this.blocks = f ? layoutRegion(f.def).map((b) => ({ ...b, def: resolveMap(b.def.id) ?? b.def })) : [];
     audio.sfx('menuOk');
   }
 
@@ -119,7 +119,7 @@ export class RegionMapScene implements Scene {
       }
       if (st.count('dragonRadar') > 0) {
         for (const pk of b.def.pickups ?? []) {
-          if (!/^db\d$/.test(pk.item) || st.flag(`pickup:${pk.id}`)) continue;
+          if (!/^db\d$/.test(pk.item) || st.flag(`pickup:${pk.id}`) || !st.check(pk.showIf)) continue;
           const [px, py] = P(b.x + pk.x, b.y + pk.y);
           ctx.fillStyle = this.t % 20 < 10 ? '#f89820' : '#f8e060';
           ctx.beginPath(); ctx.arc(px + 1, py + 1, 2, 0, Math.PI * 2); ctx.fill();

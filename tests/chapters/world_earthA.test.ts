@@ -253,7 +253,8 @@ describe('world earthA: ambient NPCs and examine triggers', () => {
     expect(city).toBeGreaterThanOrEqual(6);
     expect(city).toBeLessThanOrEqual(12);
     const family = ['chichi', 'goten', 'gohan', 'videl', 'pan'];
-    for (const id of EARTH_A) for (const n of def(id).npcs ?? []) expect(family, `${id}/${n.id}`).not.toContain(n.sprite);
+    // Only the world builder's own (ea_) NPCs are checked; chapters overlay the family as story NPCs.
+    for (const id of EARTH_A) for (const n of (def(id).npcs ?? []).filter((x) => x.id.startsWith('ea_'))) expect(family, `${id}/${n.id}`).not.toContain(n.sprite);
   });
 
   for (const ch of [1, 5, 13]) {
