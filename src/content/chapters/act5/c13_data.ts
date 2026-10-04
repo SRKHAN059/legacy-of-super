@@ -8,27 +8,30 @@ import { registerSpots } from '../../world';
  */
 
 const U6: EnemyDef[] = [
-  // Caulifla's gang (the old quarter brawl, played as Cabba).
-  { id: 'c13_gangPunk', name: 'Gang Punk', sprite: 'c13_gangPunk', hp: 3100, str: 50, pow: 1, end: 44, exp: 31000, ai: 'rusher', speed: 1.25, desc: 'One of Caulifla\'s street toughs. A Saiyan with a lot of energy and nothing to spend it on.' },
-  { id: 'c13_gangBrute', name: 'Gang Bruiser', sprite: 'c13_gangBrute', hp: 3700, str: 55, pow: 1, end: 48, exp: 38000, ai: 'charger', speed: 1.1, box: { w: 16, h: 10 }, desc: 'The biggest member of Caulifla\'s gang. Charges first, thinks never.' },
-  { id: 'c13_gangSlinger', name: 'Gang Slinger', sprite: 'c13_gangSlinger', hp: 3000, str: 46, pow: 52, end: 42, exp: 32000, ai: 'shooter', speed: 1.05, shot: { color: '#f070a0', cooldown: 75, speed: 2.7, mult: 0.85 }, desc: 'Throws ki blasts from behind the rubble of the old quarter.' },
+  // Caulifla's gang (the old quarter brawl, played as Cabba in base form): street toughs, a notch under the Defense
+  // Force ace they jump.
+  { id: 'c13_gangPunk', name: 'Gang Punk', sprite: 'c13_gangPunk', hp: 2700, str: 46, pow: 1, end: 40, exp: 27000, ai: 'rusher', speed: 1.25, desc: 'One of Caulifla\'s street toughs. A Saiyan with a lot of energy and nothing to spend it on.' },
+  { id: 'c13_gangBrute', name: 'Gang Bruiser', sprite: 'c13_gangBrute', hp: 3200, str: 50, pow: 1, end: 44, exp: 32000, ai: 'charger', speed: 1.1, box: { w: 16, h: 10 }, desc: 'The biggest member of Caulifla\'s gang. Charges first, thinks never.' },
+  { id: 'c13_gangSlinger', name: 'Gang Slinger', sprite: 'c13_gangSlinger', hp: 2600, str: 42, pow: 48, end: 40, exp: 26000, ai: 'shooter', speed: 1.05, shot: { color: '#f070a0', cooldown: 75, speed: 2.7, mult: 0.85 }, desc: 'Throws ki blasts from behind the rubble of the old quarter.' },
   {
-    id: 'c13_cauliflaSSJ', name: 'Caulifla (Super Saiyan)', sprite: 'c13_cauliflaSSJ', hp: 7200, str: 56, pow: 58, end: 60, exp: 150000, ai: 'boss', speed: 1.35,
+    id: 'c13_cauliflaSSJ', name: 'Caulifla (Super Saiyan)', sprite: 'c13_cauliflaSSJ', hp: 6800, str: 56, pow: 58, end: 60, exp: 150000, ai: 'boss', speed: 1.35,
     desc: 'Minutes into her first Super Saiyan and already wants to test it on her teacher. A natural.',
     boss: {
-      endAt: 0.5, kiColor: '#f8e048',
+      // She runs out of stamina (ep 92): the spar stops a little past half, before a forced L39 Cabba is worn down.
+      endAt: 0.55, kiColor: '#f8e048',
       phases: [
-        { until: 0.75, moves: ['chase', 'dash', 'shot'], rest: 40 },
+        { until: 0.78, moves: ['chase', 'dash', 'shot'], rest: 40 },
         { until: 0, moves: ['volley', 'beam', 'dash', 'nova', 'chase'], rest: 30, speed: 1.15, onStart: 'c13_caulifla_p2' },
       ],
     },
   },
   {
-    // Nothing reaches her (vulnerableIf is only raised once she is calm): survive, or get Caulifla to step in.
+    // Nothing reaches her ("NO EFFECT" until Caulifla has calmed her, which ends the fight): survive, or get
+    // Caulifla to step in.
     id: 'c13_kaleBerserk', name: 'Kale (Berserk)', sprite: 'c13_kaleBerserk', hp: 9000, str: 62, pow: 58, end: 68, exp: 0, ai: 'boss', speed: 1.15,
     desc: 'Kale\'s first Legendary Super Saiyan transformation. She hears nothing and stops for no one.',
     boss: {
-      endAt: 0, kiColor: '#a0f060', vulnerableIf: 'c13_kaleCalmed',
+      endAt: 0, kiColor: '#a0f060', vulnerableIf: 'c13_u6KaleCalmed',
       phases: [{ until: 0, moves: ['charge', 'chase', 'volley', 'rain', 'dash'], rest: 34, speed: 1.1 }],
     },
   },
@@ -75,7 +78,9 @@ const SADALA: EnemyDef[] = [
 registerEnemies([...U6, ...LEADER, ...SADALA]);
 
 registerQuests([
-  { id: 'c13_u6', title: 'Meanwhile, in Universe 6', star: 'gold', region: 'spot_westcity', desc: 'Universe 6 is short of fighters too. On the Saiyan planet Sadala, Cabba sets out to recruit his old captain\'s sister: the gang boss Caulifla.' },
+  // The two Universe 6 cutaways open and close inside their own scripts, so their stars never point anywhere.
+  { id: 'c13_u6', title: 'Meanwhile, in Universe 6', star: 'gold', region: 'c13_spot_sadala', desc: 'Universe 6 is short of fighters too. On the Saiyan planet Sadala, Cabba sets out to recruit his old captain\'s sister: the gang boss Caulifla.' },
+  { id: 'c13_u6kale', title: 'A Legendary Super Saiyan', star: 'gold', region: 'c13_spot_sadala', desc: 'Cabba keeps his promise and teaches Caulifla to go Super Saiyan. Her shy protegee Kale watches from behind a rock, and Kale is not happy.' },
   { id: 'c13_leader', title: 'Goku vs. Gohan: the wall to overcome', star: 'silver', region: 'c13_spot_wilds', desc: 'Gohan is back at full power and wants to test it on the strongest people he knows: Goku and Tien, against him and Piccolo.' },
   { id: 'c13_sadala', title: 'A Saiyan rematch on Sadala', star: 'bronze', region: 'c13_spot_sadala', desc: 'Cabba brought word from Universe 6: Caulifla and Kale want a rematch with Universe 7\'s best. Fly to Sadala and find them in the old quarter.' },
 ]);

@@ -296,11 +296,11 @@ registerMaps([
     ],
     enemies: [
       { type: 'wolf', x: 35, y: 21 }, { type: 'wolf', x: 38, y: 22 }, { type: 'wolf', x: 36, y: 24 },
-      { type: 'snake', x: 17, y: 12 }, { type: 'snake', x: 24, y: 19 }, { type: 'snake', x: 8, y: 16 },
+      { type: 'snake', x: 17, y: 13 }, { type: 'snake', x: 24, y: 19 }, { type: 'snake', x: 8, y: 16 },
       { type: 'hawk', x: 36, y: 4 }, { type: 'hawk', x: 41, y: 7 },
       { type: 'caveBat', x: 5, y: 5 }, { type: 'caveBat', x: 7, y: 6 }, { type: 'caveBat', x: 9, y: 4 },
       // River wildlife: shore crabs carry the odd Fish (Korin's Senzu trade); bog slimes ooze along the south bank.
-      { type: 'crab', x: 12, y: 11 }, { type: 'crab', x: 16, y: 5 },
+      { type: 'crab', x: 12, y: 11 }, { type: 'crab', x: 15, y: 9 },
       { type: 'slime', x: 14, y: 23 }, { type: 'slime', x: 14, y: 26 },
     ],
     exits: { east: { to: 'paozu_home' }, north: { to: 'paozu_peaks', offset: -2 } },
@@ -377,10 +377,11 @@ registerMaps([
       { type: 'hawk', x: 13, y: 5 }, { type: 'hawk', x: 31, y: 5 }, { type: 'hawk', x: 5, y: 30 },
       { type: 'timberWolf', x: 35, y: 25 },
       // Swamp vipers hunt fish around the waterfall pool and the stream (Fish drops); a brown bear and a giant hornet
-      // claim the lower basin (kept off the plateau, where Goten's dino hunt fights Scarface).
+      // claim the lower basin (kept off the plateau, where Goten's dino hunt fights Scarface, and out of a flyer's
+      // sight of the forest trail's arrival).
       { type: 'viper', x: 4, y: 19 }, { type: 'viper', x: 14, y: 20 },
       { type: 'bear', x: 8, y: 29 },
-      { type: 'hornet', x: 20, y: 29 },
+      { type: 'hornet', x: 24, y: 26 },
     ],
     exits: { south: { to: 'paozu_forest', offset: 2 } },
     barriers: [

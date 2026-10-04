@@ -26,9 +26,10 @@ import { spotBiome, worldTexel } from '../src/ui/worldmap';
 import { CHARACTERS } from '../src/content/characters';
 import { Rng } from '../src/engine/math';
 import { TRACKS } from '../src/content/music';
-import { CAPTION_ROWS, IntroScene } from '../src/ui/intro';
+import { CAPTION_ROWS, CAPTION_TOP, FIELD_TOP, GOKU_Y, GOTEN_Y, IntroScene } from '../src/ui/intro';
 import { SaveMenu } from '../src/ui/savemenu';
-import { ATTRACT_IDLE_FRAMES, TitleScene, type SaveCodeUi } from '../src/ui/title';
+import { ATTRACT_IDLE_FRAMES, DomSaveCodeUi, TitleScene, type SaveCodeUi } from '../src/ui/title';
+import { HUMANOID_H } from '../src/art/humanoid';
 import { Sim } from './sim';
 
 declare const setImmediate: (cb: () => void) => void;
@@ -1069,6 +1070,287 @@ describe('save codes and storage: hardening', () => {
       expect(new SaveService(new BrowserStorage({ localStorage: ls })).load(0)?.chapter).toBe(9);
     } finally {
       warn.mockRestore();
+    }
+  });
+});
+
+// ------------------------------------------------------------------------------------------------ save-code panel (DOM)
+
+/** The parts of a DOM event the save-code panel reads or calls. */
+interface PanelEvent {
+  type: string;
+  target: unknown;
+  key: string;
+  repeat: boolean;
+  shiftKey: boolean;
+  isComposing: boolean;
+  defaultPrevented: boolean;
+  propagationStopped: boolean;
+  preventDefault(): void;
+  stopPropagation(): void;
+}
+
+/** Stand-in for the few DOM element features the save-code panel uses (the test shim has no DOM). */
+class PanelEl {
+  hidden = false;
+  textContent = '';
+  readonly classes = new Set<string>();
+  readonly classList = {
+    toggle: (c: string, on?: boolean): boolean => {
+      const v = on ?? !this.classes.has(c);
+      if (v) this.classes.add(c);
+      else this.classes.delete(c);
+      return v;
+    },
+  };
+  private readonly handlers = new Map<string, Array<(e: PanelEvent) => void>>();
+
+  constructor(readonly doc: PanelDoc) {}
+
+  addEventListener(type: string, fn: (e: PanelEvent) => void): void {
+    this.handlers.set(type, [...(this.handlers.get(type) ?? []), fn]);
+  }
+
+  /** Fire an event at this element (for bubbling ones, at the panel root with `target` set to the inner element). */
+  dispatch(type: string, init: Partial<Pick<PanelEvent, 'target' | 'key' | 'repeat' | 'shiftKey'>> = {}): PanelEvent {
+    const e: PanelEvent = {
+      type, target: init.target ?? this, key: init.key ?? '', repeat: init.repeat ?? false, shiftKey: init.shiftKey ?? false,
+      isComposing: false, defaultPrevented: false, propagationStopped: false,
+      preventDefault() { this.defaultPrevented = true; },
+      stopPropagation() { this.propagationStopped = true; },
+    };
+    for (const fn of this.handlers.get(type) ?? []) fn(e);
+    return e;
+  }
+
+  focus(): void {
+    this.doc.activeElement = this;
+    this.dispatch('focus');
+  }
+
+  blur(): void {
+    if (this.doc.activeElement === this) this.doc.activeElement = this.doc.body;
+  }
+}
+
+class PanelForm extends PanelEl {}
+class PanelButton extends PanelEl {}
+class PanelTextArea extends PanelEl {
+  value = '';
+  readOnly = false;
+  placeholder = '';
+  /** The whole value is selected (ready to copy). */
+  selected = false;
+  scrollTop = 0;
+  select(): void {
+    this.selected = true;
+  }
+  setSelectionRange(start: number, end: number): void {
+    this.selected = start === 0 && end === this.value.length;
+  }
+}
+
+/** The page around the panel: #code-panel and its parts, focus, and execCommand. */
+class PanelDoc {
+  activeElement: PanelEl;
+  readonly body: PanelEl;
+  readonly els: Record<string, PanelEl>;
+  readonly execCommand = vi.fn((_cmd: string) => true);
+
+  constructor() {
+    this.body = new PanelEl(this);
+    this.activeElement = this.body;
+    this.els = {
+      'code-panel': new PanelEl(this), 'code-form': new PanelForm(this), 'code-title': new PanelEl(this),
+      'code-help': new PanelEl(this), 'code-text': new PanelTextArea(this), 'code-status': new PanelEl(this),
+      'code-copy': new PanelButton(this), 'code-ok': new PanelButton(this), 'code-close': new PanelButton(this),
+    };
+    this.els['code-panel'].hidden = true;
+  }
+
+  getElementById(id: string): PanelEl | null {
+    return this.els[id] ?? null;
+  }
+
+  get text(): PanelTextArea {
+    return this.els['code-text'] as PanelTextArea;
+  }
+}
+
+describe('save-code panel and opening: details', () => {
+  /** Swap in the stand-in DOM (and a clipboard) for one test. */
+  function withPanelDom(clipboard: { writeText(s: string): Promise<void> } | null): PanelDoc {
+    const doc = new PanelDoc();
+    vi.stubGlobal('document', doc);
+    vi.stubGlobal('HTMLElement', PanelEl);
+    vi.stubGlobal('HTMLFormElement', PanelForm);
+    vi.stubGlobal('HTMLButtonElement', PanelButton);
+    vi.stubGlobal('HTMLTextAreaElement', PanelTextArea);
+    vi.stubGlobal('navigator', clipboard ? { clipboard } : {});
+    return doc;
+  }
+
+  it('Export shows the code selected in the box (not on a button), copies it, and ignores a held Start', async () => {
+    const writeText = vi.fn(async (_s: string) => undefined);
+    const doc = withPanelDom({ writeText });
+    try {
+      const ui = new DomSaveCodeUi();
+      expect(ui.available).toBe(true);
+      const code = encodeSaveCode(richSave());
+      let closed = false;
+      const shown = ui.showExport('File 1 save code', code).then(() => { closed = true; });
+      const root = doc.els['code-panel'];
+      expect(root.hidden).toBe(false);
+      expect(doc.text.value).toBe(code);
+      expect(doc.text.readOnly).toBe(true);
+      // Focus sits on the selected code: releasing the Space (A) that opened the panel cannot click Close.
+      expect(doc.activeElement).toBe(doc.text);
+      expect(doc.text.selected).toBe(true);
+      expect(doc.els['code-ok'].hidden).toBe(true);
+      expect(doc.els['code-copy'].hidden).toBe(false);
+      await flush();
+      expect(writeText).toHaveBeenCalledWith(code);
+      expect(doc.els['code-status'].textContent).toBe('Copied to the clipboard.');
+      // Start (Enter) still held from opening the panel auto-repeats into it: nothing happens, and the game never sees it.
+      const held = root.dispatch('keydown', { key: 'Enter', target: doc.text, repeat: true });
+      expect(held.propagationStopped).toBe(true);
+      await flush();
+      expect(closed).toBe(false);
+      expect(root.hidden).toBe(false);
+      // A click on the dimmed backdrop keeps the focus in the panel.
+      doc.text.blur();
+      const click = root.dispatch('mousedown', { target: root });
+      expect(click.defaultPrevented).toBe(true);
+      expect(doc.activeElement).toBe(doc.text);
+      // A fresh Enter closes it and clears the box.
+      root.dispatch('keydown', { key: 'Enter', target: doc.text });
+      await shown;
+      expect(closed).toBe(true);
+      expect(root.hidden).toBe(true);
+      expect(doc.text.value).toBe('');
+      expect(doc.activeElement).toBe(doc.body);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('Copy falls back to selecting the code when the clipboard API is missing (plain-http LAN play)', async () => {
+    const doc = withPanelDom(null);
+    try {
+      const ui = new DomSaveCodeUi();
+      const shown = ui.showExport('File 2 save code', 'LOS1.00000000.AA');
+      await flush();
+      expect(doc.els['code-status'].textContent).toMatch(/Press Copy/);
+      doc.els['code-copy'].dispatch('click');
+      await flush();
+      expect(doc.execCommand).toHaveBeenCalledWith('copy');
+      expect(doc.els['code-status'].textContent).toBe('Copied to the clipboard.');
+      doc.els['code-close'].dispatch('click');
+      await shown;
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('Import keeps typing away from the game, refuses bad pastes in place, and returns a good one or null', async () => {
+    const doc = withPanelDom(null);
+    try {
+      const ui = new DomSaveCodeUi();
+      const root = doc.els['code-panel'];
+      const save = richSave();
+      const got = ui.promptImport('Import a save code into File 1', decodeSaveCode);
+      expect(root.hidden).toBe(false);
+      expect(doc.text.readOnly).toBe(false);
+      expect(doc.activeElement).toBe(doc.text);
+      expect(doc.els['code-ok'].hidden).toBe(false);
+      expect(doc.els['code-copy'].hidden).toBe(true);
+      // Keys typed into the box (Z, Space, WASD are game buttons) stop at the panel.
+      for (const key of ['z', ' ', 'w', 'Backspace']) expect(root.dispatch('keydown', { key, target: doc.text }).propagationStopped).toBe(true);
+      doc.text.value = 'not a code';
+      doc.els['code-form'].dispatch('submit');
+      expect(root.hidden).toBe(false);
+      expect(doc.els['code-status'].textContent).toMatch(/not a Legacy of Super save code/);
+      expect(doc.els['code-status'].classes.has('error')).toBe(true);
+      doc.text.value = encodeSaveCode(save).replace(/(.{30})/g, '$1\n');
+      root.dispatch('keydown', { key: 'Enter', target: doc.text });
+      expect(await got).toEqual(save);
+      expect(root.hidden).toBe(true);
+      // Esc cancels with nothing imported.
+      const cancelled = ui.promptImport('Import a save code into File 2', decodeSaveCode);
+      expect(doc.els['code-status'].textContent).toBe('');
+      doc.text.value = encodeSaveCode(save);
+      root.dispatch('keydown', { key: 'Escape', target: doc.text });
+      expect(await cancelled).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('a page without the panel reports it unavailable instead of hanging the title', async () => {
+    vi.stubGlobal('document', { getElementById: () => null });
+    try {
+      const ui = new DomSaveCodeUi();
+      expect(ui.available).toBe(false);
+      await expect(ui.promptImport('Import', decodeSaveCode)).resolves.toBeNull();
+      await expect(ui.showExport('Export', 'LOS1.00000000.AA')).resolves.toBeUndefined();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('cancelling "Replace File N?" goes back to the file actions with the cursor still on Import Code', async () => {
+    const ui = new FakeCodeUi();
+    const sim = new Sim();
+    const old = { ...newGame(), chapter: 2, map: 'cc_yard' };
+    sim.game.saves.save(0, old);
+    const before = window.localStorage.getItem('legacyOfSuper.slot0');
+    const title = new TitleScene(sim.game, ui);
+    sim.game.scenes.replace(title);
+    await tap(sim, 'start');
+    await tap(sim, 'A');
+    await tap(sim, 'A');
+    for (let i = 0; i < 3; i++) await tap(sim, 'down');
+    const code = encodeSaveCode(richSave());
+    // B, then Cancel with A: each time a plain A goes straight back into Import Code.
+    for (const answer of ['B', 'A'] as const) {
+      ui.pastes = [code];
+      await tap(sim, 'A');
+      await step(sim, 2);
+      expect(title.state).toBe('confirmImport');
+      await tap(sim, answer);
+      expect(title.state).toBe('fileAction');
+    }
+    ui.pastes = [code];
+    await tap(sim, 'A');
+    await step(sim, 2);
+    expect(title.state).toBe('confirmImport');
+    await tap(sim, 'B');
+    expect(window.localStorage.getItem('legacyOfSuper.slot0')).toBe(before);
+    sim.game.saves.erase(0);
+  });
+
+  it('a paste that starts like a code but was cut off or picked up stray characters is told so', () => {
+    const code = encodeSaveCode(richSave());
+    const message = (text: string): string => {
+      try {
+        decodeSaveCode(text);
+        return 'accepted';
+      } catch (err) {
+        return err instanceof Error ? err.message : String(err);
+      }
+    };
+    for (const mangled of [`${code}.`, `"${code}"`.slice(1), code.slice(0, 10), code.replace(/-/g, '+').replace(/_/g, '/') + '+/']) {
+      expect(message(mangled), mangled.slice(0, 24)).toMatch(/cut short or has extra characters/);
+    }
+    expect(message('hello there')).toMatch(/Codes start with "LOS"/);
+  });
+
+  it('the Paozu shot keeps the radish field and both farmers in view above the caption box', () => {
+    // At least two furrow rows (7 px apart, the first 5 px in) show between the horizon and the box.
+    expect(FIELD_TOP + 5 + 7 + 3).toBeLessThan(CAPTION_TOP);
+    for (const y of [GOKU_Y, GOTEN_Y]) {
+      expect(y + HUMANOID_H).toBeLessThanOrEqual(CAPTION_TOP);
+      expect(y + HUMANOID_H).toBeGreaterThan(FIELD_TOP);
     }
   });
 });

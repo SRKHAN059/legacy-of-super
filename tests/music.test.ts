@@ -3,7 +3,8 @@ import '../src/content';
 import { TRACKS } from '../src/content/music';
 import { MAPS, resolveMap } from '../src/content/registry';
 import { WORLDS } from '../src/content/world';
-import { Audio, DRUM_TOKENS, expandPattern, noteFreq, type Track } from '../src/engine/audio';
+import { Audio, audio, DRUM_TOKENS, expandPattern, noteFreq, type Track } from '../src/engine/audio';
+import { Sim } from './sim';
 
 const BAR = 16;
 /** Seconds per 16-row bar. */
@@ -144,12 +145,74 @@ describe('soundtrack coverage', () => {
       for (const [file, src] of Object.entries(SOURCES)) {
         for (const m of src.matchAll(call)) {
           found++;
-          const before = [...src.slice(0, m.index).matchAll(/\.music\(\s*'([^']+)'\s*\)/g)];
+          // Only the script (or helper) the fight sits in counts: a theme left over from an earlier scene does not.
+          const head = src.slice(0, m.index);
+          const start = Math.max(0, ...[...head.matchAll(/\basync\s*(?:function\s+\w+\s*)?\(\s*s\b/g)].map((x) => x.index ?? 0));
+          const before = [...head.slice(start).matchAll(/\.music\(\s*'([^']+)'\s*\)/g)];
           expect(before.at(-1)?.[1], `${enemy} in ${file}`).toBe(track);
         }
       }
       expect(found, `no fight call for ${enemy}`).toBeGreaterThan(0);
     }
+  });
+});
+
+// ---- fight themes in play: the headless bot runs the scenes and listens to what the engine was asked for ----
+
+const TICKS = 400000;
+
+/** Tick until no script holds the controls (onEnter scripts started by warps finish too). */
+async function settle(sim: Sim): Promise<void> {
+  let idle = 0;
+  for (let i = 0; i < TICKS && idle < 6; i += 5) {
+    await sim.tick(5);
+    idle = sim.game.lockDepth === 0 ? idle + 1 : 0;
+  }
+}
+
+/** Start on a map (when given), then run a script the way the player reaches it, with its NPC if it has one. */
+async function beat(sim: Sim, map: string | null, script: string, x?: number, y?: number): Promise<void> {
+  if (map) {
+    sim.start(map, x, y);
+    await settle(sim);
+  }
+  const npc = sim.game.field?.npcs.find((n) => n.def.talk === script);
+  expect(await sim.run(script, npc ? { npc } : {}, TICKS), `${script} finished`).toBe(true);
+  await settle(sim);
+  expect(sim.errors, `${script} errors`).toEqual([]);
+}
+
+describe('fight themes in play', () => {
+  it('a fight that leaves the player on the same map hands the music back to that map\'s track', async () => {
+    const sim = new Sim();
+    const played: string[] = [];
+    const play = sim.game.playMusic.bind(sim.game);
+    sim.game.playMusic = (id: string): void => { played.push(id); play(id); };
+    /** Run a scene, check it fought to `themes`, and that the player is left with the map's own track. */
+    const scene = async (map: string, script: string, x: number, y: number, themes: string[]): Promise<void> => {
+      played.length = 0;
+      await beat(sim, map, script, x, y);
+      const f = sim.game.field;
+      if (!f) throw new Error(`${script}: no field`);
+      for (const t of themes) expect(played, `${script} plays ${t}`).toContain(t);
+      expect(audio.playing, `after ${script} on ${f.def.id}`).toBe(f.def.music);
+    };
+
+    // Chapter 12: Hit's contract on the hotel roof (the porter's lift runs the scene from the roof's onEnter).
+    sim.start('paozu_home', 31, 10);
+    await settle(sim);
+    await beat(sim, null, 'c12_start');
+    await beat(sim, 'cc_yard', 'act5_beerus_talk', 25, 17);
+    await scene('satan_plaza', 'c12_porter_talk', 31, 6, ['hit']);
+    expect(sim.game.field?.def.id).toBe('c12_rooftop');
+
+    // Chapter 13: recruit spars with Krillin in Satan City and Android 17 at the poachers' camp.
+    await beat(sim, null, 'c13_start');
+    await scene('satan_plaza', 'c13_krillin_talk', 21, 23, ['battle']);
+    await beat(sim, 'c13_monster_beach', 'c13_beach_enter', 16, 16);
+    await beat(sim, 'c13_monster_hut', 'c13_17_talk', 16, 11);
+    await scene('c13_monster_camp', 'c13_camp_boss', 20, 12, ['boss', 'battle']);
+    expect(sim.game.state.flag('c13_17Joined')).toBe(true);
   });
 });
 

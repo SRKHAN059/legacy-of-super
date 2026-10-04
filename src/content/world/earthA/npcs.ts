@@ -14,9 +14,10 @@ import { heroTalk, type TalkLines } from '../earthB/talk';
  *    Satan City adores Mr. Satan and is wary of Vegeta; the old-timers remember the Demon King when they see
  *    Piccolo; Korin, Popo, Turtle and Yajirobe know exactly who everyone is.
  *  - the story so far: the talks in between play the NPC's chatter for the current story point, keyed to the
- *    chapter and to the story flags the acts set (Beerus's golden sky over the sea, Frieza's army, the day the
- *    Earth blew up and came back, Future Trunks, the Days of Peace episodes, the Zeno tournament, Buu's
- *    hibernation, the empty city while the Mighty Ten are away, and the post-game).
+ *    chapter and to the story flags and quests the acts set (Beerus's golden sky over the sea, Frieza's army, the
+ *    day the Earth blew up and came back, Future Trunks's time machine and Goku Black's visit, the Mafuba lesson,
+ *    the Days of Peace episodes, the Zeno tournament, Buu's hibernation, the empty city while the Mighty Ten are
+ *    away, and the post-game). The chatter never names whoever might be listening: that is what reactions are for.
  * Mr. Satan himself answers from upstairs in his mansion (the staircase) whenever no chapter has him out front.
  */
 
@@ -62,6 +63,18 @@ export const BUU_ASLEEP = 'c13_friezaIntro';
  */
 export const EARTH_RESTORED = 'c06_won';
 
+/**
+ * Goku Black's first visit to the present (Chapter 9's fight at Capsule Corp). Before it the hubs only know about
+ * the time machine that crashed there.
+ */
+export const BLACK_SEEN = 'c09_blackDone';
+
+/**
+ * Chapter 11's Mafuba lesson at Kame House (Trunks and Goku, then Kami's bottle from Mr. Popo). The hubs are walkable
+ * on both sides of it, so the news of the lesson waits for its journal entry.
+ */
+export const MAFUBA_TAUGHT = 'done:c11_q_mafuba';
+
 // ------------------------------------------------------------------ dialogue model
 
 /**
@@ -104,7 +117,10 @@ export interface Staged {
 export interface NpcTalk {
   /** Reactions to the character you play (LoG2 CurChar branches). */
   heroes: Partial<Record<CharId, Talk | Staged>>;
-  /** Story-progress chatter. */
+  /**
+   * Story-progress chatter. Every character hears it between reactions, so it never names a character who could be
+   * the one listening at that point of the story (that belongs in `heroes`).
+   */
   story: StoryTable<Talk | Cycle>;
 }
 
@@ -227,26 +243,27 @@ export const EA_TALK: Record<string, NpcTalk> = {
           [FARMER, 'Gohan and Videl\'s place is up the path. Nice young couple. Quiet, except when they\'re "sparring".'],
           [FARMER, 'Last month a pterodactyl tried to nest on their roof. It flew off very politely after Videl had a word with it.', 'smirk'],
         ],
-        'Goten drove Goku\'s tractor off the ridge again. Goku caught it with one hand. My wife fainted. I bought a new fence.',
+        'Goten drove the family tractor off the ridge again. Something orange caught it in mid-air. My wife fainted. I bought a new fence.',
       ] }],
       [2, 'A fancy car came for the little ones this morning. Some birthday on a boat. Up here we get cake on a stump, and we\'re grateful.'],
-      [3, 'Goku came by asking about orange balls with little stars on them. Said a god wants a word. I gave him a radish. Seemed to help.'],
+      [3, 'Chi-Chi\'s hunting for orange balls with little stars on them. Says a god wants a word. I gave her a radish. Seemed to help.'],
       ['c03_beerusDone', [
         [FARMER, 'You feel that quake the other night? The sky over the sea lit up gold, then red, then gold again.', 'shock'],
-        [FARMER, 'My wife says it was the Son boy\'s doing. I say a man that grows radishes that big can\'t be all bad.', 'happy'],
+        [FARMER, 'My wife says the gods are fighting over our radishes. I say any god with taste is welcome to them.', 'happy'],
       ]],
       [5, [
-        [FARMER, 'Spaceships full of soldiers came down past the ridge. Folks say Gohan went out to meet them in a suit and tie!', 'shock'],
-        [FARMER, 'Next morning my field was fine and my cows were grumpy. Mountain life, eh?'],
+        [FARMER, 'Spaceships full of soldiers just flew over the ridge, heading west! Folks say somebody\'s gone to meet them in a suit and tie!', 'shock'],
+        [FARMER, 'My cows are hiding in the barn. Smart cows. Mountain life, eh?'],
       ]],
       [EARTH_RESTORED, ['I dreamed the whole mountain went white and quiet. Then my rooster crowed, same as always. Twice, now I think on it.', 'sad']],
-      ['c07_champaDone', 'Goku\'s off at some tournament against "another universe". Chi-Chi told me. I nodded like I understood. I didn\'t.'],
-      [8, 'Goku\'s back from his universe tournament. Says his team won "by a technicality". Then he ate my lunch. That part I believe.'],
-      [9, ['Saw Goku on the ridge path last week, in a dark gi. Didn\'t wave. Didn\'t smile right, either. Goku always waves.', 'sad']],
+      ['c07_champaDone', 'Chi-Chi says the whole planet\'s been bet on a tournament against "another universe". I nodded like I understood. I didn\'t.'],
+      [8, 'So the planet\'s safe? Won "by a technicality", Chi-Chi says. My cows won the county fair by a technicality once. Still counts.'],
+      [9, 'Heard a boom from West City way this morning. Chi-Chi says something "fell out of time". I said, "Out of WHAT?"'],
+      [BLACK_SEEN, ['Folks in West City say a fella in a dark gi picked a fight over Capsule Corp, then just... vanished. Mid-punch.', 'sad']],
       [12, ['Little Pan floats over my terraces now. Lands in the cabbages, giggles, takes off again. Best scarecrow I ever had.', 'happy']],
-      [13, 'Goku came by asking if I knew any "really strong fighters". I told him about my wife. He wrote it down!'],
-      ['c14_departed', 'Quiet up here these days. No quakes, no golden lights, no Goku crashing through my fence. Funny how you miss it.'],
-      [15, ['Goku\'s back! Already broke my fence. Says he "won a tournament for the whole universe". Sure, Goku. Sure.', 'happy']],
+      [13, 'Somebody\'s going door to door looking for "really strong fighters". I put my wife\'s name down. She hasn\'t stopped stretching.'],
+      ['c14_departed', 'Quiet up here these days. No quakes, no golden lights, nobody crashing through my fence. Funny how you miss it.'],
+      [15, ['Universe saved, they say. My fence is broken again, too. Everything\'s back to normal!', 'happy']],
     ],
   },
 
@@ -266,7 +283,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
         ['hero', 'HAHAHA! I once caught a whale with my bare hands! ...It was a small whale.', 'happy'],
         [ANGLER, 'Rod\'s over there, champ.', 'smirk'],
       ],
-      android17: 'A ranger, eh? Then you\'ll approve. I throw the little ones back.',
+      android17: 'Park ranger, are you? Then you\'ll approve. I throw the little ones back.',
       frieza: [
         [ANGLER, 'Nice tail. Ever fish with it?'],
         ['hero', 'I have destroyed planets for less.', 'angry'],
@@ -312,25 +329,25 @@ export const EA_TALK: Record<string, NpcTalk> = {
       ],
     },
     story: [
-      [0, 'Chi-Chi\'s radishes win the county fair every year. Goku eats the runners-up. Every year.'],
+      [0, 'Chi-Chi\'s radishes win the county fair every year. Her family eats the runners-up. Every year.'],
       [2, 'Goten and his friend went to some birthday on a ship. Chi-Chi packed them three lunches each. Saiyan portions.'],
       [4, [
-        [UME, 'Goku\'s off "training with a god" again, apparently. And here I thought my husband\'s fishing trips were an excuse.', 'smirk'],
+        [UME, 'Chi-Chi says the men in this valley are "training with a god" now. And here I thought my husband\'s fishing trips were an excuse.', 'smirk'],
         [UME, 'Somebody has to help Chi-Chi with that field. Those radishes don\'t pull themselves.'],
       ]],
-      [5, 'Chi-Chi heard Gohan went off to fight aliens in his work suit. She\'s more upset about the suit.'],
+      [5, 'Aliens again! Chi-Chi locked every door, then unlocked them all. "The boys will want lunch after," she said.'],
       [EARTH_RESTORED, 'Chi-Chi dropped her best teapot this morning. Then it was back on the shelf. She says she\'s working too hard. So am I, apparently.'],
-      ['c07_champaDone', 'Goku entered a tournament against another universe. Chi-Chi asked if there\'s prize money. There isn\'t. Poor man.'],
+      ['c07_champaDone', 'A tournament against another universe, and Chi-Chi\'s first question was "Is there prize money?" There isn\'t. Poor woman.'],
       [8, [
         [UME, 'I came over to borrow sugar and ended up babysitting a baby who can fly. Pan floated right up to the rafters!', 'shock'],
         [UME, 'Chi-Chi just said "Oh, that\'s normal," and poured more tea.'],
       ]],
-      [9, ['A young man with lavender hair came to fetch Goku. Polite as anything. Chi-Chi fed him four bowls before he got a word in.', 'happy']],
-      [11, 'Goku\'s been gone to "the future" for days. Chi-Chi sets a place for him anyway. Out of habit. And spite.'],
-      [12, 'Chi-Chi says Goku\'s new job is farming. The radishes say otherwise.'],
-      [13, ['Goku says if a tournament goes badly, "everything disappears". Chi-Chi told him to be home by dinner. She\'s the brave one.', 'sad']],
-      ['c14_departed', ['Chi-Chi\'s swept the same step all morning. Goku and the boys left for that tournament. She\'ll never say she\'s worried.', 'sad']],
-      [15, ['They\'re home! Chi-Chi cried, then hit Goku with the ladle, then cried again. Lovely family.', 'happy']],
+      [9, ['Bulma phoned in a panic. Something about a time machine crashing in her yard. Chi-Chi made rice balls. It\'s what she does.', 'shock']],
+      [11, 'Chi-Chi says "the future" is in trouble again. She\'s packing lunches for it. I didn\'t ask how you mail rice balls to the future.'],
+      [12, 'Quiet times again. Chi-Chi planted twice as many radishes. Somebody in that house is going to farm, like it or not.'],
+      [13, ['If this tournament goes badly, "everything disappears", Chi-Chi says. She told the boys to be home by dinner. She\'s the brave one.', 'sad']],
+      ['c14_departed', ['Chi-Chi\'s swept the same step all morning. She says she isn\'t worried. She\'s on her fourth broom.', 'sad']],
+      [15, ['They\'re home! Chi-Chi cried, waved the big ladle around, then cried again. Lovely family.', 'happy']],
     ],
   },
 
@@ -372,20 +389,20 @@ export const EA_TALK: Record<string, NpcTalk> = {
       [0, ['I polish the statue\'s toes every Sunday. For luck! Don\'t tell the park ranger.', 'happy']],
       ['c02_boarded', ['Mr. Satan went to a party on a GIANT ship! He took Buu! I bet he won every bingo game.', 'happy']],
       ['c03_beerusDone', ['When the sky went gold, Mr. Satan stood on his balcony and flexed at it. Then it stopped. COINCIDENCE? No!', 'happy']],
-      [5, ['My mom says aliens attacked. Don\'t worry, Mr. Satan probably scared them off with his Victory Pose. That\'s how it works.', 'happy']],
+      [5, ['My mom says aliens are attacking. Don\'t worry, Mr. Satan will scare them off with his Victory Pose. That\'s how it works.', 'happy']],
       [EARTH_RESTORED, ['I dreamed the world blew up! Then Mr. Satan went "HAHAHA" and it un-blew. Best dream ever!', 'happy']],
-      ['ea_buuAway&chapter==7', 'Mr. Buu went on a sports trip to another universe! Mr. Satan stayed home to protect us. That\'s what heroes do.'],
+      ['ea_buuAway&chapter==7', 'Mr. Buu\'s off on a sports trip to another universe! Mr. Satan\'s staying home to protect us. That\'s what heroes do.'],
       [8, ['Mr. Buu\'s back from his sports trip! He didn\'t even play. He says the snacks were the best part.', 'happy']],
       [9, 'My cousin saw a guy with a SWORD climb out of a flying egg in West City! I told Mr. Satan. He\'ll handle it.'],
       [12, [
         [FAN, 'They\'re filming a GREAT SAIYAMAN movie in town! With a monster! And robbers! And a bank!', 'shock'],
-        [FAN, 'I asked the guy in the helmet for an autograph and he signed it "Gohan". Weird stage name.'],
+        [FAN, 'I asked the guy in the helmet for an autograph. He signed it, panicked, scribbled it out and signed it again. Weird guy.'],
       ]],
       [13, ['Mr. Buu beat a "champion of the gods" at some Expo! Mr. Satan trained him personally. Obviously.', 'happy']],
       [BUU_ASLEEP, 'Mr. Satan says Buu\'s taking a "very important nap". I take important naps too. Mom calls it "grounded".'],
       ['c14_departed', 'Grown-ups keep looking at the sky today. I\'m doing the Victory Pose at it. Just in case.'],
-      [15, 'Mr. Satan says the universe almost ended while we were asleep and he "took care of it". Mom says he means the dishes.'],
-      ['post_ztvSeen', ['Did you see the press conference?! Mr. Satan beat a GOD OF DESTRUCTION! With a Dynamite Kick! I KNEW it!', 'happy']],
+      [15, 'Grown-ups say the universe almost ended while we were asleep. I slept right through it! That\'s the BEST way to survive stuff.'],
+      ['post_ztvSeen', ['The press conference is on every channel! A GOD OF DESTRUCTION! With a Dynamite Kick! I KNEW it!', 'happy']],
     ],
   },
 
@@ -442,7 +459,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
         'The sky over the sea lit up gold for an hour. Official cause: "festive weather". I\'ve seen festive weather. That wasn\'t it.',
         'Mr. Satan says he became a god and beat an evil deity called "Beavis". My editor wants a follow-up. I want a lie detector.',
       ] }],
-      [5, ['I was THIS close to a scoop: hundreds of soldiers, a frozen-looking alien emperor... and then nothing. No wreckage.', 'angry']],
+      [5, ['Alien ships over the Rocky Wasteland, and a frozen-looking alien emperor! And the army won\'t let my van past the checkpoint!', 'angry']],
       [EARTH_RESTORED, 'Every camera in the city recorded the same day twice. ZTV legal says we "do not discuss the double Tuesday."'],
       ['ea_buuAway&chapter==7', 'Mr. Satan\'s pupil "Mr. Buu" left on a cultural exchange. With whom? "Universe Six," says the butler. Is that a hotel chain?'],
       [8, 'Mr. Buu is back from his "cultural exchange". The butler says he "failed the entrance exam". Exam for WHAT?'],
@@ -456,7 +473,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       ]],
       ['c14_departed', 'Officer Krillin, his wife AND the old hermit all vanished the same morning. Is it a cult? A cruise? I need a source!'],
       [15, 'Everyone who vanished came home yesterday, hungry. "We were at a tournament," they say. What tournament?! No footage!'],
-      ['post_ztvSeen', ['The Champion\'s press conference: "I beat the God of Destruction." My gut says nap. My paycheck says genius.', 'smirk']],
+      ['post_ztvSeen', ['That press conference rerun just broke every ratings record in ZTV history. My editor wants a sequel. In SPACE.', 'smirk']],
     ],
   },
 
@@ -498,9 +515,10 @@ export const EA_TALK: Record<string, NpcTalk> = {
       [2, 'Officer Krillin took the day off for a birthday on a boat. He left me his paperwork. And his lunch. Fair trade.'],
       ['c02_rage', ['Krillin came back from that boat party with seaweed in his hair. He won\'t say a word about it. He just shivers.', 'shock']],
       ['c03_beerusDone', 'We got a report of two men punching each other ABOVE the clouds. I wrote "pigeons" on the form. Nobody reads these forms.'],
-      [5, 'Officer Krillin went off to "help with the alien thing". Came back bruised and grinning. Says he "still has it".'],
+      [5, 'Officer Krillin went off to "help with the alien thing". Took off his badge, put on his old gi. Hopes he "still has it".'],
       [EARTH_RESTORED, 'The whole precinct had the same nightmare last week. HR says it\'s workplace stress. HR had it too.'],
-      [9, 'We got a call about a man in a dark gi with a very nice smile. The nice smile was the suspicious part.'],
+      [9, 'West City asked us to watch for "anything that fell out of the future". I\'ve checked the lost and found twice.'],
+      [BLACK_SEEN, 'West City Police put out a bulletin: a man in a dark gi with a very nice smile. The nice smile is the suspicious part.'],
       [12, [
         [COP, 'Our colleague Krillin put in for leave. Said he wants to "get his edge back."'],
         [COP, 'Between you and me, he once stopped a getaway car by flicking it. I don\'t think his edge went anywhere.', 'smirk'],
@@ -558,7 +576,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
         [GRANNY, 'Dearie, did you have the dream too? The one where the world went boom, and then it was breakfast again?', 'sad'],
         [GRANNY, 'Half the city had it. The pharmacist is out of sleeping pills. I just knit faster.'],
       ]],
-      [9, ['A young man with lavender hair sat on my bench and ate my whole bag of rice crackers without a word. Such sad eyes.', 'sad']],
+      [9, 'My grandson says a flying egg crashed into Capsule Corp. In my day, things fell from the sky politely. Rain, mostly.'],
       [12, ['My knitting circle is making a tiny cape for Mr. Satan\'s granddaughter. She flies, you know. Babies these days!', 'happy']],
       [13, 'The air feels... listened to, lately. As if someone very small and very powerful is deciding something.'],
       ['c14_departed', 'I woke up this morning and thought, "Today might be the last day of everything." So I had dessert first.'],
@@ -598,7 +616,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       [5, 'Our "alien invasion" policy has a waiting period of one invasion. Very popular right now.'],
       [EARTH_RESTORED, ['Our ledgers show every payment from last Tuesday went through twice. Accounting quit. Then un-quit.', 'shock']],
       ['c07_champaDone', 'The Champion\'s account is fine, before you ask. He did buy "one jumbo cake, to go, for another universe".'],
-      [9, 'A young man tried to pay with a Capsule Corp card dated twenty years from now. We called security. Security called Bulma.'],
+      [9, 'Capsule Corp stock jumped this morning. Rumour says Bulma has a time machine. Our investors would like a word with the future.'],
       ['c12_filmDone', 'A gang tried to rob us during the movie shoot. They hit the cardboard vault on the set across the street. Our best day.'],
       [BUU_ASLEEP, 'Mr. Buu\'s candy bill is down ninety percent this month. The Champion is fine. The candy shops are in mourning.'],
       [15, 'Business is booming. People spend more when they feel the world almost ended. Nobody knows why. They just feel generous.'],
@@ -640,7 +658,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       ['c07_champaDone', 'A round purple gentleman and a lady in teal ordered one of everything "to compare with our universe". Then seconds "to be fair".'],
       [12, 'A man in a long coat sat in the corner all night and never ordered. Left a tip anyway. Nobody saw him leave.'],
       [BUU_ASLEEP, ['Mr. Buu hasn\'t come in for a week. We baked his usual cake anyway. Out of respect. Then we ate it. Out of grief.', 'sad']],
-      [15, ['A tall pale gentleman ordered every dessert "to celebrate a universe saved". Lovely tipper. Strange toast.', 'happy']],
+      [15, ['A tall blue gentleman with a staff ordered every dessert "to celebrate a universe saved". Lovely tipper. Strange toast.', 'happy']],
     ],
   },
 
@@ -713,7 +731,8 @@ export const EA_TALK: Record<string, NpcTalk> = {
       ['c03_beerusDone', ['Huff... Did you see that guy... with red hair... flying above the clouds? I was running... and he passed me... upward.', 'shock']],
       [5, 'Huff... I ran away... from the aliens... at a personal best... Every cloud... has a silver lining...'],
       [EARTH_RESTORED, ['Huff... My watch says... I ran my morning route... twice... I only remember once...', 'shock']],
-      [9, 'Huff... A guy with lavender hair... flew past me... carrying a SWORD... Flying is one thing... the sword is just showing off...'],
+      [9, 'Huff... Heard a crash... over West City... Some kind of flying egg... I didn\'t stop... to look...'],
+      [BLACK_SEEN, 'Huff... My cousin in West City... saw a guy in a dark gi... He smiled at her... She hasn\'t slept since...'],
       ['c12_hitDone', 'Huff... I jog at night now... Saw a guy on the hotel roof... eating rice... one grain at a time... Weirdo...'],
       [13, 'Huff... Everybody\'s training lately... Even that old hermit... on the island... I saw him... doing push-ups...'],
       [15, ['Huff... New personal best... I feel like... I could run forever... like the universe... wants me to...', 'happy']],
@@ -725,7 +744,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       goku: [
         [VETERAN, 'Wait... that grin. YOU! The monkey-tailed boy! You beat me in the first round!', 'shock'],
         ['hero', 'Huh? Oh! Did we have lunch after?', 'happy'],
-        [VETERAN, 'We did! You ate mine. Fifty years and I still want a rematch.', 'happy'],
+        [VETERAN, 'We did! You ate mine. Thirty years and I still want a rematch.', 'happy'],
       ],
       vegeta: [
         [VETERAN, 'Hmph. Proud stance, that. All chin. A clever fighter would go straight for it.'],
@@ -783,8 +802,8 @@ export const EA_TALK: Record<string, NpcTalk> = {
         [SHOPPER, 'Champ Goods next door is open, though. They sell the cutest Buu plushies. They squeak when you hug them!', 'happy'],
       ]],
       ['c02_rage', 'Bulma Briefs had her birthday on a CRUISE SHIP. I saw the photos. One guest was a purple cat in a robe. Fashion!'],
-      [4, 'A tall pale man in a gorgeous robe bought every cake in the plaza. And his neck ring! I need to know where he got it.'],
-      ['ea_buuAway&chapter==7', 'Buu plushies are half price while Mr. Buu\'s away "in another universe". I bought six.'],
+      [4, 'A tall blue man in a gorgeous robe bought every cake in the plaza. And his neck ring! I need to know where he got it.'],
+      ['ea_buuAway&chapter==7', 'Champ Goods marked down the Buu plushies while Mr. Buu\'s away "in another universe". I bought six.'],
       [8, 'Mr. Buu\'s home, so the plushies are back to full price. I bought a seventh anyway. Don\'t judge me.'],
       [12, ['Champ Goods has a new Great Saiyaman helmet. It lights up! I bought two. One for my cat.', 'happy']],
       [13, 'They\'re selling "End of the Universe" party hats at the boutique. Nobody knows why. They\'re selling out.'],
@@ -823,7 +842,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
         [AOKI, 'My hypothesis? Gold is very reflective. Burglars hate being seen.', 'smirk'],
       ]],
       ['c03_beerusDone', 'During the golden sky event my instruments recorded two energies colliding above the stratosphere. I\'ve named them A and B.'],
-      [5, 'Alien ships! I begged for a debris sample. Capsule Corporation says they "tidied up". Tidied up an invasion!'],
+      [5, 'Alien ships! I begged the army for a debris sample. They said "after the invasion". As if invasions keep office hours!'],
       [EARTH_RESTORED, 'Hypothesis: last week happened twice. Evidence: two copies of the same receipt. Peer review: my cat. She agrees.'],
       [9, [
         [AOKI, 'My seismographs registered a disturbance in the fourth dimension. Yes, I own a seismograph for that.', 'shock'],
@@ -834,7 +853,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
         'New study: infants who fly. Sample size: one. Her grandfather threatened me with a lawsuit and a lollipop.',
       ] }],
       [13, 'My instruments detect a vast presence "above" twelve whole universes. Twelve! I\'ve only ever counted one.'],
-      ['c14_departed', 'My readings say eight universes are currently... in a room. A very large, very empty room. I\'m switching to decaf.'],
+      ['c14_departed', 'My readings say eight universes are currently... in a room. A very large, very empty room. I\'ve changed the batteries twice.'],
       [15, ['Universes that went dark on my instruments are back. All of them. I\'m writing a paper. Nobody will read it.', 'happy']],
     ],
   },
@@ -868,11 +887,11 @@ export const EA_TALK: Record<string, NpcTalk> = {
       ['ea_buuAway&chapter==2', 'The Champion and Mr. Buu went to a party on a ship. The topiary and I are having a quiet day.'],
       [3, 'The Champion had me bury his "Champion Orb" in the trophy garden for safekeeping. Then dig it up. Twice before lunch.'],
       [5, 'Alien soldiers? Mr. Buu turned three of my rosebushes into gumdrops "so the aliens can\'t have them". Very thoughtful.'],
-      ['ea_buuAway&chapter==7', 'Mr. Buu\'s off to another universe with Mr. Son. The garden\'s so quiet. I almost miss the candy weeds.'],
+      ['ea_buuAway&chapter==7', 'Mr. Buu\'s joined a team to fight another universe. The garden\'s so quiet. I almost miss the candy weeds.'],
       [8, ['Mr. Buu\'s home! First thing he did was turn the weeds into candy again. I missed it. Don\'t tell him.', 'happy']],
       [12, ['The Champion\'s granddaughter flew into the hedge maze yesterday. Flew OUT the top. He fainted in the begonias.', 'shock']],
       [BUU_ASLEEP, ['Mr. Buu fell asleep in my flowerbed again. Days now. I\'ve been watering around him.', 'sad']],
-      [15, 'Mr. Buu\'s still asleep. The Champion had me plant his favourite candy-flowers all around the window, so he wakes to them.'],
+      [15, 'Mr. Buu\'s still asleep. I\'ve planted his favourite candy-flowers all around the window, so he wakes up to them.'],
     ],
   },
 
@@ -915,7 +934,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       [12, 'Some fella in a long coat was standing on the hotel roof across the plaza at midnight. Didn\'t move for an hour. Creepy.'],
       [BUU_ASLEEP, 'Mr. Buu\'s been asleep for days. The Champion says to keep the noise down. I\'ve been whispering at burglars.'],
       ['c14_departed', 'The Champion paces upstairs all night. Says he can feel "the whole universe being very nervous". Me too, I guess.'],
-      [15, ['Whatever had the Champion so nervous is over. He came down this morning and did forty push-ups. Then he lay down.', 'happy']],
+      [15, ['Whatever had the whole city so jumpy is over. Even the dog sleeps through the night again.', 'happy']],
     ],
   },
 
@@ -944,7 +963,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       [8, ['Pool party\'s back on! Mr. Buu came home with a cake "from another universe". It tasted like Earth cake. Big, though.', 'happy']],
       [12, ['A flying baby did a perfect dive into the deep end yesterday. Mr. Satan did a less perfect dive after her. Both fine!', 'happy']],
       [BUU_ASLEEP, 'Pool\'s closed. The Champion says no splashing while Mr. Buu is "hibernating". Kind of sweet, honestly.'],
-      [15, ['Pool\'s open again! The Champion threw a "Universe Saved" party. Nobody knows which universe. We\'re partying anyway.', 'happy']],
+      [15, ['Pool\'s open again! There\'s a "Universe Saved" party on Saturday. Nobody knows which universe. We\'re partying anyway.', 'happy']],
     ],
   },
 
@@ -1047,7 +1066,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       ['c02_rage', ['Buu met scary purple cat at party. Cat want Buu pudding. Buu eat pudding first! Then cat beat Buu up. ...Worth it.', 'angry']],
       ['c03_satanDone', 'Royal Pudding best pudding! Buu not mad at cat anymore. ...Buu little bit mad at cat.'],
       [4, 'Blue man with stick eat cake at cafe. Blue man say cake "magnificent". Buu like blue man. Blue man know cake.'],
-      [5, 'Bad aliens come? Buu sleep through it. Mr. Satan say Buu very brave for sleeping.'],
+      [5, 'Bad aliens come? Mr. Satan say Buu stay home and guard candy. Buu very brave guard. Buu guard candy... inside Buu.'],
       [EARTH_RESTORED, ['Buu have bad dream. Whole world go poof. Buu wake up, world still here. Buu eat breakfast twice. To be safe.', 'sad']],
       [8, 'Buu take test for tournament! Buu draw candy on every answer. Lady say zero points. Buu watch fight with snacks. Best day!'],
       [12, 'Mr. Satan granddaughter fly to Buu! Buu make Pan candy. Mr. Satan say no candy for baby. So Buu eat it. Problem solved!'],
@@ -1058,7 +1077,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       ]],
       [15, [
         ['narrator', 'Majin Buu sleeps on. A sign is taped to his belly: "UNIVERSE SAVED. WAKE ME FOR CAKE." It is in Mr. Satan\'s handwriting.'],
-        [BUU, 'Zzz... Mr. Satan... strongest... Zzz...'],
+        [BUU, 'Zzz... best friend... strongest... Zzz...'],
       ]],
     ],
   },
@@ -1118,16 +1137,16 @@ export const EA_TALK: Record<string, NpcTalk> = {
       ['ea_buuAway&chapter==2', 'The Master and Mr. Buu are at a birthday cruise. I have been instructed to "guard the fridge". I take it very seriously.'],
       ['c03_satanDone', 'The Master\'s "Champion Orb" has left the house. He insists it was a loan. He also insists pudding is a business expense.'],
       [4, 'The Master told the press he defeated a god named "Beavis". I have ordered extra hairspray for the follow-up interviews.'],
-      [5, 'During the alien incident the Master retired to the panic room. He calls it "the strategy room". He strategised for six hours.'],
+      [5, 'The Master has retired to the panic room for the alien incident. He calls it "the strategy room". He is strategising with snacks.'],
       [EARTH_RESTORED, 'Every clock in the house is a day behind. Or ahead. I have stopped winding them. Time is no longer my department.'],
-      ['ea_buuAway&chapter==7', 'Mr. Buu is competing in "another universe". The Master has rehearsed his welcome-home speech forty times. It is mostly sobbing.'],
+      ['ea_buuAway&chapter==7', 'Mr. Buu has joined a tournament in "another universe". The Master has rehearsed his welcome-home speech forty times. It is mostly sobbing.'],
       [8, 'Mr. Buu returned having failed a written examination. The Master framed a photocopy. The original, I am told, belongs to a god.'],
       [9, 'Since the news of a time machine in West City, the Master has hidden his diary "in case they read the future". It is mostly menus.'],
       [12, 'Miss Pan visits on Sundays. The Master lets her win at arm-wrestling. He insists he is letting her win.'],
       [13, 'Mr. Buu won his bout at the gods\' "Expo". The Master has ordered a commemorative statue. Of Mr. Buu. Holding the Master.'],
       [BUU_ASLEEP, 'The Master is upstairs rehearsing a speech for "the end of the universe". He insists it is a metaphor. I have stopped asking.'],
       ['c14_departed', 'The Master has not left Mr. Buu\'s side. He reads him the sports pages. Aloud. With voices.'],
-      [15, 'All is as it was. The Master says he "felt the universe wobble, and steadied it with a Victory Pose". I have stopped asking.'],
+      [15, 'All is as it was. The fridge is full, the house is calm, and Mr. Buu sleeps on. I may even take a holiday.'],
     ],
   },
 
@@ -1183,9 +1202,9 @@ export const EA_TALK: Record<string, NpcTalk> = {
       ] }],
       [6, ['The press loved my story! "Mr. Satan, God of Martial Arts!" I\'m practising my divine pose. Like the regular one, but holier!', 'happy']],
       [EARTH_RESTORED, ['Did anybody else feel the whole house disappear for a second?! No? Just me? Must be the Champion\'s... sensitive... ki!', 'shock']],
-      ['ea_buuAway&chapter==7', 'Buu went to fight in ANOTHER UNIVERSE?! Who\'s going to eat my cooking?! Who\'s going to tell me I\'m strong?! ...Bee? Bee, come here!'],
+      ['ea_buuAway&chapter==7', 'Buu\'s going to fight in ANOTHER UNIVERSE?! Who\'s going to eat my cooking?! Who\'s going to tell me I\'m strong?! ...Bee? Bee, come here!'],
       [8, ['Buu\'s home! He failed some test, but the Champion says: tests are for people who aren\'t already champions!', 'happy']],
-      [9, ['A man with a sword AND a man with Goku\'s face are going around?! Tell them the Champion is on vacation! Indefinitely!', 'shock']],
+      [9, ['A time machine crashed in West City?! Tell anybody from the future that the Champion is on vacation! Indefinitely!', 'shock']],
       [12, ['Pan? Is that my granddaughter?! ...Oh. It\'s you. Have you seen Pan? She flies now. Grandpa can\'t catch her!', 'sad']],
       [13, ['Buu\'s going to the big tournament! I\'ve been training him myself! He did ten sit-ups! TEN! ...Then he had a snack.', 'happy']],
       [BUU_ASLEEP, ['Buu won\'t wake up. The doctor says it\'s "hibernation". I\'ll... I\'ll keep his candy fresh till he does. Don\'t worry, buddy.', 'sad']],
@@ -1226,7 +1245,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       [12, ['Great Saiyaman helmets are flying off the shelves! The movie isn\'t even out yet. The Champion is... thrilled. Mostly.', 'smirk']],
       ['c12_filmDone', 'The Great Saiyaman movie is a smash! The Champion asked for a cameo in the sequel. He wants to play "the real hero".'],
       [13, 'Strange order this week: ten good-luck headbands, one extra-extra-large, one Namekian-sized. Billed to Capsule Corp.'],
-      [15, ['Our new bestseller: the "Mr. Satan, God Slayer" figure. Comes with a tiny Dynamite Kick and an even tinier disclaimer.', 'happy']],
+      [15, ['Our new bestseller: the "God Slayer" action figure. Comes with a tiny Dynamite Kick and an even tinier disclaimer.', 'happy']],
     ],
   },
 
@@ -1255,7 +1274,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       [0, ['I\'ve saved up for a month for the Victory Pose action figure. The arm goes up AND down!', 'happy']],
       [3, 'Now I\'m saving for the Royal Pudding plushie. It\'s a pudding. That\'s a plushie. Mr. Buu loves pudding.'],
       [5, 'Mom says aliens attacked. I\'m saving for the Mr. Satan Alien-Fighting Kit. It\'s a stick and a cape.'],
-      ['ea_buuAway&chapter==7', 'Mr. Buu is in another universe! I\'m saving for a ticket. How much is a ticket to another universe?'],
+      ['ea_buuAway&chapter==7', 'Mr. Buu\'s going to another universe! I\'m saving for a ticket. How much is a ticket to another universe?'],
       [8, 'Now I\'m saving for the Majin Buu cake-hat. It\'s a hat. That\'s a cake. Buu wore one on TV.'],
       [9, 'My brother saw a time machine in West City. I\'m saving up for a time machine now. I have four zeni.'],
       [12, ['I got the Great Saiyaman helmet! Now I\'m saving for the Great Saiyaman watch. It doesn\'t do anything. I NEED it.', 'happy']],
@@ -1295,10 +1314,10 @@ export const EA_TALK: Record<string, NpcTalk> = {
       [5, 'Sensei says the real secret of the Satan School is "showing up after the fight is already over." I think it\'s a riddle.'],
       [EARTH_RESTORED, 'During meditation the whole dojo felt the world end. Then begin again. Sensei says it was "a really good stretch".'],
       ['c07_champaDone', 'We asked Sensei if he\'d fight in the tournament against another universe. He had a dentist appointment.'],
-      [9, 'Sensei cancelled class. A man with a sword was "looking for the strongest fighter". He wasn\'t looking for Sensei. Sensei hid anyway.'],
+      [9, 'Sensei cancelled class. He heard a time machine landed in West City and says he\'s "guarding the timeline". From under his bed.'],
       [12, ['Sensei\'s granddaughter came to class. She\'s one. She threw me across the room. Sensei says she gets it from him.', 'shock']],
       [13, 'Sensei has us practising cheering stances this week. For a tournament he "can\'t talk about". Our cheering is very advanced.'],
-      [15, ['Sensei says the universe was saved by "the Satan School spirit". I\'ll take it. I was cheering REALLY hard.', 'happy']],
+      [15, ['The universe got saved and nobody knows who did it. We\'re crediting "the Satan School spirit". I was cheering REALLY hard.', 'happy']],
     ],
   },
 
@@ -1359,18 +1378,20 @@ export const EA_TALK: Record<string, NpcTalk> = {
       [0, 'The tide brings in all sorts of things. Last week it brought a whole lost spaceship. Master Roshi used it as a deck chair.'],
       [2, 'Master Roshi went to a party on a cruise ship! He packed sunscreen, a snorkel and a VERY small swimsuit. I stayed home.'],
       [4, 'Krillin visits more often lately. He says police work is "peaceful". He says it like it hurts.'],
-      [5, ['Master Roshi fought an alien army! With his shirt off! I have never been so proud or so embarrassed.', 'shock']],
+      [5, ['Master Roshi\'s gone to fight an alien army! With his shirt off! I have never been so proud or so embarrassed.', 'shock']],
       [EARTH_RESTORED, 'The sea went still for a moment, as if the whole world stopped breathing. Then a wave hit me in the face. Very rude.'],
-      [9, 'Bulma\'s boy from the future came to say hello. Master Roshi asked if the future has better magazines. Trunks didn\'t answer. Good boy.'],
-      [11, 'Master Roshi taught Goku the Evil Containment Wave! He sealed a fly in the rice cooker to show him. We have no rice cooker now.'],
+      [9, 'A time machine crashed at Capsule Corp, they say. Master Roshi asked if anyone from the future brought magazines.'],
+      [BLACK_SEEN, 'Master Roshi sat up and said he felt "a familiar ki gone cold". Then he put his magazine down. He never does that.'],
+      [11, 'Bulma phoned about "a god who can\'t die". Master Roshi went very quiet. The Evil Containment Wave cost his own master his life.'],
+      [MAFUBA_TAUGHT, 'Master Roshi sealed a fly in our rice cooker for the lesson. We have no rice cooker now. Or fly.'],
       [12, { cycle: [
-        ['Master Roshi found his sealing charm on the table after Goku left. So what did Goku take? ...A ramen coupon. Oh dear.', 'shock'],
+        ['Master Roshi found his sealing charm on the table after everyone left. So what went to the future? ...His ramen coupon. Oh dear.', 'shock'],
         ['Krillin\'s moping on the beach. He says he\'s "lost his edge". I told him turtles don\'t have edges and we\'re very happy.', 'sad'],
       ] }],
       ['c12_herbGot', 'Krillin came back from the Forest of Terror with his head shaved and his eyes clear. He looks years younger. I look a thousand.'],
       [13, ['Master Roshi\'s been doing push-ups! Real ones! I\'m over a thousand years old and I\'ve never seen that.', 'shock']],
       ['c14_departed', 'Master Roshi left for the tournament with a toothbrush and a bottle of sake. I\'m guarding the house. Mostly I sit.'],
-      [15, ['Master Roshi\'s back! He says he "lasted ages" and met "a lovely lady from Universe 2". He\'s been humming for three days.', 'happy']],
+      [15, ['Master Roshi\'s back! He says he "lasted ages" and met "a lovely lady from Universe 4". He\'s been humming for three days.', 'happy']],
     ],
   },
 
@@ -1396,13 +1417,14 @@ export const EA_TALK: Record<string, NpcTalk> = {
         [FERRYMAN, 'The old hermit tips well, but he keeps asking if I have any "fit young deckhands" for hire. Odd fellow.', 'smirk'],
       ]],
       [2, 'Extra run this week: the old hermit wanted a lift to a birthday cruise. He tipped me in coupons. Expired coupons.'],
-      [5, 'I dropped off groceries the day the aliens came. The hermit fought half an army in his swim trunks. I want a raise.'],
+      [5, 'I dropped off groceries the day the aliens came. The hermit went off to fight them in his swim trunks. I want a raise.'],
       [EARTH_RESTORED, 'Funny week. I sailed the same Tuesday twice. Same waves. Same seagull stealing my lunch. Twice.'],
-      [11, 'Goku spent all week out here shouting at an old rice cooker. The hermit calls it "sealing practice". The rice cooker calls it abuse.'],
+      [11, 'The hermit had me fetch his old rice cooker from the shed. Says he needs it for "sealing a god". I just drive the boat.'],
+      [MAFUBA_TAUGHT, 'Goku\'s been out here all afternoon shouting "MAFUBA!" at flies. The hermit calls it practice. The flies call it harassment.'],
       [12, 'Krillin keeps asking me to take him "somewhere dangerous". I took him to the fish market. He seemed disappointed.'],
       ['c12_herbGot', 'Krillin took the hermit\'s boat out to the Forest of Terror. Came back bald and grinning. I wouldn\'t go there for all the zeni in Satan City.'],
       [13, 'The hermit wants me to row him "to the edge of the universe" for some tournament. I said that\'s not on my route.'],
-      ['c14_departed', 'Turns out the hermit didn\'t need my boat. A tall blue-skinned fella tapped a staff and they were gone. Rude. Free, though.'],
+      ['c14_departed', 'Turns out the hermit didn\'t need my boat. Krillin flew him to the mainland. Piggyback. I\'ve seen everything now.'],
       [15, ['Back to the regular route. Rice, fish, magazines. Feels good to be boring again.', 'happy']],
     ],
   },
@@ -1439,7 +1461,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       [3, { cycle: ['Some kid with a radar came asking about a "shiny orange ball". I was using it as a paperweight. Long story.', YAJI_FISH_TIP] }],
       [5, { cycle: [['Heard there was another big fight. I wasn\'t hiding. I was guarding the forest. From the back. Very important job.', 'smirk'], YAJI_FISH_TIP] }],
       [EARTH_RESTORED, { cycle: ['Had a nightmare the planet blew up while I was holding my lunch. Woke up, lunch was gone. THAT\'s the real tragedy.', YAJI_FISH_TIP] }],
-      [9, { cycle: ['A kid with a sword came by for beans. Looked like Vegeta\'s brat, all grown up. I hid. Can\'t be too careful with that family.', YAJI_FISH_TIP] }],
+      [9, { cycle: ['Heard a time machine crashed at Capsule Corp. If I had one, I\'d go back and eat the lunch I dropped last week.', YAJI_FISH_TIP] }],
       [12, { cycle: ['Krillin\'s training again. He asked if I wanted to train too. I said no. I\'m retired. From what? Exactly.', YAJI_FISH_TIP] }],
       [13, { cycle: ['A tournament where the losers get erased? Erased! Count me out. I\'ll be right here. Existing.', YAJI_FISH_TIP] }],
       ['c14_departed', { cycle: ['Everyone\'s gone. If the universe gets erased, at least I\'ll go out full.', YAJI_FISH_TIP] }],
@@ -1478,11 +1500,12 @@ export const EA_TALK: Record<string, NpcTalk> = {
     },
     story: [
       [0, KORIN_TRADE],
-      ['c03_beerusDone', { cycle: ['Hoho. Goku became a god, they say. I trained him when he was this tall. Well, I let him chase me. Same thing.', KORIN_TRADE] }],
+      ['c03_beerusDone', { cycle: ['Hoho. The sky turned gold, and a god went home with a full belly. Earth survives on pudding. Remarkable planet.', KORIN_TRADE] }],
       [5, { cycle: ['Frieza is back. I felt it in my whiskers. Keep your pouch full of beans, young one.', KORIN_TRADE] }],
       [EARTH_RESTORED, { cycle: ['The planet died for a moment. Even I felt it. Then time stitched itself back. An angel\'s work, I\'d wager.', KORIN_TRADE] }],
-      [9, { cycle: ['A boy from the future climbed my tower the old way. Hands and feet. Took him a day. I like him.', KORIN_TRADE] }],
-      [11, { cycle: [['The young man from the future came for beans again. His eyes... he\'s been through a lot. I gave him extra.', 'sad'], KORIN_TRADE] }],
+      [9, { cycle: ['Time machines again. Every time one lands, my bean crop has a very busy year. Bring fish.', KORIN_TRADE] }],
+      [BLACK_SEEN, { cycle: [['Something out there wears a familiar ki, and none of its heart. My whiskers don\'t like it. Bring fish. Bring friends.', 'sad'], KORIN_TRADE] }],
+      [11, { cycle: ['A god who cannot die, they say. Then don\'t fight to kill him. Fight to end it. ...Old cats know a few things.', KORIN_TRADE] }],
       [12, { cycle: ['Peace at last. My beans are growing fat and lazy. So is Yajirobe.', KORIN_TRADE] }],
       [13, { cycle: [['This tournament smells like the end of everything. Bring fish. Lots of fish.', 'sad'], KORIN_TRADE] }],
       ['c14_departed', { cycle: ['The universe is holding its breath. Even the clouds have stopped moving. Win, young ones.', KORIN_TRADE] }],
@@ -1527,9 +1550,10 @@ export const EA_TALK: Record<string, NpcTalk> = {
         [POPO, 'The Room of Spirit and Time has been busy. Mr. Popo cleans it after every visitor. Saiyans are very messy.'],
         [POPO, 'If you wish to use it, ask Dende first. And wipe your feet.'],
       ]],
-      [11, [
-        [POPO, 'Mr. Popo lent Goku the old bottle Kami was once sealed in. Mr. Popo would like it back. Empty.'],
-        [POPO, 'Vegeta has been in the Room of Spirit and Time for a whole year. Since yesterday. Mr. Popo is afraid to see the floor.'],
+      [11, 'Vegeta has been in the Room of Spirit and Time for a whole year. Since this morning. Mr. Popo can hear him yelling from here.'],
+      [MAFUBA_TAUGHT, [
+        [POPO, 'Kami\'s old bottle once held Kami himself. Mr. Popo would like it back. Empty.'],
+        [POPO, 'Dende watches the clouds for the future all day. Mr. Popo brings him tea. Dende forgets to drink it.', 'sad'],
       ]],
       [12, ['Peaceful days. Mr. Popo planted a new flower. Mr. Popo named it "Quiet".', 'happy']],
       [13, 'The flowers are restless. Something very large is about to happen to the whole universe. Mr. Popo will water them anyway.'],
@@ -1824,8 +1848,11 @@ registerScripts({
 
   ea_smi_trophies: async (s) => {
     await s.narrate('Rows of golden trophies: "World Martial Arts Champion", "Savior of Earth", "Best Moustache (Honorary)", "Cell Games - Winner by Default"...');
-    if (s.check('chapter>=7')) await s.narrate('A new plaque sits slightly crooked: "Universe Exhibition Match - Moral Victory."');
-    if (s.check('chapter>=8')) await s.narrate('Beside it hangs a framed photocopy of an exam paper. Every answer is a drawing of candy. It is marked "0" in red ink.');
+    // Both mementos of the Tournament of Destroyers arrive with Buu, who comes home in Chapter 8.
+    if (s.check('chapter>=8')) {
+      await s.narrate('A new plaque sits slightly crooked: "Universe Exhibition Match - Moral Victory."');
+      await s.narrate('Beside it hangs a framed photocopy of an exam paper. Every answer is a drawing of candy. It is marked "0" in red ink.');
+    }
     await aside(s, 'ea_smi_trophies');
   },
 

@@ -866,3 +866,74 @@ describe('world ecology: Dr. Sekimura points the way to the remnant camp', () =>
     }
   });
 });
+
+describe('world ecology (Earth B): homed wildlife stands on open ground, out of sight of every way in', () => {
+  /** Regular enemies notice the hero within 110 px (`AGGRO` in src/game/enemy.ts). */
+  const SIGHT = 110 / 16;
+  /** Wildlife the ecology pass homed on Earth B's hostile maps (the older spawns keep their own placement). */
+  const HOMED: Record<string, string[]> = {
+    desert_oasis: ['viper', 'kingCrab'], waste_canyon: ['tRex'], waste_mesa: ['soldierB', 'soldierC', 'soldierElite'],
+    snow_peak: ['eb_trihorn', 'voidSlime'],
+  };
+
+  it('every spawn on these maps starts clear of solids and in reach once the gates break; no homed creature can jump the hero on arrival', async () => {
+    for (const [id, types] of Object.entries(HOMED)) {
+      const m = resolveMap(id);
+      if (!m) throw new Error(`missing map ${id}`);
+      const sim = new Sim();
+      sim.game.state.data.chapter = 15; // the Great Mesa camp is up from Chapter 8
+      for (const b of m.barriers ?? []) sim.game.state.set(`gate:${id}:${b.id}`);
+      sim.start(id);
+      await sim.tick(1);
+      const f = sim.game.field;
+      if (!f) throw new Error('no field');
+      const grid = parseGrid(m);
+      const W = grid[0].length;
+      const H = grid.length;
+      const open = (x: number, y: number) => x >= 0 && y >= 0 && x < W && y < H && !f.col.blocked({ x: x * 16 + 3, y: y * 16 + 8, w: 10, h: 6 });
+      const ways: Array<[number, number, string]> = [];
+      for (const [side, ex] of Object.entries(m.exits ?? {})) {
+        if (!ex) continue;
+        for (let i = 0; i < (side === 'north' || side === 'south' ? W : H); i++) {
+          const [x, y] = side === 'north' ? [i, 0] : side === 'south' ? [i, H - 1] : side === 'west' ? [0, i] : [W - 1, i];
+          if (open(x, y)) ways.push([x, y, `${side} exit`]);
+        }
+      }
+      for (const other of Object.keys(MAPS)) {
+        const o = resolveMap(other);
+        for (const w of o?.warps ?? []) if (w.to === id) ways.push([Math.floor(w.tx), Math.floor(w.ty), `door from ${other}`]);
+        for (const fl of o?.objects ?? []) if (fl.type === 'flight' && fl.to === id) ways.push([Math.floor(fl.tx), Math.floor(fl.ty), `flight from ${other}`]);
+      }
+      for (const s of Object.values(SPOTS)) if (s.map === id) ways.push([s.tx, s.ty, s.id]);
+      expect(ways.length, id).toBeGreaterThan(0);
+      // Walk the map from every way in (flight circles hop within it).
+      const seen = new Set<string>();
+      const queue: Array<[number, number]> = [];
+      const visit = (x: number, y: number) => {
+        if (seen.has(`${x},${y}`) || !open(x, y)) return;
+        seen.add(`${x},${y}`);
+        queue.push([x, y]);
+      };
+      for (const [x, y] of ways) visit(x, y);
+      const hops = (m.objects ?? []).flatMap((o) => (o.type === 'flight' && o.to === id ? [o] : []));
+      while (queue.length) {
+        const [x, y] = queue.shift() as [number, number];
+        visit(x + 1, y); visit(x - 1, y); visit(x, y + 1); visit(x, y - 1);
+        for (const o of hops) if (Math.abs(o.x - x) <= 1 && Math.abs(o.y - y) <= 1) visit(Math.floor(o.tx), Math.floor(o.ty));
+      }
+      for (const e of m.enemies ?? []) expect(seen.has(`${e.x},${e.y}`), `${id}: ${e.type} at ${e.x},${e.y} is out of reach`).toBe(true);
+      // Each creature's own hitbox (T-Rexes and Destroyers are wider than a hero) starts clear of walls and props.
+      expect(f.enemies.length, id).toBeGreaterThan(0);
+      for (const e of f.enemies) {
+        expect(f.col.blocked(e.box(), e.flying), `${id}: ${e.def.id} spawns inside something solid at ${(e.x / 16).toFixed(1)},${(e.y / 16).toFixed(1)}`).toBe(false);
+      }
+      const homed = (m.enemies ?? []).filter((e) => types.includes(e.type));
+      expect(homed.length, id).toBeGreaterThan(0);
+      for (const e of homed) {
+        for (const [x, y, how] of ways) {
+          expect(Math.hypot(x - e.x, y - e.y), `${id}: ${e.type} at ${e.x},${e.y} sees the ${how} at ${x},${y}`).toBeGreaterThan(SIGHT);
+        }
+      }
+    }
+  });
+});

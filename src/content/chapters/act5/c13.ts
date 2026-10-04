@@ -6,10 +6,11 @@ import { HUB } from './hubs';
 /**
  * Chapter 13 — "Universe Survival" (L42→45). Zeno Expo exhibition (Goku vs Toppo), then the LoG2
  * "collection chapter": recruit the Mighty Ten through four silver sub-objectives, then the tenth warrior
- * (Frieza from Hell). Canon interludes play where the anime puts them: Goku vs. Gohan once Tien and Gohan are in
- * (ep 90, `c13_leader.ts`), and Universe 6's Saiyans between Goku's Frieza plan and his trip to Hell (eps 88-93,
- * `c13_u6.ts`). Side: Monster Island's seven escaped animals (LoG2's missing Namekians), three of them in old Earth
- * regions behind coloured gates.
+ * (Frieza from Hell). Canon interludes play where the anime puts them (`c13_u6.ts`, `c13_leader.ts`): Cabba recruits
+ * Caulifla on Sadala once Gohan has trained or Tien has joined (eps 88-89), Goku vs. Gohan once both are in (ep 90),
+ * and Caulifla's Super Saiyan and Kale's berserk form between Goku's Frieza plan and his trip to Hell (eps 92-93).
+ * Side: Monster Island's seven escaped animals (LoG2's missing Namekians), three of them in old Earth regions behind
+ * coloured gates.
  */
 
 const RECRUITS = ['c13_krillin', 'c13_tien', 'c13_gohan', 'c13_17'] as const;
@@ -25,7 +26,7 @@ const ANIMAL_HINTS: Record<string, string> = {
   c13_ani1: 'right here on the island\'s beach, by the tide pool',
   c13_ani2: 'in a warm valley full of dinosaurs on Highland Peak, in the Snowy Highlands. An orange barrier blocks the way in',
   c13_ani3: 'at the wrecked poacher camp',
-  c13_ani4: 'in a shrine hollow on the Paozu Peaks, behind an orange barrier',
+  c13_ani4: 'out on the atoll of Turtle Reef, past Kame House. A light blue barrier closes the sandbar',
   c13_ani5: 'in a sealed cave in Dragon\'s Throat Canyon, in the Rocky Wasteland. A dark blue barrier seals it',
   c13_ani6: 'by Fortuneteller Baba\'s lake', c13_ani7: 'near a farmhouse on Mt. Paozu',
 };
@@ -203,20 +204,26 @@ registerScripts({
   },
 
   /**
-   * After each recruit: Goku vs. Gohan once Tien and Gohan are both in (ep 90), then the progress count; all four
-   * → Buu falls asleep → the tenth warrior.
+   * After each recruit: Universe 6's recruiting cutaway once Gohan has trained or Tien has joined (eps 88-89), Goku
+   * vs. Gohan once both are in (ep 90), then the progress count; all four → Buu falls asleep → the tenth warrior.
    */
   c13_check: async (s) => {
     if (s.state.data.chapter !== 13) return;
-    if (s.check('done:c13_tien') && s.check('done:c13_gohan') && !s.check('done:c13_leader') && s.hasScript('c13_leader_start')) {
+    const tien = s.check('done:c13_tien');
+    const gohan = s.check('done:c13_gohan');
+    // Cabba is played through Vegeta's moves (Vegeta is always in the party by now).
+    if ((tien || gohan) && !s.check('done:c13_u6') && s.state.char('vegeta').joined && s.hasScript('c13_u6_recruit')) {
+      await s.call('c13_u6_recruit');
+    }
+    if (tien && gohan && !s.check('done:c13_leader') && s.hasScript('c13_leader_start')) {
       await s.call('c13_leader_start');
     }
     const n = RECRUITS.filter((q) => s.check(`done:${q}`)).length;
     if (n < 4) {
       const fighters = 5 + (s.check('done:c13_krillin') ? 2 : 0) + (s.check('done:c13_tien') ? 2 : 0) + (s.check('done:c13_17') ? 1 : 0);
-      const gohan = s.check('done:c13_leader') ? ' Gohan is back at full strength, and Goku wants him to lead the team.'
-        : s.check('done:c13_gohan') ? ' Gohan is back at full strength.' : ' Gohan still needs to train with Piccolo.';
-      await s.narrate(`The Mighty Ten: ${fighters} of 10 fighters signed up.${gohan}`);
+      const lead = s.check('done:c13_leader') ? ' Gohan is back at full strength, and Goku wants him to lead the team.'
+        : gohan ? ' Gohan is back at full strength.' : ' Gohan still needs to train with Piccolo.';
+      await s.narrate(`The Mighty Ten: ${fighters} of 10 fighters signed up.${lead}`);
       return;
     }
     if (s.flag('c13_friezaIntro')) return;
@@ -251,6 +258,7 @@ registerScripts({
     const [hx, hy] = heroTile(s);
     const [kx, ky] = freeNear(s, hx, hy - 3);
     removeAll(s, 'c13_krillinP');
+    s.music('battle');
     await bossFight(s, 'c13_krillin', { x: kx, y: ky, uid: 'c13_krillin1' });
     removeAll(s, 'c13_krillin1');
     s.letterbox(true);
@@ -264,6 +272,7 @@ registerScripts({
       ['krillin', 'Yes, dear.', 'sad'],
     ]);
     removeAll(s, 'c13_krillinS', 'c13_18S');
+    s.music(s.field.def.music);
     s.letterbox(false);
     await s.done('c13_krillin', false);
     await s.give('str3');
@@ -600,6 +609,7 @@ registerScripts({
     s.letterbox(false);
     const [sx, sy] = freeNear(s, hx + 1, hy - 2);
     removeAll(s, 'c13_17C');
+    s.music('battle');
     await bossFight(s, 'c13_17spar', { x: sx, y: sy, uid: 'c13_17spar1' });
     removeAll(s, 'c13_17spar1');
     s.letterbox(true);
@@ -611,6 +621,7 @@ registerScripts({
     ]);
     removeAll(s, 'c13_17D');
     s.set('c13_17Joined');
+    s.music(s.field.def.music);
     s.letterbox(false);
     await s.done('c13_17', false);
     await s.give('str3');
@@ -669,11 +680,11 @@ registerScripts({
       ['beerus', '...If he betrays us, I\'m destroying him and then YOU. Go.', 'angry'],
       ['whis', 'King Yemma will want paperwork. I will tell him you said please.', 'smirk'],
     ]);
-    // Eps 92-93 cut from Goku's plan to Universe 6, where Cabba is recruiting Saiyans, and back to Goku in Hell.
-    const cutaway = !s.check('done:c13_u6') && s.hasScript('c13_u6_episode');
+    // Eps 92-93 cut from Goku's plan to Universe 6, where Cabba is training his new recruits, and back to Goku in Hell.
+    const cutaway = !s.check('done:c13_u6kale') && s.hasScript('c13_u6_episode');
     if (cutaway) {
       await s.talk([
-        ['whis', 'Speaking of recruiting... my sister Vados tells me Universe 6 is combing its Saiyan planet for fighters.', 'smirk'],
+        ['whis', 'Speaking of recruiting... my sister Vados tells me Universe 6 has found itself some new Saiyans. Young ones.', 'smirk'],
         ['goku', 'More Saiyans?! Aw, now I REALLY can\'t wait for the tournament!', 'happy'],
         ['beerus', 'Go to Hell, Goku. I mean that literally. GO.', 'angry'],
       ]);

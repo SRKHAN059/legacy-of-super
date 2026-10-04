@@ -58,6 +58,8 @@ const TYPE_SPEED = 1.5;
 /** Rows a caption box holds (the LoG2 dialogue box); every caption must fit in one box. */
 export const CAPTION_ROWS = 3;
 const BOX_H = 52;
+/** Top edge of the caption box; anything a shot needs the player to see stays above it. */
+export const CAPTION_TOP = SCREEN_H - BOX_H - 3;
 const PANEL_W_PORTRAIT = 182;
 const PORTRAIT_FRAME_W = 50;
 const BLACK = '#000000';
@@ -172,27 +174,36 @@ const splashEmblem = lazy(() => {
   return p.done();
 });
 
+/**
+ * Top of the Paozu radish field. The captions cover everything from CAPTION_TOP down, so the horizon sits high and
+ * the first furrows, with Goku and Goten working them, stay in view above the box.
+ */
+export const FIELD_TOP = 82;
+/** Where Goku and Goten stand in the field (sprite tops; their feet land between the first furrows). */
+export const GOKU_Y = FIELD_TOP - 22;
+export const GOTEN_Y = FIELD_TOP - 18;
+
 const earthBackdrop = lazy(() => {
   const p = new Painter(SCREEN_W, SCREEN_H);
-  bandedSky(p, 0, 100, ['#4890e8', '#58a0f0', '#70b4f8', '#90c8f8', '#b0dcf8', '#d0ecf8']);
-  p.ellipse(182, 10, 22, 22, '#fff4c0');
-  p.ellipse(186, 14, 14, 14, '#ffffff');
-  for (const [x, w, h] of [[2, 14, 44], [24, 10, 56], [62, 16, 38], [146, 12, 50], [168, 18, 60], [212, 14, 42]]) {
-    spire(p, x, 96 - h, w, 98, '#8ca8c0', '#a8c8d0');
+  bandedSky(p, 0, FIELD_TOP - 6, ['#4890e8', '#58a0f0', '#70b4f8', '#90c8f8', '#b0dcf8', '#d0ecf8']);
+  p.ellipse(182, 8, 22, 22, '#fff4c0');
+  p.ellipse(186, 12, 14, 14, '#ffffff');
+  for (const [x, w, h] of [[2, 14, 36], [24, 10, 46], [62, 16, 30], [146, 12, 40], [168, 18, 48], [212, 14, 34]]) {
+    spire(p, x, FIELD_TOP - 10 - h, w, FIELD_TOP - 8, '#8ca8c0', '#a8c8d0');
   }
-  bandedSky(p, 84, 100, ['#78a888', '#689870']);
-  for (const [x, w, h] of [[-6, 22, 72], [40, 16, 58], [196, 24, 80]]) spire(p, x, 100 - h, w, 102, '#5c7464', '#4c9c44');
+  bandedSky(p, FIELD_TOP - 20, FIELD_TOP - 6, ['#78a888', '#689870']);
+  for (const [x, w, h] of [[-6, 22, 60], [40, 16, 48], [196, 24, 66]]) spire(p, x, FIELD_TOP - 6 - h, w, FIELD_TOP - 4, '#5c7464', '#4c9c44');
   // Rolling hills.
   for (let x = 0; x < SCREEN_W; x++) {
-    const top = 96 + Math.round(Math.sin(x / 23) * 3 + Math.sin(x / 9) * 1);
-    for (let y = top; y < 106; y++) p.px(x, y, y === top ? '#70c858' : y < top + 3 ? '#58b048' : '#4c9c44');
+    const top = FIELD_TOP - 8 + Math.round(Math.sin(x / 23) * 3 + Math.sin(x / 9) * 1);
+    for (let y = top; y < FIELD_TOP; y++) p.px(x, y, y === top ? '#70c858' : y < top + 3 ? '#58b048' : '#4c9c44');
   }
-  // The radish field: furrows of dark soil and rows of leafy tops.
-  p.rect(0, 106, SCREEN_W, SCREEN_H - 106, '#a07444');
-  p.speckle(0, 106, SCREEN_W, SCREEN_H - 106, ['#8c6038', '#b48450'], 0.2, 7);
-  for (let y = 112; y < SCREEN_H; y += 9) {
+  // The radish field: furrows of dark soil and staggered rows of leafy tops with the white radish shoulders showing.
+  p.rect(0, FIELD_TOP, SCREEN_W, SCREEN_H - FIELD_TOP, '#a07444');
+  p.speckle(0, FIELD_TOP, SCREEN_W, SCREEN_H - FIELD_TOP, ['#8c6038', '#b48450'], 0.2, 7);
+  for (let row = 0, y = FIELD_TOP + 5; y < SCREEN_H; row++, y += 7) {
     p.hline(0, y + 4, SCREEN_W, '#7c5430');
-    for (let x = 4 + ((y / 9) % 2) * 4; x < SCREEN_W; x += 9) {
+    for (let x = 4 + (row % 2) * 4; x < SCREEN_W; x += 9) {
       p.px(x, y, '#58b048'); p.px(x + 2, y, '#58b048'); p.px(x + 1, y + 1, '#409030');
       p.px(x, y - 1, '#70c858'); p.px(x + 2, y - 1, '#70c858'); p.px(x + 1, y + 2, '#f0f0e8');
     }
@@ -200,7 +211,7 @@ const earthBackdrop = lazy(() => {
   const house = propArt('domeHouse').bmp;
   const { bmp, ctx } = makeBitmap(SCREEN_W, SCREEN_H);
   ctx.drawImage(p.done(), 0, 0);
-  ctx.drawImage(house, 178, 108 - house.height);
+  ctx.drawImage(house, 178, FIELD_TOP + 2 - house.height);
   return bmp;
 });
 
@@ -265,15 +276,15 @@ const stageNight = lazy(() => {
 
 /**
  * The far side of the universe: Beerus's world (a lit sphere) and, floating over it, the upside-down pyramid of rock
- * that carries his stepped palace and the great tree.
+ * topped by a giant dead tree with his stepped temple on it.
  */
 const beerusWorld = lazy(() => {
-  const p = new Painter(100, 96);
+  const p = new Painter(100, 100);
   const cx = 50;
-  const cy = 65;
-  const r = 28;
+  const cy = 72;
+  const r = 26;
   const rnd = seeded(23);
-  const land = Array.from({ length: 8 }, () => ({ x: cx + (rnd() - 0.5) * 48, y: cy + (rnd() - 0.5) * 48, r: 5 + rnd() * 9 }));
+  const land = Array.from({ length: 8 }, () => ({ x: cx + (rnd() - 0.5) * 45, y: cy + (rnd() - 0.5) * 45, r: 5 + rnd() * 8 }));
   const LAND = ['#1c3428', '#2c5440', '#3c7450', '#5c9868', '#88c088'];
   const SEA = ['#1c1834', '#2c2858', '#40407c', '#5c60a4', '#8488c8'];
   for (let y = cy - r - 3; y <= cy + r + 3; y++) {
@@ -294,32 +305,42 @@ const beerusWorld = lazy(() => {
     }
   }
   // The floating island: an upside-down pyramid of rock, lit on the left face, with strata lines.
-  for (let i = 0; i < 11; i++) {
-    const half = 28 - i * 2.5;
+  for (let i = 0; i < 16; i++) {
+    const half = 28 - i * 1.75;
     for (let x = Math.round(50 - half); x < Math.round(50 + half); x++) {
       const lit = x < 50;
-      p.px(x, 22 + i, i % 4 === 3 ? (lit ? '#6c5040' : '#4c3428') : lit ? '#907054' : '#644838');
+      p.px(x, 24 + i, i % 4 === 3 ? (lit ? '#6c5040' : '#4c3428') : lit ? '#907054' : '#644838');
     }
   }
-  p.ellipse(22, 18, 56, 6, '#58a050');
-  p.hline(30, 19, 40, '#78c068');
-  // Stepped palace.
-  [[34, 30], [38, 24], [42, 18], [46, 12]].forEach(([x, w], i) => {
-    const y = 20 - (i + 1) * 4;
-    p.rect(x, y, w, 4, '#d8c088');
-    p.rect(x + w - 3, y, 3, 4, '#a89060');
+  p.ellipse(22, 20, 56, 6, '#58a050');
+  p.hline(30, 21, 40, '#78c068');
+  // The giant dead tree growing out of it: a thick grey trunk on flared roots, bare boughs spreading flat to each
+  // side with twigs reaching up, and the stepped temple sitting on top of it all.
+  const BARK = '#8a7c6c';
+  const BARK_LIT = '#a89a88';
+  const BARK_DARK = '#5c5044';
+  for (let y = 12; y < 24; y++) {
+    const flare = y >= 20 ? y - 19 : 0;
+    for (let x = 45 - flare; x < 55 + flare; x++) p.px(x, y, x < 47 ? BARK_LIT : x >= 52 ? BARK_DARK : BARK);
+  }
+  p.vline(49, 14, 8, BARK_DARK);
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 26; i++) {
+      const x = 50 + side * (4 + i);
+      const y = 13 - Math.floor(i / 6) + (i > 20 ? 1 : 0);
+      p.px(x, y, side < 0 ? BARK_LIT : BARK);
+      if (i < 16) p.px(x, y + 1, BARK_DARK);
+      if (i % 5 === 2) p.line(x, y - 1, x + side, y - 3 - (i % 3), BARK);
+    }
+  }
+  [[38, 24], [41, 18], [44, 12]].forEach(([x, w], i) => {
+    const y = 12 - (i + 1) * 3;
+    p.rect(x, y, w, 3, '#d8c088');
+    p.rect(x + w - 3, y, 3, 3, '#a89060');
     p.hline(x, y, w, '#f0e0b0');
   });
-  p.rect(50, 0, 4, 4, '#e0c040');
-  p.px(51, 0, '#fff8c0');
-  // The great tree beside it: a thick trunk with flared roots under a broad crown.
-  p.rect(22, 5, 6, 16, '#6a4a30');
-  p.vline(22, 5, 16, '#86603c');
-  p.vline(27, 5, 16, '#4c3420');
-  p.rect(20, 19, 10, 2, '#5a3c24');
-  p.ellipse(6, 0, 36, 10, '#2e6e40');
-  p.ellipse(9, 0, 30, 7, '#3a8a50');
-  p.ellipse(12, 1, 18, 3, '#58b070');
+  p.rect(48, 0, 4, 3, '#e0c040');
+  p.px(49, 0, '#fff8c0');
   return p.done();
 });
 
@@ -468,15 +489,15 @@ function peaceShot(): Shot {
       const step = Math.floor(t / 8) % 4;
       const walkPose: Pose = (['walk1', 'idle', 'walk2', 'idle'] as const)[step];
       const pulling = !walking && Math.floor((t - 240) / 20) % 3 === 1;
-      blit(ctx, frame('goku', walking ? walkPose : pulling ? 'raise' : 'idle', walking ? 'right' : 'down'), gx, 76);
+      blit(ctx, frame('goku', walking ? walkPose : pulling ? 'raise' : 'idle', walking ? 'right' : 'down'), gx, GOKU_Y);
       const tx = Math.min(70, -60 + t * 0.55);
       const hop = tx < 70 ? Math.abs(Math.round(Math.sin(t / 5) * 3)) : 0;
-      blit(ctx, frame('goten', tx < 70 ? walkPose : 'idle', 'right'), tx, 80 - hop);
+      blit(ctx, frame('goten', tx < 70 ? walkPose : 'idle', 'right'), tx, GOTEN_Y - hop);
       if (pulling) {
         ctx.fillStyle = '#f0f0e8';
-        ctx.fillRect(Math.round(gx) + 18, 78, 3, 4);
+        ctx.fillRect(Math.round(gx) + 18, GOKU_Y + 2, 3, 4);
         ctx.fillStyle = '#58b048';
-        ctx.fillRect(Math.round(gx) + 17, 75, 5, 3);
+        ctx.fillRect(Math.round(gx) + 17, GOKU_Y - 1, 5, 3);
       }
     },
   };
@@ -573,7 +594,7 @@ function spaceShot(): Shot {
       blit(ctx, w, px, 6 + Math.round(Math.sin(t / 40) * 2));
       if (t > 200 && Math.floor(t / 6) % 2 === 0) {
         ctx.fillStyle = '#fff8c0';
-        ctx.fillRect(Math.round(px) + 51, 6 + Math.round(Math.sin(t / 40) * 2), 2, 1);
+        ctx.fillRect(Math.round(px) + 49, 6 + Math.round(Math.sin(t / 40) * 2), 2, 1);
       }
     },
   };
@@ -815,7 +836,7 @@ export class IntroScene implements Scene {
   private drawCaption(ctx: CanvasRenderingContext2D, cap: Caption, age: number): void {
     const face = cap.who ? portrait(cap.who, cap.expr ?? 'neutral') : null;
     const panelW = captionPanelW(cap);
-    const y = SCREEN_H - BOX_H - 3;
+    const y = CAPTION_TOP;
     drawWindow(ctx, 3, y, panelW, BOX_H, { fill: '#101c40', alpha: 0.95 });
     ctx.fillStyle = 'rgba(0,0,0,0.22)';
     for (let yy = y + 3; yy < y + BOX_H - 2; yy += 2) ctx.fillRect(6, yy, panelW - 6, 1);

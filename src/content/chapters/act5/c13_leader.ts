@@ -1,4 +1,4 @@
-import { registerScripts } from '../../../game/script';
+import { registerScripts, type ScriptApi } from '../../../game/script';
 import { force, unforce } from '../common';
 import { bossFight, freeNear, heroTile, refresh, rememberHero, removeAll, restoreHero, stage, warpTo } from './helpers';
 
@@ -6,7 +6,8 @@ import { bossFight, freeNear, heroTile, refresh, rememberHero, removeAll, restor
  * Chapter 13, "Goku vs. Gohan: the wall to overcome" (anime ep 90). Once Tien has joined and Gohan has his power
  * back, Gohan asks to test it: a two-on-two ring match on the Wilderness Plateau (Goku and Tien against Gohan and
  * Piccolo) that ends when Piccolo's full-body blast levels the ring, then one more round, father against son, with
- * a Senzu Bean each. Goku picks Gohan to lead the team (he tells everyone at the Chapter 14 gathering).
+ * a Senzu Bean each. Goku finishes it in Super Saiyan Blue and picks Gohan to lead the team (he tells everyone at
+ * the Chapter 14 gathering).
  * Silver: it plays the moment both recruits are in.
  */
 
@@ -15,6 +16,11 @@ const RING: [number, number] = [18, 12];
 
 /** Cutscene actors of the episode (cleared on entry, so a replay never stacks a second Gohan on screen). */
 const ACTORS = ['c13_gohanR', 'c13_piccoloR', 'c13_tienR', 'c13_gohanR2'];
+
+/** The plateau's wolves and raptors bolt when Gohan powers up: nothing wild joins the sparring match. */
+function scatterWildlife(s: ScriptApi): void {
+  for (const e of s.field.enemies) if (!e.uid && !e.dead && e.state !== 'dying') e.dead = true;
+}
 
 registerScripts({
   /** Called from `c13_check` as soon as Tien has joined and Gohan's training is done (any order). */
@@ -35,6 +41,7 @@ registerScripts({
       await s.fadeIn(16);
     }
     removeAll(s, ...ACTORS);
+    scatterWildlife(s);
     s.letterbox(true);
     s.music('heroic');
     const [hx, hy] = heroTile(s);
@@ -108,7 +115,7 @@ registerScripts({
     await s.call('c13_leader_round2');
   },
 
-  /** Round two: father against son, no holding back. Goku ends it with Blue Kaio-ken and catches Gohan as he falls. */
+  /** Round two: father against son, no holding back. Goku ends it in Super Saiyan Blue and catches Gohan as he falls. */
   c13_leader_round2: async (s) => {
     const [hx, hy] = heroTile(s);
     removeAll(s, 'c13_gohanR');
@@ -129,6 +136,8 @@ registerScripts({
     removeAll(s, 'c13_gohanR2');
     stage(s, 'c13_gohanR2', 'gohanUltimate', ex, ey, 'left', 'Gohan');
     if (r === 'lose') {
+      // Goku gets back up for the finish (a scripted loss never leaves him at 1 HP afterwards).
+      refresh(s, 'goku');
       s.pose('hero', null);
       await s.talk([
         ['gohanUltimate', 'Dad! Are you okay?! I... I actually...', 'shock'],
@@ -140,8 +149,8 @@ registerScripts({
         ['goku', 'Alright. You asked for it!', 'smirk'],
       ]);
     }
-    s.transformNow('ssbkk');
-    await s.powerUp('hero', '#f83838', 40);
+    s.transformNow('ssb');
+    await s.powerUp('hero', '#40c0f8', 40);
     await s.say('gohanUltimate', 'Kamehameha!', 'shout');
     await s.clash('hero', 'c13_gohanR2', 70);
     s.flash('#ffffff', 14);
@@ -162,7 +171,7 @@ registerScripts({
       ['gohanUltimate', 'Thanks, Dad. And sorry about the mountain, Tien.', 'happy'],
       ['tien', 'I\'ve seen worse. Usually from you two.', 'smirk'],
       ['goku', 'I\'ve decided something. When the whole team gets together, I\'m telling everybody: Gohan is the leader of Team Universe 7!', 'happy'],
-      ['gohanUltimate', 'Me? ...Let me think about it, Dad. If I say yes, we fight as a team. Nobody goes it alone.', 'neutral'],
+      ['gohanUltimate', 'Leader...? Give me until everyone is together, Dad. I\'ll have an answer for you then.', 'neutral'],
       ['piccoloUnweighted', '(The student surpasses his father\'s plans again. Good.)', 'smirk'],
     ]);
     removeAll(s, ...ACTORS);

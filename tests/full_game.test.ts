@@ -756,7 +756,9 @@ describe('full game: one save from newGame to the post-game', () => {
       expect(q('c04_delicacies')).toBe('active');
       expect(sim.game.field?.def.id).toBe('c04_whis_field');
       await settle();
-      for (let i = 0; i < 3; i++) {
+      // The field's Moss Grazer roams free and can be mid-charge when a jar is filled; a jar it knocks out of the
+      // hero's hands is fetched again, as a player would (the save's random seed decides whether that happens).
+      for (let i = 0; i < 12 && !st.flag('c04_jarsDone'); i++) {
         await run('c04_jar_fill');
         await run('c04_jar_deliver');
       }
@@ -1032,7 +1034,7 @@ describe('full game: one save from newGame to the post-game', () => {
       await beat('c13_monster_camp', 'c13_camp_boss', 20, 12);
       expect(q('c13_17')).toBe('done');
       const animals: Array<[string, string]> = [
-        ['c13_monster_beach', 'c13_ani1'], ['snow_peak', 'c13_ani2'], ['c13_monster_camp', 'c13_ani3'], ['paozu_peaks', 'c13_ani4'],
+        ['c13_monster_beach', 'c13_ani1'], ['snow_peak', 'c13_ani2'], ['c13_monster_camp', 'c13_ani3'], ['kame_reef', 'c13_ani4'],
         ['waste_canyon', 'c13_ani5'], ['c13_baba_lake', 'c13_ani6'], ['paozu_home', 'c13_ani7'],
       ];
       for (const [map, id] of animals) {

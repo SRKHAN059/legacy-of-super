@@ -197,9 +197,11 @@ describe('act 2: chapters 3-5 chain', () => {
 
       // Chores: three water jars (carry), three boulders, the spoon.
       await settle(sim);
-      for (let i = 0; i < 3; i++) {
+      // The field's Moss Grazer roams free and can be mid-charge when a jar is filled (the save's random seed decides):
+      // a jar it breaks is fetched again, as a player would.
+      for (let i = 0; i < 12 && !st.flag('c04_jarsDone'); i++) {
         await run(sim, 'c04_jar_fill');
-        expect(sim.game.field?.carrying).toBeTruthy();
+        if (!sim.game.field?.carrying) continue;
         await run(sim, 'c04_jar_deliver');
         expect(sim.game.field?.carrying).toBeNull();
       }

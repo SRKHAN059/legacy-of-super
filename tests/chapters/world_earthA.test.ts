@@ -5,7 +5,7 @@ import { SPOTS } from '../../src/content/world';
 import { CAST } from '../../src/content/cast';
 import { MAIN_ROSTER, type CharId } from '../../src/content/characters';
 import {
-  BUU_ASLEEP, EARTH_RESTORED, EA_ASIDES, EA_TALK, YAJI_GIFTS, YAJI_HELD, YAJI_MAX_GIFTS, YAJI_QUIT, byStory, reactionFor, satanHome, talkLines,
+  BLACK_SEEN, BUU_ASLEEP, EARTH_RESTORED, EA_ASIDES, EA_TALK, MAFUBA_TAUGHT, YAJI_GIFTS, YAJI_HELD, YAJI_MAX_GIFTS, YAJI_QUIT, byStory, reactionFor, satanHome, talkLines,
   type StoryKey, type Talk,
 } from '../../src/content/world/earthA/npcs';
 import type { Line } from '../../src/ui/dialogue';
@@ -568,6 +568,8 @@ describe('world earthA: river and reef wildlife (LoG2 Fish for Korin\'s Senzu)',
     const sim = new Sim();
     setup(sim, 4, 14);
     const st = sim.game.state;
+    // A fixed save seed makes the field's drop rolls reproducible (a fresh save seeds from Math.random).
+    st.data.seed = 0x4b0b1f15;
     let kills = 0;
     for (let visit = 0; visit < 200 && st.count('fish') < 3; visit++) {
       // Every visit respawns the wildlife (LoG2 §5.8).
@@ -696,6 +698,7 @@ describe('world earthA: townsfolk react to the character you play and to the sto
    * departure and the post-game press conference. A flag set in a chapter's last scene is first walked around in the
    * next chapter (c02_rage → c03_start, c03_beerusDone → c04_start, c11_farewell → c12_start, c14_won →
    * post_start), and c06_earthGone never outlives its cutscene: the victory party after it only sees c06_won.
+   * A `done:` entry finishes that journal quest (Chapter 11's Mafuba lesson).
    */
   const TIMELINE: Array<[number, string[], string[]?]> = [
     [0, []], [1, []], [1, ['c01_metSatan']],
@@ -703,7 +706,7 @@ describe('world earthA: townsfolk react to the character you play and to the sto
     [3, ['c02_rage'], ['ea_buuAway']], [3, ['c03_satanDone']],
     [4, ['c03_beerusDone']], [5, []], [6, []], [6, ['c06_round2', 'c06_won']],
     [7, []], [7, ['c07_champaDone', 'ea_buuAway', 'c07_hidBuu']], [8, [], ['ea_buuAway', 'c07_hidBuu']],
-    [9, []], [9, ['c09_hopeCrashed']], [10, []], [11, []],
+    [9, []], [9, ['c09_hopeCrashed']], [9, [BLACK_SEEN]], [10, []], [11, []], [11, [MAFUBA_TAUGHT]],
     [12, ['c11_farewell']], [12, ['c12_hitDone']], [12, ['c12_filmDone', 'c12_herbGot']],
     [13, []], [13, ['c13_expoSeen']], [13, [BUU_ASLEEP]],
     [14, []], [14, ['c14_departed']],
@@ -717,7 +720,10 @@ describe('world earthA: townsfolk react to the character you play and to the sto
   function step(st: State, i: number): void {
     const [ch, set, clear] = TIMELINE[i];
     st.data.chapter = ch;
-    for (const f of set) st.set(f);
+    for (const f of set) {
+      if (f.startsWith('done:')) st.data.journal[f.slice(5)] = 'done';
+      else st.set(f);
+    }
     for (const f of clear ?? []) st.clear(f);
   }
 
@@ -869,6 +875,10 @@ describe('world earthA: townsfolk react to the character you play and to the sto
         if (typeof k === 'number') continue;
         for (const atom of k.split('&').map((a) => a.trim().replace(/^!/, ''))) {
           if (/^chapter/.test(atom)) continue;
+          if (atom.startsWith('done:')) {
+            expect(source.includes(`done('${atom.slice(5)}'`), `${id}: story key "${atom}" is a quest no script finishes`).toBe(true);
+            continue;
+          }
           expect(source.includes(`set('${atom}'`), `${id}: story key "${atom}" is never set by any script`).toBe(true);
           if (source.includes(`clear('${atom}'`)) expect(cleared.has(atom), `${id}: story key "${atom}" is cleared again by a script`).toBe(true);
         }
@@ -924,7 +934,7 @@ describe('world earthA: townsfolk react to the character you play and to the sto
       ['paozu_valley', 'ea_pv_farmer', moment(7, 'c07_champaDone'), /another universe/],
       ['satan_mansion', 'ea_sm_gardener', moment(7, 'c07_champaDone'), /another universe/],
       ['satan_mansion', 'ea_sm_gardener', moment(8), /Buu\'s home/, /another universe with Mr\. Son/],
-      ['paozu_home', 'ea_ph_neighbor', moment(9), /lavender hair/],
+      ['paozu_home', 'ea_ph_neighbor', moment(9), /time machine/],
       ['satan_plaza', 'ea_sc_scientist', moment(12, 'c11_farewell'), /whole timeline/],
       ['kame_island', 'ea_ki_turtle', moment(12, 'c11_farewell'), /ramen coupon/],
       ['satan_plaza', 'ea_sc_scientist', moment(13), /twelve whole universes/],
@@ -1028,7 +1038,7 @@ describe('world earthA: townsfolk react to the character you play and to the sto
     await sim.run('ea_smi_stairs');
     expect(said.some((l) => /^Mr\. Satan: .*This is a recording/.test(l))).toBe(true);
     await sim.run('ea_smi_stairs');
-    expect(said.some((l) => /^Mr\. Satan: .*Goku's face/.test(l))).toBe(true);
+    expect(said.some((l) => /^Mr\. Satan: .*time machine crashed/.test(l))).toBe(true);
     // Back home with the Champion Orb handed over (Chapter 3), he tells the cruise story that ended Chapter 2.
     const ch3 = playAs('goku', moment(3, 'c03_satanDone'));
     const heard = listen(ch3);
@@ -1095,6 +1105,77 @@ describe('world earthA: townsfolk react to the character you play and to the sto
       expect(sim.errors, `as ${hero} @${label(i)}`).toEqual([]);
     }
   });
+
+  /**
+   * Who can be standing in front of the townsfolk: the forced segments (Vegeta for all of Chapter 2, Goku in
+   * Chapter 8's hub time, Trunks for all of Chapter 11), otherwise everyone the party timeline has joined.
+   */
+  function listeners(st: State): CharId[] {
+    const forced: Partial<Record<number, CharId>> = { 2: 'vegeta', 8: 'goku', 11: 'trunks' };
+    const only = forced[st.data.chapter];
+    return only ? [only] : MAIN_ROSTER.filter((h) => PLAYABLE[h]?.(st) ?? false);
+  }
+
+  /** How the townsfolk name each character when he is not around. */
+  const NAMED: Record<CharId, RegExp> = {
+    goku: /\bGoku\b|\bKakarot\b|\bMr\. Son\b/, vegeta: /\bVegeta\b/, gohan: /\bGohan\b/, piccolo: /\bPiccolo\b/, trunks: /\bTrunks\b/,
+    satan: /\bMr\. Satan\b|\bChampion\b|\bSensei\b|\bthe Master\b/, android17: /\bAndroid 17\b/, frieza: /\bFrieza\b/,
+  };
+
+  it('nobody talks about you behind your back: the news never names a character who could be the one listening', () => {
+    const st = new Sim().game.state;
+    const leaks: string[] = [];
+    for (let i = 0; i < TIMELINE.length; i++) {
+      step(st, i);
+      for (const [id, t] of Object.entries(EA_TALK)) {
+        const c = byStory(st, t.story);
+        const news = typeof c === 'object' && !Array.isArray(c) ? c.cycle : [c];
+        for (const hero of listeners(st)) {
+          // Mr. Satan's voice from upstairs is only heard while he is home and somebody else is downstairs.
+          if (id === 'ea_smi_stairs' && !satanHome({ check: (k) => st.check(k), hero })) continue;
+          for (const [who, text] of news.flatMap((n) => talkLines(n, id, id))) {
+            if (who !== 'narrator' && who !== 'hero' && NAMED[hero].test(text)) leaks.push(`${id} to ${hero} @${label(i)}: ${text}`);
+          }
+        }
+      }
+    }
+    expect(leaks).toEqual([]);
+  });
+
+  it('mid-chapter news waits for its beat: Frieza\'s army (Ch5), Goku Black\'s visit (Ch9), the Mafuba lesson (Ch11)', async () => {
+    /** Four talks to `id` on `map` as `hero` at timeline moment `i`: everything said. */
+    const hear = async (map: string, id: string, hero: CharId, i: number): Promise<string[]> => {
+      const sim = playAs(hero, i);
+      const said = listen(sim);
+      sim.start(map);
+      await sim.tick(3);
+      for (let k = 0; k < 4; k++) await talkTo(sim, id);
+      expect(sim.errors, `${id} @${label(i)}`).toEqual([]);
+      return said;
+    };
+    // [map, NPC, the moment before the beat, the moment after it, what only the second may mention]
+    const beats: Array<[string, string, number, number, RegExp]> = [
+      ['satan_plaza', 'ea_sc_police', moment(9, 'c09_hopeCrashed'), moment(9, BLACK_SEEN), /dark gi/],
+      ['satan_plaza', 'ea_sc_jogger', moment(9, 'c09_hopeCrashed'), moment(9, BLACK_SEEN), /dark gi/],
+      ['paozu_valley', 'ea_pv_farmer', moment(9, 'c09_hopeCrashed'), moment(9, BLACK_SEEN), /dark gi/],
+      ['kame_island', 'ea_ki_turtle', moment(9, 'c09_hopeCrashed'), moment(9, BLACK_SEEN), /familiar ki/],
+      ['korin_tower', 'ea_kt_korin', moment(9, 'c09_hopeCrashed'), moment(9, BLACK_SEEN), /familiar ki/],
+      ['kame_island', 'ea_ki_turtle', moment(11), moment(11, MAFUBA_TAUGHT), /rice cooker/],
+      ['kame_island', 'ea_ki_sailor', moment(11), moment(11, MAFUBA_TAUGHT), /MAFUBA/],
+      ['lookout', 'ea_lk_popo', moment(11), moment(11, MAFUBA_TAUGHT), /Kami's old bottle/],
+    ];
+    // Trunks is forced through Chapter 11 and is the first to walk the hubs in Chapter 9.
+    for (const [map, id, before, after, news] of beats) {
+      expect((await hear(map, id, 'trunks', before)).filter((l) => news.test(l)), `${id} @${label(before)}`).toEqual([]);
+      expect((await hear(map, id, 'trunks', after)).some((l) => news.test(l)), `${id} @${label(after)}`).toBe(true);
+    }
+    // Chapter 5's hub time is before and during the battle in the wasteland: nobody reports it won yet.
+    for (const [map, id] of [['satan_plaza', 'ea_sc_police'], ['satan_plaza', 'ea_sc_reporter'], ['satan_plaza', 'ea_sc_scientist'],
+      ['satan_mansion_in', 'ea_smi_butler'], ['paozu_valley', 'ea_pv_farmer'], ['kame_island', 'ea_ki_turtle'], ['kame_island', 'ea_ki_sailor']]) {
+      const said = await hear(map, id, 'gohan', moment(5));
+      expect(said.filter((l) => /came back|no wreckage|tidied|next morning|for six hours|fought (half )?an? (alien )?army/i.test(l)), id).toEqual([]);
+    }
+  });
 });
 
 describe('world earthA: Turtle Reef signposts', () => {
@@ -1108,5 +1189,85 @@ describe('world earthA: Turtle Reef signposts', () => {
       // Read from the sandbar walkway (rows 12-13), the only way between the island and the reef.
       expect([grid[y + 1]?.[x], grid[y - 1]?.[x]].includes('sand'), `${id} sign beside the path`).toBe(true);
     }
+  });
+});
+
+describe('world ecology (Earth A): homed wildlife keeps out of sight of every way into its map', () => {
+  /** Regular enemies notice the hero within 110 px (`AGGRO` in src/game/enemy.ts). */
+  const SIGHT = 110 / TILE;
+  /** Wildlife the ecology pass homed on Earth A's hostile maps (the older spawns keep their own placement). */
+  const HOMED: Record<string, string[]> = {
+    paozu_forest: ['crab', 'slime'], paozu_peaks: ['viper', 'bear', 'hornet'],
+    korin_base: ['viper', 'crab', 'beetle', 'hornet', 'bear'], kame_reef: ['crab', 'viper', 'mudSlime', 'kingCrab', 'pterodactyl'],
+  };
+
+  it('no homed creature can jump the hero on arrival (edge exits, doors, flight circles, landing spots)', async () => {
+    for (const [id, types] of Object.entries(HOMED)) {
+      const m = def(id);
+      const sim = new Sim();
+      setup(sim, QUIET);
+      sim.start(id);
+      await sim.tick(1);
+      const f = sim.game.field;
+      if (!f) throw new Error('no field');
+      const grid = parseGrid(m);
+      const W = grid[0].length;
+      const H = grid.length;
+      const open = (x: number, y: number) => !f.col.blocked({ x: x * TILE + 3, y: y * TILE + 8, w: 10, h: 6 });
+      const ways: Array<[number, number, string]> = [];
+      for (const [side, ex] of Object.entries(m.exits ?? {})) {
+        if (!ex) continue;
+        for (let i = 0; i < (side === 'north' || side === 'south' ? W : H); i++) {
+          const [x, y] = side === 'north' ? [i, 0] : side === 'south' ? [i, H - 1] : side === 'west' ? [0, i] : [W - 1, i];
+          if (open(x, y)) ways.push([x, y, `${side} exit`]);
+        }
+      }
+      for (const other of Object.keys(MAPS)) {
+        const o = resolveMap(other);
+        for (const w of o?.warps ?? []) if (w.to === id) ways.push([Math.floor(w.tx), Math.floor(w.ty), `door from ${other}`]);
+        for (const fl of o?.objects ?? []) if (fl.type === 'flight' && fl.to === id) ways.push([Math.floor(fl.tx), Math.floor(fl.ty), `flight from ${other}`]);
+      }
+      for (const s of Object.values(SPOTS)) if (s.map === id) ways.push([s.tx, s.ty, s.id]);
+      expect(ways.length, id).toBeGreaterThan(0);
+      const homed = (m.enemies ?? []).filter((e) => types.includes(e.type));
+      expect(homed.length, id).toBeGreaterThan(0);
+      for (const e of homed) {
+        for (const [x, y, how] of ways) {
+          expect(Math.hypot(x - e.x, y - e.y), `${id}: ${e.type} at ${e.x},${e.y} sees the ${how} at ${x},${y}`).toBeGreaterThan(SIGHT);
+        }
+      }
+    }
+  });
+
+  it('every creature on an Earth A hostile map starts with its own hitbox clear of walls, water and props', async () => {
+    for (const id of EARTH_A.filter((m) => def(m).hostile)) {
+      const sim = new Sim();
+      setup(sim, QUIET);
+      for (const b of def(id).barriers ?? []) sim.game.state.set(`gate:${id}:${b.id}`);
+      sim.start(id);
+      await sim.tick(1);
+      const f = sim.game.field;
+      if (!f) throw new Error('no field');
+      for (const e of f.enemies) {
+        expect(f.col.blocked(e.box(), e.flying), `${id}: ${e.def.id} spawns inside something solid at ${(e.x / TILE).toFixed(1)},${(e.y / TILE).toFixed(1)}`).toBe(false);
+      }
+    }
+  });
+});
+
+describe('world ecology (Earth A): Kame House keeps one Delicacy across the move to Turtle Reef', () => {
+  it('the atoll Delicacy waits for a new save, but not for one that already dug up the old Kame House beach one', async () => {
+    const reefDelicacy = async (dugUpOld: boolean): Promise<boolean> => {
+      const sim = new Sim();
+      setup(sim, QUIET, 25);
+      if (dugUpOld) sim.game.state.set('pickup:del_kame_island_1');
+      sim.game.state.set('gate:kame_reef:ea_g25_gohan');
+      sim.start('kame_reef', 2, 12);
+      await sim.tick(2);
+      expect(sim.errors).toEqual([]);
+      return (sim.game.field?.pickups ?? []).some((p) => p.kind === 'item' && p.item === 'delicacy');
+    };
+    expect(await reefDelicacy(false)).toBe(true);
+    expect(await reefDelicacy(true)).toBe(false);
   });
 });

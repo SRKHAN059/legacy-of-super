@@ -360,7 +360,7 @@ registerScripts({
     await s.narrate('Lord Beerus\'s planet, a few weeks after Frieza\'s second defeat.');
     await s.warp('beerus_grounds', BG.hero.x, BG.hero.y, 'left');
     s.letterbox(true);
-    s.music('godly');
+    s.music('beerusPlanet');
     clearWild(s);
     const whis = whisOnPlanet(s);
     s.place(whis, BG.whis.x, BG.whis.y, 'down');

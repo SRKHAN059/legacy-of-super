@@ -8,7 +8,7 @@ import { registerEnemies, type EnemyDef } from '../../enemies';
  */
 
 /** Kahseral's squad: his formation shields him until all four are down (`c14_squadDown`). */
-export const SQUAD = ['c14_tupper1', 'c14_zoiray1', 'c14_kettle1', 'c14_vewon1'] as const;
+export const SQUAD = ['c14_tupper1', 'c14_zoiray1', 'c14_kettle1', 'c14_cocotte1'] as const;
 
 /** EXP for Saonel and Pirina together, paid once when both are down (each twin may regenerate). */
 export const TWIN_EXP = 420000;
@@ -19,15 +19,16 @@ const PRIDE_SQUAD: EnemyDef[] = [
   { id: 'c14_tupper', name: 'Tupper', sprite: 'c14_tupper', hp: 4200, str: 64, pow: 54, end: 56, exp: 60000, ai: 'heavy', speed: 0.95, desc: 'A hulking Pride Trooper. Holds the front of Kahseral\'s formation with a wall of ki.' },
   { id: 'c14_zoiray', name: 'Zoiray', sprite: 'c14_zoiray', hp: 3600, str: 52, pow: 64, end: 54, exp: 58000, ai: 'shooter', speed: 1.1, shot: { color: '#e04060', cooldown: 70, speed: 2.9, mult: 0.85 }, desc: 'The squad\'s marksman. Covers his captain from the back of the formation.' },
   { id: 'c14_kettle', name: 'Kettle', sprite: 'c14_kettle', hp: 3400, str: 60, pow: 1, end: 52, exp: 56000, ai: 'rusher', speed: 1.55, desc: 'The smallest and quickest of the squad. First through any gap in your guard.' },
-  { id: 'c14_vewon', name: 'Vewon', sprite: 'c14_vewon', hp: 3800, str: 64, pow: 1, end: 56, exp: 60000, ai: 'charger', speed: 1.15, desc: 'Charges in straight lines like a battering ram, in the name of justice.' },
+  { id: 'c14_cocotte', name: 'Cocotte', sprite: 'c14_cocotte', hp: 3800, str: 62, pow: 58, end: 54, exp: 60000, ai: 'reach', speed: 1.2, desc: 'Seals the space around the squad\'s targets, then strikes from beyond arm\'s length through the folds she made.' },
   {
     id: 'c14_kahseral', name: 'Kahseral', sprite: 'c14_kahseral', hp: 8400, str: 62, pow: 64, end: 60, exp: 320000, ai: 'boss', speed: 1.2,
     desc: 'Captain of the Pride Troopers\' strike squad. While his four troopers hold formation, no blow can reach him.',
     boss: {
-      endAt: 0.4, ringOut: true, kiColor: '#f04050', minion: 'c14_pride', vulnerableIf: 'c14_squadDown',
+      endAt: 0.4, ringOut: true, kiColor: '#f04050', vulnerableIf: 'c14_squadDown',
+      // No summons: his four troopers are the adds, and Goku comes into this fight straight from surviving Kale.
       phases: [
         { until: 0.7, moves: ['shot', 'guard', 'dash', 'chase'], rest: 54 },
-        { until: 0, moves: ['volley', 'dash', 'beam', 'summon', 'chase'], rest: 34, speed: 1.15, onStart: 'c14_kahseral_p2' },
+        { until: 0, moves: ['volley', 'dash', 'beam', 'chase'], rest: 34, speed: 1.15, onStart: 'c14_kahseral_p2' },
       ],
     },
   },
@@ -47,13 +48,15 @@ const FIREBALLS: EnemyDef[] = [
     },
   },
   // Ribrianne and Rozie hang back during Kakunsa's fight behind a barrier of love: untouchable, but they still shoot.
-  { id: 'c14_brianneEscort', name: 'Ribrianne', sprite: 'c14_brianne', hp: 9000, str: 1, pow: 56, end: 56, exp: 0, ai: 'shooter', speed: 0.9, invulnerable: true, drops: 'none', shot: { color: '#f878b8', cooldown: 250, speed: 2.2, mult: 0.35 }, desc: 'The Fireballs\' leader, hanging back behind a barrier of love. Your blows pass straight through it.' },
-  { id: 'c14_rozieEscort', name: 'Rozie', sprite: 'c14_sanka', hp: 6400, str: 1, pow: 56, end: 52, exp: 0, ai: 'shooter', speed: 0.95, invulnerable: true, drops: 'none', shot: { color: '#f8d070', cooldown: 270, speed: 2.4, mult: 0.35 }, desc: 'Ribrianne\'s partner, sniping from behind the same barrier of love.' },
+  // They read on the Scouter exactly as they do when they fight for real later (eps 117-118); the shot multipliers
+  // keep their sniping at the strength of a 56-POW shot.
+  { id: 'c14_brianneEscort', name: 'Ribrianne', sprite: 'c14_brianne', hp: 9000, str: 56, pow: 62, end: 56, exp: 0, ai: 'shooter', speed: 0.9, invulnerable: true, drops: 'none', shot: { color: '#f878b8', cooldown: 250, speed: 2.2, mult: 0.26 }, desc: 'The Fireballs\' leader, hanging back behind a barrier of love. Your blows pass straight through it.' },
+  { id: 'c14_rozieEscort', name: 'Rozie', sprite: 'c14_sanka', hp: 6400, str: 50, pow: 60, end: 52, exp: 0, ai: 'shooter', speed: 0.95, invulnerable: true, drops: 'none', shot: { color: '#f8d070', cooldown: 270, speed: 2.4, mult: 0.29 }, desc: 'Ribrianne\'s partner, sniping from behind the same barrier of love.' },
   {
     id: 'c14_ribrianne', name: 'Ribrianne', sprite: 'ribrianne', hp: 9000, str: 56, pow: 62, end: 56, exp: 420000, ai: 'boss', speed: 1.15,
     desc: 'Leader of Universe 2\'s Kamikaze Fireballs. Fed by her universe\'s love, she grows into Super Ribrianne.',
     boss: {
-      endAt: 0.45, ringOut: true, kiColor: '#f878b8',
+      endAt: 0.3, ringOut: true, kiColor: '#f878b8',
       phases: [
         { until: 0.75, moves: ['shot', 'volley', 'rain', 'chase'], rest: 42 },
         { until: 0, moves: ['charge', 'nova', 'beam', 'rain', 'chase'], rest: 32, speed: 1.1, onStart: 'c14_ribrianne_super' },

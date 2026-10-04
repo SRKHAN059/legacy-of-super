@@ -2,8 +2,8 @@ import { registerScripts } from '../../../game/script';
 import { ally, cloakCues, everyFrame, twinFight, type TwinOutcome } from './c14_assist';
 import './c14_cast';
 import { SQUAD, TWIN_EXP } from './c14_enemies';
-import { eliminated, erased, ringOut, standIn } from './c14_kit';
-import { bossFight, freeNear, handOff, heroTile, readyGuest, removeAll, stage, sweepRivals } from './helpers';
+import { eliminated, erased, FIGHT_MARGIN, onStage, ringOut, stageOn, standIn } from './c14_kit';
+import { bossFight, handOff, heroTile, readyGuest, removeAll, sweepRivals } from './helpers';
 
 /**
  * Chapter 14 set pieces (dbs_story.md §7.1 D, eps 101-119), run inline by the stage relays in `c14.ts`:
@@ -26,20 +26,21 @@ registerScripts({
     s.clear('c14_squadDown');
     s.music('tense');
     const [gx, gy] = heroTile(s);
-    stage(s, 'c14_cauliflaP', 'caulifla', gx - 3, gy + 1, 'right', 'Caulifla');
-    stage(s, 'c14_kaleP', 'kale', gx - 4, gy + 2, 'right', 'Kale');
+    stageOn(s, 'c14_cauliflaP', 'caulifla', gx - 3, gy + 1, 'right', 'Caulifla');
+    stageOn(s, 'c14_kaleP', 'kale', gx - 4, gy + 2, 'right', 'Kale');
     s.pose('c14_kaleP', 'ko');
     s.flash('#f04050', 8);
     s.sfx('teleport');
     const squad: Array<[string, string, number, number, string]> = [
       ['c14_kahseralP', 'c14_kahseral', gx + 4, gy - 3, 'Kahseral'], ['c14_tupperP', 'c14_tupper', gx + 2, gy - 4, 'Tupper'],
       ['c14_zoirayP', 'c14_zoiray', gx + 7, gy - 1, 'Zoiray'], ['c14_kettleP', 'c14_kettle', gx + 6, gy - 4, 'Kettle'],
-      ['c14_vewonP', 'c14_vewon', gx + 3, gy + 2, 'Vewon'],
+      ['c14_cocotteP', 'c14_cocotte', gx + 3, gy + 2, 'Cocotte'],
     ];
     const at = new Map<string, [number, number]>();
-    for (const [id, sp, x, y, name] of squad) at.set(sp, stage(s, id, sp, x, y, 'left', name));
+    for (const [id, sp, x, y, name] of squad) at.set(sp, stageOn(s, id, sp, x, y, 'left', name, FIGHT_MARGIN));
     await s.talk([
       ['c14_kahseralP', 'Pride Troopers, encircle them! The Saiyans of two universes in one place. Justice is efficient today.', 'smirk'],
+      ['c14_cocotteP', 'Space around them sealed, Captain. They have nowhere to run.', 'neutral'],
       ['goku', 'Whoa, whoa! Five of you at once?', 'shock'],
       ['caulifla', 'Back off, red suits! Kale can\'t even stand up yet!', 'angry'],
       ['c14_kahseralP', 'Then she falls first. Universe 11 leaves no threat standing on this stage.', 'neutral'],
@@ -49,9 +50,9 @@ registerScripts({
     s.letterbox(false);
     s.music('boss');
     removeAll(s, ...squad.map((q) => q[0]));
-    const members: Array<[string, string]> = [['c14_tupper', 'c14_tupper1'], ['c14_zoiray', 'c14_zoiray1'], ['c14_kettle', 'c14_kettle1'], ['c14_vewon', 'c14_vewon1']];
+    const members: Array<[string, string]> = [['c14_tupper', 'c14_tupper1'], ['c14_zoiray', 'c14_zoiray1'], ['c14_kettle', 'c14_kettle1'], ['c14_cocotte', 'c14_cocotte1']];
     for (const [type, uid] of members) {
-      const [x, y] = at.get(type) ?? freeNear(s, gx + 3, gy - 2);
+      const [x, y] = at.get(type) ?? onStage(s, gx + 3, gy - 2, FIGHT_MARGIN);
       s.spawnEnemy(type, x, y, uid);
     }
     // The formation breaks the moment the last of the four is down (knocked out or rung out). One watcher instead of
@@ -66,7 +67,7 @@ registerScripts({
       f.flashScreen('#f04050', 8);
       f.toast(['Kahseral: My formation... broken?!', 'The captain can be hurt now!'], '#f8e040');
     });
-    const [kx, ky] = at.get('c14_kahseral') ?? freeNear(s, gx + 4, gy - 3);
+    const [kx, ky] = at.get('c14_kahseral') ?? onStage(s, gx + 4, gy - 3, FIGHT_MARGIN);
     try {
       await bossFight(s, 'c14_kahseral', { x: kx, y: ky, uid: 'c14_kahseral1' });
     } finally {
@@ -85,7 +86,6 @@ registerScripts({
       ['caulifla', 'Kale... your eyes! You\'re actually in there this time!', 'shock'],
       ['kale', 'Get away from my sister!', 'shout'],
     ]);
-    sweepRivals(s);
     await s.blast('c14_kaleP', boss, '#90f070');
     const b = s.actor(boss);
     const [bx, by] = [Math.floor(b.x / 16), Math.floor((b.y - 14) / 16)];
@@ -103,7 +103,7 @@ registerScripts({
   },
 
   c14_kahseral_p2: async (s) => {
-    await s.say('c14_kahseral', 'Pride Troopers, reinforce me! Justice does not retreat!', 'shout');
+    await s.say('c14_kahseral', 'Formation or no formation, justice does not retreat! Face me, Son Goku!', 'shout');
   },
 
   /**
@@ -118,9 +118,9 @@ registerScripts({
     s.music('topArena');
     await s.narrate('Elsewhere on the west ring, Android 17 runs into Universe 2\'s warriors of love.');
     const [hx, hy] = heroTile(s);
-    const [bx, by] = stage(s, 'c14_brianneF', 'c14_brianne', hx + 3, hy - 3, 'left', 'Brianne');
-    const [rx, ry] = stage(s, 'c14_sankaF', 'c14_sanka', hx + 6, hy - 2, 'left', 'Sanka');
-    const [kx, ky] = stage(s, 'c14_suroasF', 'c14_suroas', hx + 4, hy - 1, 'left', 'Su Roas');
+    const [bx, by] = stageOn(s, 'c14_brianneF', 'c14_brianne', hx + 3, hy - 3, 'left', 'Brianne', FIGHT_MARGIN);
+    const [rx, ry] = stageOn(s, 'c14_sankaF', 'c14_sanka', hx + 6, hy - 2, 'left', 'Sanka', FIGHT_MARGIN);
+    const [kx, ky] = stageOn(s, 'c14_suroasF', 'c14_suroas', hx + 4, hy - 1, 'left', 'Su Roas', FIGHT_MARGIN);
     s.face('hero', 'c14_suroasF');
     await s.talk([
       ['c14_brianneF', 'Android 17 of Universe 7! The maidens of Universe 2 have chosen you as our first sweetheart!', 'happy'],
@@ -129,7 +129,7 @@ registerScripts({
       ['c14_sankaF', 'Not yet, Su Roas! We fight at our most beautiful, or not at all!', 'happy'],
       ['c14_brianneF', 'Exactly. Watch closely, Universe 7. Love is about to bloom!', 'happy'],
     ]);
-    await s.narrate('Su Roas leaps in while the other two hang back behind a barrier of love. Their love is still building - hit her hard before it blooms!');
+    await s.narrate('Su Roas leaps in while the other two hang back behind a barrier of love that no blow can pass. Take Su Roas down - and keep an eye on the girls in the back!');
     s.letterbox(false);
     s.music('boss');
     removeAll(s, 'c14_brianneF', 'c14_sankaF', 'c14_suroasF');
@@ -146,7 +146,7 @@ registerScripts({
       const tx = e ? Math.floor(e.x / 16) : hx + 5;
       const ty = e ? Math.floor((e.y - 14) / 16) : hy - 3;
       removeAll(s, uid);
-      stage(s, id, sp, tx, ty, 'left', name);
+      stageOn(s, id, sp, tx, ty, 'left', name);
     }
     const kak = standIn(s, 'c14_kakunsa1', 'c14_kakunsa', kx, ky, 'Kakunsa');
     s.sprite(kak, 'c14_kakunsa');
@@ -204,9 +204,9 @@ registerScripts({
     await handOff(s, 'goku');
     s.music('topArena');
     const [gx, gy] = heroTile(s);
-    stage(s, 'c14_hitD', 'hit', gx - 2, gy + 1, 'right', 'Hit');
-    const [dx, dy] = stage(s, 'c14_dyspoD', 'dyspo', gx + 4, gy - 2, 'left', 'Dyspo');
-    const [nx, ny] = stage(s, 'c14_knsiD', 'c14_knsi', gx + 5, gy, 'left', 'K\'nsi');
+    stageOn(s, 'c14_hitD', 'hit', gx - 2, gy + 1, 'right', 'Hit');
+    const [dx, dy] = stageOn(s, 'c14_dyspoD', 'dyspo', gx + 4, gy - 2, 'left', 'Dyspo', FIGHT_MARGIN);
+    const [nx, ny] = stageOn(s, 'c14_knsiD', 'c14_knsi', gx + 5, gy, 'left', 'K\'nsi', FIGHT_MARGIN);
     s.face('hero', 'c14_dyspoD');
     await s.talk([
       ['dyspo', 'Son Goku AND the assassin of Universe 6, side by side. That saves me a trip.', 'smirk'],
@@ -274,14 +274,14 @@ registerScripts({
   c14_hitJiren: async (s) => {
     const [hx, hy] = heroTile(s);
     const jiren = 'c14_jiren1';
-    if (!s.exists(jiren)) stage(s, jiren, 'jiren', hx + 3, hy - 1, 'left', 'Jiren');
+    if (!s.exists(jiren)) stageOn(s, jiren, 'jiren', hx + 3, hy - 1, 'left', 'Jiren');
     s.actor(jiren).hidden = false;
     s.face(jiren, 'hero');
     await s.say('jiren', 'Leave the stage while you still can.', 'neutral');
     s.flash('#c070f0', 10);
     s.sfx('teleport');
     s.music('hit');
-    stage(s, 'c14_hitJ', 'hit', hx + 1, hy, 'right', 'Hit');
+    stageOn(s, 'c14_hitJ', 'hit', hx + 1, hy, 'right', 'Hit');
     s.face('c14_hitJ', jiren);
     await s.talk([
       ['hit', 'Rest, Goku. This one is my job.', 'neutral'],
@@ -324,7 +324,10 @@ registerScripts({
     await eliminated(s, 'Hit has been eliminated! Universe 6 fights on without its strongest warrior.');
     await s.say('goku', 'Hit... I won\'t waste it.', 'hurt');
     s.aura(jiren, null);
-    await ringOut(s, jiren, hx + 9, hy - 7);
+    // Jiren is not eliminated: he turns his back on Goku and walks off across the ring.
+    const [lx, ly] = onStage(s, hx + 11, hy - 5);
+    await s.walk(jiren, lx, ly, 2);
+    removeAll(s, jiren);
     s.set('c14_hitOut');
   },
 
@@ -339,9 +342,9 @@ registerScripts({
     s.music('topArena');
     await s.narrate('On the far side of the central ring, Universe 2\'s leader has been waiting for the androids.');
     const [hx, hy] = heroTile(s);
-    stage(s, 'c14_18R', 'android18', hx - 1, hy + 1, 'up', 'Android 18');
-    const [bx, by] = stage(s, 'c14_ribrianneR', 'ribrianne', hx + 3, hy - 3, 'down', 'Ribrianne');
-    stage(s, 'c14_rozieR', 'c14_rozie', hx + 6, hy - 2, 'down', 'Rozie');
+    stageOn(s, 'c14_18R', 'android18', hx - 1, hy + 1, 'up', 'Android 18');
+    const [bx, by] = stageOn(s, 'c14_ribrianneR', 'ribrianne', hx + 3, hy - 3, 'down', 'Ribrianne', FIGHT_MARGIN);
+    stageOn(s, 'c14_rozieR', 'c14_rozie', hx + 6, hy - 2, 'down', 'Rozie');
     await s.talk([
       ['c14_ribrianneR', 'Universe 7\'s androids! You threw our dear Kakunsa off the stage. Now feel Universe 2\'s love at full strength!', 'angry'],
       ['android18', 'Love? I have a husband and a daughter waiting at home. Don\'t lecture me about love.', 'smirk'],
@@ -369,7 +372,7 @@ registerScripts({
     const r = s.actor(rib);
     const [rx, ry] = [Math.floor(r.x / 16), Math.floor((r.y - 14) / 16)];
     if (s.exists('c14_18R')) {
-      const [ex, ey] = freeNear(s, rx - 1, ry + 1);
+      const [ex, ey] = onStage(s, rx - 1, ry + 1);
       await s.walk('c14_18R', ex, ey, 4);
       s.face('c14_18R', rib);
       s.pose('c14_18R', 'kick');
@@ -380,8 +383,8 @@ registerScripts({
     await eliminated(s, 'Android 18 kicks Ribrianne out of the ring!');
     // Ep 118: Rozie's last stand.
     s.flash('#f8d070', 8);
-    stage(s, 'c14_rozieR', 'c14_rozie', hx + 5, hy - 3, 'left', 'Rozie');
-    stage(s, 'c14_gokuR', 'goku', hx - 2, hy - 2, 'right', 'Goku');
+    stageOn(s, 'c14_rozieR', 'c14_rozie', hx + 5, hy - 3, 'left', 'Rozie');
+    stageOn(s, 'c14_gokuR', 'goku', hx - 2, hy - 2, 'right', 'Goku');
     await s.talk([
       ['c14_rozieR', 'Ribrianne! ...Then I will carry Universe 2\'s love on my own!', 'angry'],
       ['goku', 'Sorry, Rozie. We can\'t lose either!', 'shout'],
@@ -418,9 +421,9 @@ registerScripts({
     s.music('tense');
     await s.narrate('Meanwhile, Gohan and Piccolo come face to face with Universe 6\'s Namekians.');
     const [hx, hy] = heroTile(s);
-    stage(s, 'c14_piccoloN', 'piccolo', hx - 1, hy + 1, 'up', 'Piccolo');
-    const [ax, ay] = stage(s, 'c14_saonelN', 'c14_saonel', hx + 2, hy - 3, 'down', 'Saonel');
-    const [bx, by] = stage(s, 'c14_pirinaN', 'c14_pirina', hx + 5, hy - 2, 'down', 'Pirina');
+    stageOn(s, 'c14_piccoloN', 'piccolo', hx - 1, hy + 1, 'up', 'Piccolo');
+    const [ax, ay] = stageOn(s, 'c14_saonelN', 'c14_saonel', hx + 2, hy - 3, 'down', 'Saonel', FIGHT_MARGIN);
+    const [bx, by] = stageOn(s, 'c14_pirinaN', 'c14_pirina', hx + 5, hy - 2, 'down', 'Pirina', FIGHT_MARGIN);
     await s.talk([
       ['c14_saonelN', 'The Namekian of Universe 7. And his pupil. Our universe needs you gone.', 'neutral'],
       ['piccolo', 'Namekians from Universe 6... Gohan, stay sharp. Their ki is strange. Crowded, somehow.', 'neutral'],
@@ -447,7 +450,7 @@ registerScripts({
       removeAll(s, o.uid);
       if (o.ringedOut) continue;
       const [id, sp, name] = i === 0 ? ['c14_saonelF', 'c14_saonel', 'Saonel'] : ['c14_pirinaF', 'c14_pirina', 'Pirina'];
-      stage(s, id, sp, o.x, o.y, 'down', name);
+      stageOn(s, id, sp, o.x, o.y, 'down', name);
       s.pose(id, 'hurt');
       finish.push([id, i === 0 ? 'hero' : 'c14_piccoloN', i === 0 ? '#f0f0ff' : '#f8f070', name]);
     }
@@ -501,7 +504,7 @@ registerScripts({
     s.letterbox(false);
     s.music('tense');
     sweepRivals(s);
-    const [gx, gy] = freeNear(s, hx + 4, hy - 2);
+    const [gx, gy] = onStage(s, hx + 4, hy - 2, FIGHT_MARGIN);
     s.spawnEnemy('c14_gamisalas', gx, gy, 'c14_gamisalas1').cloak = 1;
     const cues = cloakCues(s, 'c14_gamisalas1');
     try {
@@ -530,8 +533,8 @@ registerScripts({
     const [px, py] = heroTile(s);
     const look = s.field.player.spriteId;
     s.show('hero', false);
-    stage(s, 'c14_piccoloOut', look, px, py, 'left', 'Piccolo');
-    stage(s, 'c14_damomG', 'c14_damom', px - 1, py, 'right', 'Damom');
+    stageOn(s, 'c14_piccoloOut', look, px, py, 'left', 'Piccolo');
+    stageOn(s, 'c14_damomG', 'c14_damom', px - 1, py, 'right', 'Damom');
     s.flash('#ffffff', 6);
     s.shake(16, 2);
     s.pose('c14_damomG', 'punch2');
@@ -539,7 +542,7 @@ registerScripts({
     await ringOut(s, 'c14_piccoloOut', px + 10, py + 9);
     s.pose('c14_damomG', null);
     await eliminated(s, 'Piccolo has been eliminated by Damom, a fighter almost too tiny to see!');
-    stage(s, 'c14_gohanG', 'gohanUltimate', px - 5, py - 1, 'right', 'Gohan');
+    stageOn(s, 'c14_gohanG', 'gohanUltimate', px - 5, py - 1, 'right', 'Gohan');
     await s.say('gohan', 'PICCOLO! ...You\'ll pay for that!', 'shout');
     await s.blast('c14_gohanG', 'c14_damomG', '#f0f0ff');
     await ringOut(s, 'c14_damomG', px + 8, py - 10);

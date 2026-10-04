@@ -89,8 +89,8 @@ interface CodePanelEls {
   close: HTMLButtonElement;
 }
 
-/** The panel declared in index.html (#code-panel). */
-class DomSaveCodeUi implements SaveCodeUi {
+/** The panel declared in index.html (#code-panel); exported so tests can drive it against a stand-in DOM. */
+export class DomSaveCodeUi implements SaveCodeUi {
   private els: CodePanelEls | null | undefined;
   private active: { submit(): void; cancel(): void } | null = null;
 
@@ -124,12 +124,29 @@ class DomSaveCodeUi implements SaveCodeUi {
       e.stopPropagation();
       if (e.key === 'Escape') { e.preventDefault(); this.active?.cancel(); }
       // A code is one line (pasted line breaks are ignored), so Enter in the box submits; Shift+Enter breaks a line.
-      if (e.key === 'Enter' && e.target === text && !e.shiftKey && !e.isComposing) { e.preventDefault(); this.active?.submit(); }
+      // Auto-repeat is ignored: a Start (Enter) still held from opening the panel must not submit or close it.
+      if (e.key === 'Enter' && e.target === text && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        if (!e.repeat) this.active?.submit();
+      }
+    });
+    // A click on the dimmed backdrop keeps the focus in the panel, so typing, Enter and Esc keep working there
+    // instead of falling through to the game's keyboard handlers.
+    root.addEventListener('mousedown', (e) => {
+      if (e.target !== root) return;
+      e.preventDefault();
+      text.focus();
     });
     form.addEventListener('submit', (e) => { e.preventDefault(); this.active?.submit(); });
     close.addEventListener('click', () => this.active?.cancel());
     copy.addEventListener('click', () => void this.copy(false));
-    text.addEventListener('focus', () => { if (text.readOnly) text.select(); });
+    // A shown code is selected whole, ready to copy. Selecting backwards leaves the caret at the start, so the box
+    // keeps the beginning of the code in view instead of scrolling to its end.
+    text.addEventListener('focus', () => {
+      if (!text.readOnly) return;
+      text.setSelectionRange(0, text.value.length, 'backward');
+      text.scrollTop = 0;
+    });
     this.els = els;
     return els;
   }
@@ -141,7 +158,9 @@ class DomSaveCodeUi implements SaveCodeUi {
       const done = (): void => { this.hide(d); resolve(); };
       this.open(d, heading, 'Keep this code somewhere safe. Paste it into Import Code on the file screen (on any device) to get this file back.', code, 'export');
       this.active = { submit: done, cancel: done };
-      d.close.focus();
+      // Focus the (read-only, selected) code rather than a button: releasing the Space (A) that opened the panel
+      // over a focused button can click it in some browsers and shut the panel at once. Enter or Esc closes it.
+      d.text.focus();
       void this.copy(true);
     });
   }
@@ -342,11 +361,8 @@ export class TitleScene implements Scene {
         // The pasted save is already validated; the file is only written once the player says so.
         const pending = this.pendingImport;
         if (up || down || input.repeat('left') || input.repeat('right')) { this.actionSel ^= 1; audio.sfx('menuMove'); }
-        if (back || !pending) { this.pendingImport = null; this.mode = 'fileAction'; this.actionSel = 3; audio.sfx('menuBack'); break; }
-        if (ok) {
-          if (this.actionSel === 0) this.writeImport(pending);
-          else { this.pendingImport = null; this.mode = 'fileAction'; this.actionSel = 3; audio.sfx('menuBack'); }
-        }
+        if (back || !pending || (ok && this.actionSel !== 0)) { this.cancelImport(); break; }
+        if (ok) this.writeImport(pending);
         break;
       }
       case 'message':
@@ -445,6 +461,14 @@ export class TitleScene implements Scene {
     this.files = this.game.saves.summaries();
     if (ok) { audio.sfx('save'); this.notify(`Imported into File ${n}.`, PAL.white); }
     else { audio.sfx('denied'); this.notify(`Could not write File ${n}. Nothing was changed.`, RED); }
+  }
+
+  /** "Replace File N?" answered Cancel / B: drop the pasted save and go back to the file's actions, on Import Code. */
+  private cancelImport(): void {
+    this.pendingImport = null;
+    this.mode = 'fileAction';
+    this.actionSel = Math.max(0, this.fileOptions(!!this.files[this.fileSel].data).indexOf('Import Code'));
+    audio.sfx('menuBack');
   }
 
   private notify(text: string, color: string): void {

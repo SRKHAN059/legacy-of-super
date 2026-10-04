@@ -176,12 +176,12 @@ registerProp('c13_feast', () => {
 
 /** Readings for the new sprites (and the Chapter 13 creatures and extras that never had one). */
 const READINGS: Record<string, ScanEntry> = {
-  c13_cauliflaSSJ: { name: 'Caulifla', hp: 7200, str: 56, pow: 58, end: 60, desc: 'Caulifla of Universe 6, Super Saiyan on her very first try. Leads a street gang on Sadala and answers to nobody.' },
+  c13_cauliflaSSJ: { name: 'Caulifla', hp: 6800, str: 56, pow: 58, end: 60, desc: 'Caulifla of Universe 6, Super Saiyan on her very first try. Leads a street gang on Sadala and answers to nobody.' },
   c13_kaleBerserk: { name: 'Kale', hp: '???', str: '???', pow: '???', end: '???', desc: 'Kale\'s Legendary Super Saiyan form, out of control. The readings keep climbing until the scouter gives up.' },
   c13_renso: { name: 'Renso', hp: 2600, str: 30, pow: 30, end: 32, desc: 'Retired captain of the Sadala Defense Force. Cabba\'s old commander and Caulifla\'s big brother. Bad leg, good heart.' },
-  c13_gangPunk: { name: 'Gang Punk', hp: 3100, str: 50, pow: 1, end: 44, desc: 'One of Caulifla\'s street toughs. A Saiyan with a lot of energy and nothing to spend it on.' },
-  c13_gangBrute: { name: 'Gang Bruiser', hp: 3700, str: 55, pow: 1, end: 48, desc: 'The biggest member of Caulifla\'s gang. Charges first, thinks never.' },
-  c13_gangSlinger: { name: 'Gang Slinger', hp: 3000, str: 46, pow: 52, end: 42, desc: 'Throws ki blasts from behind the rubble of the old quarter. Wears sunglasses at night.' },
+  c13_gangPunk: { name: 'Gang Punk', hp: 2700, str: 46, pow: 1, end: 40, desc: 'One of Caulifla\'s street toughs. A Saiyan with a lot of energy and nothing to spend it on.' },
+  c13_gangBrute: { name: 'Gang Bruiser', hp: 3200, str: 50, pow: 1, end: 44, desc: 'The biggest member of Caulifla\'s gang. Charges first, thinks never.' },
+  c13_gangSlinger: { name: 'Gang Slinger', hp: 2600, str: 42, pow: 48, end: 40, desc: 'Throws ki blasts from behind the rubble of the old quarter. Wears sunglasses at night.' },
   c13_sadalan: { name: 'Sadalan', hp: 800, str: 14, pow: 10, end: 12, desc: 'A Saiyan of Universe 6. On Sadala even the shopkeepers could bench-press a car.' },
   c13_sadalanF: { name: 'Sadalan', hp: 760, str: 12, pow: 12, end: 11, desc: 'A Saiyan of Universe 6, haggling at the market like it is a martial art.' },
   c13_sadalaGuard: { name: 'Defense Force', hp: 1900, str: 26, pow: 24, end: 25, desc: 'A soldier of the Sadala Defense Force. Saiyans who protect people instead of conquering them.' },
@@ -192,7 +192,7 @@ const READINGS: Record<string, ScanEntry> = {
   c13_puffball: { name: 'Puffball', hp: 60, str: 1, pow: 1, end: 2, desc: 'A Monster Island fluffball. Rolls away when scared, which is always.' },
   c13_babyDino: { name: 'Baby Dino', hp: 420, str: 9, pow: 1, end: 8, desc: 'A young Monster Island dinosaur. Loves warm places and anything that looks like its mother.' },
   c13_glowMoth: { name: 'Glow Moth', hp: 40, str: 1, pow: 3, end: 1, desc: 'A Monster Island moth that glows at dusk. Collectors pay fortunes for its wings.' },
-  c13_emeraldKite: { name: 'Emerald Kite', hp: 180, str: 6, pow: 1, end: 4, desc: 'A green bird of prey from Monster Island. Likes high, quiet places.' },
+  c13_emeraldKite: { name: 'Emerald Kite', hp: 180, str: 6, pow: 1, end: 4, desc: 'A green bird of prey from Monster Island. Frightened, it flies far out to sea and roosts on lonely islands.' },
   c13_cliffBat: { name: 'Cliff Bat', hp: 90, str: 3, pow: 1, end: 3, desc: 'A Monster Island bat that roosts in sealed caves. Hates bright light and loud Saiyans.' },
   c13_rainbowSnake: { name: 'Rainbow Snake', hp: 260, str: 7, pow: 1, end: 6, desc: 'A harmless Monster Island snake with every colour on its scales.' },
   // The Universe 6 Saiyans in their everyday forms. The shared scouter table owns these characters: fill only gaps.

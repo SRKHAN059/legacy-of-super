@@ -182,6 +182,7 @@ registerScripts({
     s.remove('c12_hitB');
     s.flash('#c070f0', 8);
     await s.narrate('Hit is gone. Somewhere far away, Whis and Vados are surely laughing.');
+    s.music(s.field.def.music);
     s.letterbox(false);
     await s.done('c12_hit', false);
     s.set('c12_hitDone');

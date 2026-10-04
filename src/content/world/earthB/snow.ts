@@ -76,7 +76,7 @@ registerMaps([
       // Dino park: a warm hot-spring valley.
       ['tree', 2, 13.4], ['tree', 9.6, 12.6], ['tree', 1.6, 24.6], ['tree', 10.6, 25.6], ['bush', 4, 21.4], ['bush', 9, 20.4],
       ['flowers', 3, 17], ['flowers', 10, 16], ['flowers', 6, 25], ['palm', 9.4, 15.4], ['rock', 6, 28.2],
-      // Mech alcove.
+      // Ice cave (behind the Vegeta L45 gate).
       ['eb_iceSpire', 35, 20.2], ['eb_iceSpire', 42, 21.4], ['eb_iceSpire', 36.4, 28.2], ['rubble', 40, 20.6], ['crate', 42.4, 26.2],
     ],
     npcs: [{ id: 'eb_snow_hermit', sprite: 'oldMan', x: 25, y: 6, talk: 'eb_snow_hermit', name: 'Shrine Keeper' }],
@@ -86,7 +86,7 @@ registerMaps([
       { type: 'stormPtero', x: 21, y: 15 }, { type: 'stormPtero', x: 28, y: 22 },
       { type: 'snowWolf', x: 22, y: 29 },
       // Dino park (Goku L40).
-      { type: 'blueTRex', x: 5, y: 22 }, { type: 'blueTRex', x: 8, y: 27 },
+      { type: 'blueTRex', x: 7, y: 22 }, { type: 'blueTRex', x: 8, y: 27 },
       { type: 'eb_trihorn', x: 7, y: 13 }, { type: 'eb_trihorn', x: 3, y: 24 }, { type: 'eb_trihorn', x: 7, y: 29 },
       { type: 'redRaptor', x: 4, y: 15 }, { type: 'redRaptor', x: 10, y: 18 }, { type: 'redRaptor', x: 10, y: 23 },
       // Ice cave (Vegeta L45).

@@ -399,7 +399,12 @@ export function decodeSaveCode(text: string): SaveData {
   const code = text.replace(/\s+/g, '');
   if (!code) throw new SaveCodeError('empty', 'Paste a save code first.');
   const m = SAVE_CODE_RE.exec(code);
-  if (!m) throw new SaveCodeError('format', 'That is not a Legacy of Super save code. Codes start with "LOS".');
+  if (!m) {
+    // A paste that starts like a code was most likely cut off or picked up stray characters around it.
+    throw new SaveCodeError('format', /^LOS\d/i.test(code)
+      ? 'That code is cut short or has extra characters in it. Copy the whole code again.'
+      : 'That is not a Legacy of Super save code. Codes start with "LOS".');
+  }
   const format = parseInt(m[1], 10);
   if (format > SAVE_CODE_FORMAT) throw new SaveCodeError('newer', 'This code was made by a newer version of the game.');
   if (format < 1) throw new SaveCodeError('format', 'That is not a Legacy of Super save code.');

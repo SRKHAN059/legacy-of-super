@@ -552,7 +552,7 @@ registerScripts({
   // ================================================================== Zeno's palace
   c10_zeno_arrive: async (s) => {
     s.letterbox(true);
-    s.music('space');
+    s.music('godly');
     actor(s, 'c10_shin', 'supremeKai', 19, 21, 'up');
     await s.walkAll([['hero', 20, 9, 1.2], ['c10_shin', 19, 10, 1.2]]);
     await s.talk([

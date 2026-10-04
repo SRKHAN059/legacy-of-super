@@ -178,9 +178,9 @@ registerOverlay('waste_canyon', {
 registerOverlay('snow_peak', {
   npcs: [{ id: 'c13_ani2', sprite: 'c13_babyDino', x: 6, y: 24, talk: 'c13_animal_talk', name: 'Baby Dino', showIf: 'c13_animalsLoose', hideIf: 'c13_ani_c13_ani2' }],
 });
-// The Emerald Kite roosts in the shrine hollow behind the Paozu Peaks Goku gate.
-registerOverlay('paozu_peaks', {
-  npcs: [{ id: 'c13_ani4', sprite: 'c13_emeraldKite', x: 34, y: 24, talk: 'c13_animal_talk', name: 'Emerald Kite', showIf: 'c13_animalsLoose', hideIf: 'c13_ani_c13_ani4' }],
+// The Emerald Kite flew out to sea and roosts on Turtle Reef's outer atoll, past the sandbar's Gohan gate.
+registerOverlay('kame_reef', {
+  npcs: [{ id: 'c13_ani4', sprite: 'c13_emeraldKite', x: 32, y: 8, talk: 'c13_animal_talk', name: 'Emerald Kite', showIf: 'c13_animalsLoose', hideIf: 'c13_ani_c13_ani4' }],
 });
 
 // ---------------------------------------------------------------- Cabba visits Master Vegeta (post-game)

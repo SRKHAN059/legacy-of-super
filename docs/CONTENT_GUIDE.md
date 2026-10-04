@@ -295,8 +295,9 @@ a kill. Also: `refillAt/refillTo` (Perfect Cell refill), `stamina` (Golden Friez
   godly heroic frieza black jiren ending. Tournaments: tournament topArena. Fights: battle (waves, spars) boss (any boss
   without a theme) beerus goldenFrieza hit zamasu (Goku Black and Zamasu) finale (Tournament of Power climax).
   Jingles (play once): victory gameover. Give each map its region's theme (no track on more than 8 maps; see
-  `tests/music.test.ts`), call `s.music('<boss theme>')` just before a headline boss fight, and call `s.music(...)`
-  after `s.warp(...)`, never before it: entering a map starts that map's own track. Credits: `await s.credits([...lines])`.
+  `tests/music.test.ts`), call `s.music('<boss theme>')` just before a headline boss fight, hand the map its track back
+  with `s.music(s.field.def.music)` when the player stays on the map after a fight, and call `s.music(...)` after
+  `s.warp(...)`, never before it: entering a map starts that map's own track. Credits: `await s.credits([...lines])`.
 - **Items** (`src/content/items.ts`): senzu cookie fish str1/3/5 pow1/3/5 end1/3/5 delicacy whisStaff scouter
   dragonRadar db1–db7 trophyGoku trophyVegeta trophyGohan trophyTrunks trophyPiccolo. Add key items with
   `registerItems([...])` (prefix ids).

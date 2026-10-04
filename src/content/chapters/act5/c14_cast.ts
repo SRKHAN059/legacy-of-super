@@ -21,7 +21,7 @@ registerCast({
   c14_tupper: { body: 'big', skin: '#d07858', hair: 'mohawk', hairColor: '#f0d040', ...PRIDE, face: 'stern' },
   c14_zoiray: { body: 'male', skin: '#90c0a0', hair: 'antennae', hairColor: '#4a8060', ...PRIDE, eye: '#d02040' },
   c14_kettle: { body: 'child', skin: '#e0c080', hair: 'helmet', hairColor: '#c02828', accent: '#202020', ...PRIDE },
-  c14_vewon: { body: 'big', skin: '#8a7a68', hair: 'bald', hairColor: '#8a7a68', ...PRIDE, face: 'stern' },
+  c14_cocotte: { body: 'female', skin: '#ece4f0', hair: 'bob', hairColor: '#2c2c48', ...PRIDE, eye: '#5048a0' },
   c14_knsi: { body: 'male', skin: '#c0a0e0', hair: 'spiky', hairColor: '#402060', ...PRIDE, face: 'stern' },
 
   // ---------------------------------------------------------------- Universe 2: the Kamikaze Fireballs (eps 102, 117-118)
@@ -42,7 +42,7 @@ registerCast({
   // ---------------------------------------------------------------- Universe 4: the tiny trickster (ep 119)
   c14_damom: { body: 'child', skin: '#b0a080', hair: 'mohawk', hairColor: '#605030', top: '#806040', topStyle: 'vest', under: '#806040', sleeves: 'none', pants: '#504030', boots: '#302010', face: 'stern' },
 }, {
-  c14_kahseral: 'Kahseral', c14_tupper: 'Tupper', c14_zoiray: 'Zoiray', c14_kettle: 'Kettle', c14_vewon: 'Vewon', c14_knsi: 'K\'nsi',
+  c14_kahseral: 'Kahseral', c14_tupper: 'Tupper', c14_zoiray: 'Zoiray', c14_kettle: 'Kettle', c14_cocotte: 'Cocotte', c14_knsi: 'K\'nsi',
   c14_brianne: 'Brianne', c14_sanka: 'Sanka', c14_suroas: 'Su Roas', c14_rozie: 'Rozie', c14_kakunsa: 'Kakunsa', c14_superRibrianne: 'Ribrianne',
   c14_saonel: 'Saonel', c14_pirina: 'Pirina', c14_damom: 'Damom',
 });
@@ -52,7 +52,7 @@ registerScans({
   c14_tupper: { name: 'Tupper', hp: 3150, str: 64, pow: 54, end: 56, desc: 'A hulking Pride Trooper who fights from inside a wall of his own ki.' },
   c14_zoiray: { name: 'Zoiray', hp: 2700, str: 52, pow: 64, end: 54, desc: 'A Pride Trooper marksman. Fires from the back of the formation.' },
   c14_kettle: { name: 'Kettle', hp: 2550, str: 60, pow: 1, end: 52, desc: 'The smallest Pride Trooper and the first one through any gap.' },
-  c14_vewon: { name: 'Vewon', hp: 2850, str: 64, pow: 1, end: 56, desc: 'A Pride Trooper who charges like a battering ram and apologises to nobody.' },
+  c14_cocotte: { name: 'Cocotte', hp: 2850, str: 62, pow: 58, end: 54, desc: 'A Pride Trooper who folds space itself. She seals her squad\'s targets into a pocket they cannot slip out of.' },
   c14_knsi: { name: 'K\'nsi', hp: 3900, str: 62, pow: 56, end: 54, desc: 'A Pride Trooper who partners with Dyspo. Sure he is fast enough to catch an assassin.' },
   c14_brianne: { name: 'Brianne', hp: 900, str: 10, pow: 40, end: 20, desc: 'An idol of Universe 2 in her everyday clothes. The readings soar the moment she transforms.' },
   c14_sanka: { name: 'Sanka Ku', hp: 800, str: 12, pow: 36, end: 18, desc: 'Brianne\'s loyal partner. Becomes Rozie when she transforms.' },

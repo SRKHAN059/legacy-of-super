@@ -136,7 +136,9 @@ registerMaps([
       { type: 'breakable', x: 11, y: 21, size: 2 },
       { type: 'breakable', x: 36, y: 13, size: 3, item: 'pow1', id: 'ea_reef_rock' },
     ],
-    pickups: [{ id: 'del_kame_reef_1', item: 'delicacy', x: 31, y: 21 }],
+    // Before Turtle Reef, the region's one Delicacy was buried on Kame House's beach (del_kame_island_1). A save that
+    // already dug that one up finds the atoll empty, so its collection still tops out at 25.
+    pickups: [{ id: 'del_kame_reef_1', item: 'delicacy', x: 31, y: 21, showIf: '!pickup:del_kame_island_1' }],
   },
 
   {

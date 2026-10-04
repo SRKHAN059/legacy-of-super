@@ -1,23 +1,27 @@
 import { FORMS } from '../../characters';
 import { STAT_CAP } from '../../../game/leveling';
+import type { Dir } from '../../../engine/math';
 import { registerScripts, type ScriptApi } from '../../../game/script';
-import { force } from '../common';
-import { battle, bossFight, freeNear, heroTile, refresh, removeAll, stage, warpTo } from './helpers';
+import { force, unforce } from '../common';
+import { battle, bossFight, freeNear, heroTile, refresh, rememberHero, removeAll, restoreHero, stage, warpTo } from './helpers';
 import { SADALA } from './c13_maps';
 
 /**
- * Chapter 13 side episode, "Meanwhile, in Universe 6" (anime eps 88-93). While Goku talks his way into Hell for
- * Frieza (ep 93), the story cuts to Sadala, where Cabba recruits his old captain's sister Caulifla and her protegee
- * Kale: Caulifla's first Super Saiyan (ep 92), then Kale's first berserk Legendary form (ep 93). The player controls
- * Cabba, drawn as an outfit over Vegeta (Chapter 11's Vegito precedent): Vegeta's level and techniques, with his
- * own Z forms set aside so the costume never turns into Vegeta's hair. Canon never has Goku meet them before the
- * Tournament of Power, so he does not: Caulifla's first words to him in Chapter 14 stay true.
+ * Chapter 13 side episode, "Meanwhile, in Universe 6" (anime eps 88-93), told in two cutaways where the anime cuts
+ * to Sadala. Part one (eps 88-89, gold `c13_u6`) plays as soon as Gohan has trained or Tien has joined: Champa sends
+ * Cabba home for fighters, his old captain Renso points him at his sister Caulifla, her gang jumps him, and his
+ * golden hair wins her over. Part two (eps 92-93, gold `c13_u6kale`) plays between Goku's Frieza pitch and his visit
+ * to Hell: Caulifla's first Super Saiyan, her spar with Cabba, then Kale's first berserk Legendary form, which
+ * Caulifla talks down. The player controls Cabba, drawn as an outfit over Vegeta (Chapter 11's Vegito precedent):
+ * Vegeta's level and techniques, with his own Z forms set aside so the costume never turns into Vegeta's hair.
+ * Canon never has Goku meet them before the Tournament of Power, so he does not: Caulifla's first words to him in
+ * Chapter 14 stay true, and her Super Saiyan 2 waits for Goku's lesson in the tournament (ep 100).
  *
  * Post-game, Cabba comes to Capsule Corp to thank Master Vegeta, Sadala opens on the space map, and Caulifla and
  * Kale want a rematch (bronze).
  */
 
-/** Vegeta's HP, EP and Z form before he stood in for Cabba (restored when the episode ends). */
+/** Vegeta's HP, EP and Z form before he stood in for Cabba (restored when a cutaway ends). */
 const STASH = 'c13_u6Stash';
 /** Stat points Cabba's Super Saiyan added (so they come off exactly). */
 const BOOST = 'c13_u6Boost';
@@ -58,7 +62,7 @@ function cabbaSSJ(s: ScriptApi, on: boolean): void {
   s.outfit('vegeta', on ? 'cabbaSSJ' : 'cabba');
 }
 
-/** Back to Vegeta: costume and boost off, his Z form and the HP/EP he had before the episode back. */
+/** Back to Vegeta: costume and boost off, his Z form and the HP/EP he had before the cutaway back. */
 function leaveCabba(s: ScriptApi): void {
   cabbaSSJ(s, false);
   const c = s.state.char('vegeta');
@@ -73,24 +77,62 @@ function leaveCabba(s: ScriptApi): void {
   s.outfit('vegeta', null);
 }
 
+/** Where Universe 7's story stood when a cutaway began, and who was playing it (forced or free). */
+interface Universe7 {
+  map: string;
+  x: number;
+  y: number;
+  dir: Dir;
+  forced: boolean;
+}
+
+/** Remember Universe 7's side before cutting away to Sadala. */
+function leaveUniverse7(s: ScriptApi): Universe7 {
+  rememberHero(s, 'u6');
+  const [x, y] = heroTile(s);
+  return { map: s.field.def.id, x, y, dir: s.field.player.dir, forced: s.flag('noSwitch') };
+}
+
+/**
+ * Cut back to Universe 7: Cabba hands the controls back to whoever was playing, forced or free as before.
+ * With `here`, the story carries on from wherever it is staged next (no warp back to the old spot).
+ */
+async function backToUniverse7(s: ScriptApi, u7: Universe7, here = false): Promise<void> {
+  leaveCabba(s);
+  if (!u7.forced) unforce(s);
+  restoreHero(s, 'u6');
+  if (here) return;
+  await s.narrate('Back in Universe 7...');
+  await warpTo(s, u7.map, u7.x, u7.y, u7.dir);
+}
+
 /** Tile of an actor (cutscene NPC, enemy or hero). */
 function tileOf(s: ScriptApi, id: string): [number, number] {
   const a = s.actor(id);
   return [Math.floor(a.x / 16), Math.floor((a.y - 14) / 16)];
 }
 
+/** Part one's scenes as Cabba: Champa's order, then the old quarter. Ends faded out on Sadala, journal updated. */
+async function recruitCaulifla(s: ScriptApi): Promise<void> {
+  await s.quest('c13_u6', true);
+  await s.narrate('Meanwhile, in Universe 6...');
+  becomeCabba(s);
+  await s.call('c13_u6_champa');
+  await s.call('c13_u6_quarter');
+  await s.done('c13_u6', false);
+  s.letterbox(false);
+  await s.fadeOut(16);
+}
+
 registerScripts({
-  // ================================================================ the episode (called from c13_whis_frieza)
-  c13_u6_episode: async (s) => {
+  // ================================================================ part one: Cabba recruits Caulifla (eps 88-89)
+  /** Called from `c13_check` once Gohan has trained or Tien has joined (whichever comes first). */
+  c13_u6_recruit: async (s) => {
     if (s.check('done:c13_u6')) return;
+    const u7 = leaveUniverse7(s);
     await s.fadeOut(16);
-    await s.quest('c13_u6', true);
-    await s.narrate('Meanwhile, in Universe 6...');
-    becomeCabba(s);
-    await s.call('c13_u6_champa');
-    await s.call('c13_u6_quarter');
-    await s.call('c13_u6_crags');
-    await s.call('c13_u6_epilogue');
+    await recruitCaulifla(s);
+    await backToUniverse7(s, u7);
   },
 
   /** Ep 88: Champa is short of fighters and sends Cabba home to Sadala to find Saiyans. */
@@ -104,7 +146,7 @@ registerScripts({
     await s.walk('hero', T.arrive[0], T.arrive[1] - 2, 1);
     await s.talk([
       ['champa', 'Seventy rival fighters, and Beerus has Goku AND Vegeta. Hit can\'t win this all by himself!', 'angry'],
-      ['vados', 'Hit is out persuading an old acquaintance of ours as we speak. A thoroughly "reformed" one.', 'smirk'],
+      ['vados', 'Botamo and Magetta have agreed to fight again, my lord. Hit is making inquiries of his own.', 'smirk'],
       ['champa', 'Cabba! You\'re a Saiyan. Your planet is FULL of Saiyans. Bring me strong ones!', 'shout'],
       ['cabba', 'Yes, Lord Champa! My old captain, Renso, knows every fighter on Sadala. I\'ll start with him.', 'neutral'],
       ['vados', 'Do hurry. If Universe 6 loses, we will all be erased. Lord Champa first, I imagine.', 'happy'],
@@ -177,25 +219,51 @@ registerScripts({
     s.face('c13_henchQ', 'hero');
     cabbaSSJ(s, true);
     await s.powerUp('hero', '#f8e048', 40);
+    // One golden punch sends the henchman tumbling across the yard.
+    s.pose('hero', 'punch1');
+    s.sfx('hit');
+    s.flash('#f8e048', 6);
     const [ex, ey] = freeNear(s, Q.henchman[0] - 2, Q.henchman[1] + 3);
     await s.walk('c13_henchQ', ex, ey, 5);
+    s.pose('hero', null);
     s.pose('c13_henchQ', 'ko');
     s.shake(14, 2);
     await s.talk([
       ['caulifla', 'Whoa... your hair just turned GOLD. What was that?! Do it again!', 'shock'],
       ['cabbaSSJ', 'It\'s called Super Saiyan. Join the team, and I\'ll teach you how.', 'neutral'],
       ['caulifla', 'I\'m still not saving any universes... But fine. You\'ve got yourself a student. Teach me first, then we\'ll see.', 'smirk'],
+      ['kale', '(Sis... is going to go away with him...)', 'sad'],
     ]);
     cabbaSSJ(s, false);
     removeAll(s, 'c13_cauliflaQ', 'c13_kaleQ', 'c13_henchQ');
     s.follow();
   },
 
+  // ================================================================ part two: a Legendary Super Saiyan (eps 92-93)
+  /**
+   * Called from `c13_whis_frieza` between Goku's Frieza pitch and his visit to Hell. A save that skipped part one
+   * (Gohan and Tien already in before it existed) plays it first, straight into part two.
+   */
+  c13_u6_episode: async (s) => {
+    if (s.check('done:c13_u6kale')) return;
+    const u7 = leaveUniverse7(s);
+    await s.fadeOut(16);
+    if (!s.check('done:c13_u6')) {
+      await recruitCaulifla(s);
+      await s.narrate('A few days later...');
+    } else {
+      await s.narrate('Meanwhile, in Universe 6. A few days later...');
+    }
+    await s.quest('c13_u6kale', true);
+    becomeCabba(s);
+    await s.call('c13_u6_crags');
+    await s.call('c13_u6_epilogue');
+    await backToUniverse7(s, u7, true);
+  },
+
   /** Eps 92-93: the lesson in the crags, Caulifla's first Super Saiyan, the spar, then Kale. */
   c13_u6_crags: async (s) => {
     const C = SADALA.crags;
-    await s.fadeOut(16);
-    await s.narrate('The next morning, in the badlands outside the city.');
     await warpTo(s, 'c13_sadala_crags', C.centre[0] - 5, C.centre[1], 'right');
     s.letterbox(true);
     s.music('alien');
@@ -306,6 +374,7 @@ registerScripts({
     s.clear(RAMPAGE);
     s.letterbox(true);
     const shouted = s.flag('c13_u6Shouted');
+    s.clear('c13_u6Shouted');
     // Knocked down (as in the anime): Cabba is still on the ground when Kale winds up the finishing blast.
     if (r === 'lose') s.pose('hero', 'ko');
     const [bx, by] = s.exists(KALE_UID) ? tileOf(s, KALE_UID) : [kx, ky];
@@ -313,27 +382,36 @@ registerScripts({
     stage(s, 'c13_kaleC2', 'c13_kaleBerserk', bx, by, 'down', 'Kale');
     s.face('c13_kaleC2', 'hero');
     if (shouted) await s.say('cabbaSSJ', 'Caulifla, PLEASE! She won\'t stop! She\'s going to kill me!', 'shout');
-    s.pose('c13_kaleC2', 'blast');
+    s.pose('c13_kaleC2', 'charge');
+    s.aura('c13_kaleC2', '#a0f060');
     await s.say('kale', 'GRAAAAH!', 'shout');
-    // Caulifla goes Super Saiyan 2 to block the blast meant for Cabba (ep 93).
+    // Caulifla throws herself between them (ep 93). Kale's blast tears past them both and takes the far ridge
+    // with it; then Caulifla talks her down.
+    const [hx, hy] = heroTile(s);
     if (s.exists('c13_cauliflaC2')) {
-      const [hx, hy] = heroTile(s);
       const [mx, my] = freeNear(s, Math.round((hx + bx) / 2), Math.round((hy + by) / 2));
       s.sprite('c13_cauliflaC2', 'c13_cauliflaSSJ');
       s.aura('c13_cauliflaC2', '#f8e048');
       s.sfx('dash');
       await s.walk('c13_cauliflaC2', mx, my, 6);
       s.face('c13_cauliflaC2', 'c13_kaleC2');
-      await s.blast('c13_kaleC2', 'c13_cauliflaC2', '#a0f060');
-      s.pose('c13_cauliflaC2', 'guard');
-      s.boom(mx, my, 24, '#f8e048');
-      s.flash('#ffffff', 10);
-      s.pose('c13_cauliflaC2', null);
+      await s.say('caulifla', 'KALE! STOP!', 'shout');
     }
+    // The blast goes wide, over everyone's heads, into the ridge on the far side of the crags.
+    const [rx, ry] = [bx < 20 ? 34 : 5, 2];
+    s.spawn('c13_u6Ridge', 'kale', rx, ry, 'down');
+    s.show('c13_u6Ridge', false);
+    await s.blast('c13_kaleC2', 'c13_u6Ridge', '#a0f060');
+    s.remove('c13_u6Ridge');
+    s.flash('#ffffff', 14);
+    s.boom(rx, ry, 30, '#a0f060');
+    s.boom(rx + (rx > 20 ? -3 : 3), ry + 1, 24, '#d0ff90');
+    s.shake(50, 4);
     s.pose('c13_kaleC2', null);
+    s.aura('c13_kaleC2', null);
     s.pose('hero', null);
     await s.talk([
-      ['caulifla', 'Super Saiyan... TWO, I guess. KALE! That\'s ENOUGH! Look at me!', 'shout'],
+      ['caulifla', 'That\'s ENOUGH, Kale! Look at me! It\'s me!', 'shout'],
       ['caulifla', 'You think I\'d ditch you for this guy? Not in a million years. You\'re my little sis. Nobody\'s taking me anywhere.', 'happy'],
       ['kale', '...Sis...', 'sad'],
     ]);
@@ -346,8 +424,8 @@ registerScripts({
     cabbaSSJ(s, false);
     s.music('peaceful');
     await s.talk([
-      ['cabba', 'That power... it\'s nothing like a normal Super Saiyan. Caulifla, I think you just found Universe 6 another fighter.', 'shock'],
-      ['caulifla', 'Heh. Fine. We\'re in, Cabba. Both of us. Somebody has to watch her back... and somebody has to beat that Goku guy you keep talking about.', 'smirk'],
+      ['cabba', 'That power... it\'s nothing like a normal Super Saiyan. And that ridge... it\'s just GONE.', 'shock'],
+      ['caulifla', 'Heh. Fine. We\'re in, Cabba. Both of us. Somebody has to watch her back... and somebody has to beat those Universe 7 Saiyans you keep talking about.', 'smirk'],
     ]);
     s.set('c13_u6KaleCalmed');
     removeAll(s, 'c13_kaleC2', 'c13_cauliflaC2');
@@ -373,7 +451,7 @@ registerScripts({
     s.flash('#f8e048', 8);
   },
 
-  /** Champa's verdict, then back to Universe 7, where Goku is on his way to Hell. */
+  /** Champa's verdict (Hit has brought Frost in by now, ep 91), then back to Goku on his way to Hell. */
   c13_u6_epilogue: async (s) => {
     const T = SADALA.terrace;
     await s.fadeOut(16);
@@ -384,19 +462,17 @@ registerScripts({
     stage(s, 'c13_vadosT', 'vados', T.vados[0], T.vados[1], 'down', 'Vados');
     s.face('hero', 'up');
     await s.talk([
-      ['vados', 'Two new Saiyans, my lord. One went Super Saiyan on her first try. The other levelled a mountain range by accident.', 'smirk'],
-      ['champa', 'HA! Take THAT, Beerus! Universe 6 can\'t lose now!', 'happy'],
+      ['vados', 'Two new Saiyans, my lord. One went Super Saiyan on her first try. The other levelled a mountain ridge by accident.', 'smirk'],
+      ['vados', 'And Hit has returned with Frost, who swears he is a reformed man.', 'smirk'],
+      ['champa', 'Reformed, schmeformed. A fighter is a fighter! Take THAT, Beerus! Universe 6 can\'t lose now!', 'happy'],
       ['vados', 'Do try to learn their names before the tournament.', 'smirk'],
       ['champa', 'Cabbage, Cauliflower and Kale. Easy!', 'happy'],
       ['cabba', '...It\'s Cabba, Lord Champa.', 'sad'],
     ]);
     removeAll(s, 'c13_champaT', 'c13_vadosT');
-    s.set('c13_u6Done');
-    await s.done('c13_u6', false);
+    await s.done('c13_u6kale', false);
     s.letterbox(false);
     await s.fadeOut(20);
-    leaveCabba(s);
-    force(s, 'goku');
     s.set('world', 'earth');
   },
 
@@ -466,7 +542,7 @@ registerScripts({
     if (s.exists('c13_kale')) s.show('c13_kale', false);
     if (s.exists('c13_caulifla')) s.show('c13_caulifla', false);
     s.letterbox(false);
-    s.music('battle');
+    s.music('boss');
     s.spawnEnemy('c13_kaleRematch', kx, ky, 'c13_kaleR');
     const r = await bossFight(s, 'c13_cauliflaRematch', { x: cx, y: cy, uid: 'c13_caulR', loseOk: true });
     removeAll(s, 'c13_caulR', 'c13_kaleR');
@@ -480,7 +556,7 @@ registerScripts({
         ['kale', 'Sis... they can come back any time, right?', 'neutral'],
         ['caulifla', '...Yeah. Any time. I\'ll be stronger by then.', 'smirk'],
       ]);
-      s.heal();
+      refresh(s, s.hero);
       s.letterbox(false);
       return;
     }

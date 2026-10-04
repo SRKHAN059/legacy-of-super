@@ -5,7 +5,8 @@ import type { Enemy } from '../../../game/enemy';
 import type { Field } from '../../../game/field';
 import { Shot } from '../../../game/projectiles';
 import type { ScriptApi } from '../../../game/script';
-import { battle, freeNear, heroTile, stage } from './helpers';
+import { FIGHT_MARGIN, onStage, stageOn } from './c14_kit';
+import { battle, heroTile } from './helpers';
 
 /**
  * Chapter 14 fight mechanics built on the engine's scripted fights: a fighting partner (Hit, Android 18, Piccolo),
@@ -126,7 +127,7 @@ function pickTarget(f: Field, spec: AllySpec, a: Actor): Enemy | null {
 export function ally(s: ScriptApi, spec: AllySpec): Ally {
   if (!s.exists(spec.id)) {
     const [hx, hy] = heroTile(s);
-    stage(s, spec.id, spec.sprite, hx - 1, hy + 1, 'up', spec.name);
+    stageOn(s, spec.id, spec.sprite, hx - 1, hy + 1, 'up', spec.name);
   }
   const a = s.actor(spec.id);
   a.hidden = false;
@@ -367,7 +368,7 @@ function regenerate(f: Field, e: Enemy): void {
 export async function twinFight(s: ScriptApi, twins: readonly [TwinSpec, TwinSpec], windowSec: number): Promise<TwinOutcome[]> {
   const f = s.field;
   const foes = twins.map((t) => {
-    const [x, y] = freeNear(s, t.x, t.y);
+    const [x, y] = onStage(s, t.x, t.y, FIGHT_MARGIN);
     return s.spawnEnemy(t.type, x, y, t.uid);
   });
   const down = (e: Enemy): boolean => e.ended || e.dead || e.state === 'dying';
