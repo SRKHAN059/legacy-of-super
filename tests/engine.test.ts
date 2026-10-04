@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CHAPTER_MIN_LEVEL, ensureChapterState, force, FORCED_LEVEL_GAP, STORY_RUN } from '../src/content/chapters/common';
+import { CHAPTER_MIN_LEVEL, ensureChapterState, force, FORCED_LEVEL_GAP, HANDOVER_LEVEL_GAP, STORY_RUN } from '../src/content/chapters/common';
 import { inArena } from '../src/content/chapters/act3/helpers';
 import { ENEMIES } from '../src/content/enemies';
 import { resolveMap } from '../src/content/registry';
@@ -477,17 +477,17 @@ describe('chapter level floors (LoG2: levels come from EXP)', () => {
     set: (f: string) => st.set(f),
   }) as unknown as ScriptApi;
 
-  it('a playthrough from the prologue lifts only the hero who played the last chapter; the bench keeps its level', () => {
+  it('a playthrough from the prologue nets only the hero who played the last chapter, at band - 5; the bench keeps its level', () => {
     const st = new GameState();
     ensureChapterState(api(st), 0);
     expect(st.flag(STORY_RUN)).toBe(true);
-    st.join('goku', 18);
+    st.join('goku', 15);
     st.join('vegeta', 14);
     st.join('piccolo', 18);
     st.data.active = 'goku';
     st.data.chapter = 5;
     ensureChapterState(api(st), 6);
-    expect(st.char('goku').level).toBe(CHAPTER_MIN_LEVEL[6]);
+    expect(st.char('goku').level).toBe(CHAPTER_MIN_LEVEL[6] - HANDOVER_LEVEL_GAP);
     expect(st.char('vegeta').level).toBe(14);
     expect(st.char('piccolo').level).toBe(18);
   });

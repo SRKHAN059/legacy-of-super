@@ -89,15 +89,15 @@ registerQuests([
 ]);
 
 registerScans({
-  pilaf: { name: 'Emperor Pilaf', hp: 12, str: 1, pow: 1, end: 2, desc: 'Self-proclaimed future ruler of the world. Currently about eight years old, thanks to a wish gone wrong.' },
-  mai: { name: 'Mai', hp: 30, str: 3, pow: 1, end: 3, desc: 'Pilaf\'s most competent minion. Handles anything with a trigger.' },
-  shu: { name: 'Shu', hp: 25, str: 2, pow: 1, end: 3, desc: 'Pilaf\'s ninja dog. Drives the robots, forgets the passwords.' },
-  majinBuu: { name: 'Majin Buu', hp: '???', str: '???', pow: '???', end: '???', desc: 'Mr. Satan\'s best friend. Gentle unless someone touches his pudding.' },
-  yajirobe: { name: 'Yajirobe', hp: 420, str: 14, pow: 2, end: 11, desc: 'A lazy samurai who lives at Korin Tower and eats most of the Senzu harvest.' },
-  dende: { name: 'Dende', hp: 300, str: 3, pow: 18, end: 8, desc: 'Earth\'s young Guardian. A Namekian healer who keeps the Dragon Balls working.' },
-  jaco: { name: 'Jaco', hp: 900, str: 16, pow: 19, end: 12, desc: 'A Galactic Patrolman. Elite, according to Jaco.' },
-  sorbet: { name: 'Sorbet', hp: 380, str: 9, pow: 14, end: 8, desc: 'Leader of what is left of the Frieza Force. Cowardly, clever, and wearing a dangerous ring.' },
-  tagoma: { name: 'Tagoma', hp: 3000, str: 28, pow: 26, end: 40, desc: 'Sorbet\'s enforcer. His "steel body" shrugs off blows that would fell a mountain.' },
-  shisami: { name: 'Shisami', hp: 2200, str: 25, pow: 22, end: 19, desc: 'A Frieza Force elite. Fast, proud, and very sure of himself.' },
-  frieza: { name: 'Frieza', hp: '???', str: '???', pow: '???', end: '???', desc: 'The former emperor of the universe. Four months of training - his first ever - and the readings break the scale.' },
+  pilaf: { name: 'Emperor Pilaf', kind: 'Earthling / Pilaf Gang', hp: 12, str: 1, pow: 1, end: 2, desc: 'Self-proclaimed future ruler of the world. Currently about eight years old, thanks to a wish gone wrong.' },
+  mai: { name: 'Mai', kind: 'Earthling / Pilaf Gang', hp: 30, str: 3, pow: 1, end: 3, desc: 'Pilaf\'s most competent minion. Handles anything with a trigger.' },
+  shu: { name: 'Shu', kind: 'Dog-man / Pilaf Gang', hp: 25, str: 2, pow: 1, end: 3, desc: 'Pilaf\'s ninja dog. Drives the robots, forgets the passwords.' },
+  majinBuu: { name: 'Majin Buu', kind: 'Majin / Satan family', hp: '???', str: '???', pow: '???', end: '???', desc: 'Mr. Satan\'s best friend. Gentle unless someone touches his pudding.' },
+  yajirobe: { name: 'Yajirobe', kind: 'Earthling / Korin Tower', hp: 420, str: 14, pow: 2, end: 11, desc: 'A lazy samurai who lives at Korin Tower and eats most of the Senzu harvest.' },
+  dende: { name: 'Dende', kind: 'Namekian / Guardian', hp: 300, str: 3, pow: 18, end: 8, desc: 'Earth\'s young Guardian. A Namekian healer who keeps the Dragon Balls working.' },
+  jaco: { name: 'Jaco', kind: 'U7 / Galactic Patrol', hp: 900, str: 16, pow: 19, end: 12, desc: 'A Galactic Patrolman. Elite, according to Jaco.' },
+  sorbet: { name: 'Sorbet', kind: 'Frieza Force / command', hp: 380, str: 9, pow: 14, end: 8, desc: 'Leader of what is left of the Frieza Force. Cowardly, clever, and wearing a dangerous ring.' },
+  tagoma: { name: 'Tagoma', kind: 'Frieza Force / elite', hp: 3000, str: 28, pow: 26, end: 40, desc: 'Sorbet\'s enforcer. His "steel body" shrugs off blows that would fell a mountain.' },
+  shisami: { name: 'Shisami', kind: 'Frieza Force / elite', hp: 2200, str: 25, pow: 22, end: 19, desc: 'A Frieza Force elite. Fast, proud, and very sure of himself.' },
+  frieza: { name: 'Frieza', kind: 'Frost Demon / emperor', hp: '???', str: '???', pow: '???', end: '???', desc: 'The former emperor of the universe. Four months of training - his first ever - and the readings break the scale.' },
 });

@@ -7,6 +7,7 @@ import type { Button } from '../../src/engine/input';
 import { Shot } from '../../src/game/projectiles';
 import { ScriptApi, SCRIPTS, type FightOpts, type FightResult, type Script } from '../../src/game/script';
 import { HUB } from '../../src/content/chapters/act1/hubs';
+import { CHAPTER_MIN_LEVEL, HANDOVER_LEVEL_GAP } from '../../src/content/chapters/common';
 import { Sim } from '../sim';
 
 /**
@@ -361,7 +362,10 @@ describe('Act 1 main path', () => {
       expect(s().char('vegeta').level).toBeGreaterThanOrEqual(8);
       expect(s().char('vegeta').techs).toContain('bigBang');
       expect(s().char('vegeta').form).toBe('ssj');
-      expect(s().char('goku').level).toBeGreaterThanOrEqual(8);
+      // Goku played Chapter 1 and is benched now. Levels come from EXP (the story gates make the player grind): the
+      // hand-over only nets the outgoing hero at band start - HANDOVER_LEVEL_GAP, so he keeps what his own fights
+      // earned (this chain hands over the radishes instead of farming, about L5) and is never raised to the band.
+      expect(s().char('goku').level).toBeGreaterThanOrEqual(CHAPTER_MIN_LEVEL[2] - HANDOVER_LEVEL_GAP);
       expect(quest(sim, 'c02_party')).toBe('active');
       expect(s().data.map).toBe('cc_gravity');
 

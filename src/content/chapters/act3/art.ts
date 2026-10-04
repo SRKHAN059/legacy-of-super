@@ -86,13 +86,13 @@ registerCreatures({
 });
 
 registerScans({
-  c07_magetta: { name: 'Auta Magetta', hp: 4800, str: 36, pow: 38, end: 44, desc: 'A metal giant from Universe 6. Spits magma and runs hot. Surprisingly sensitive.' },
-  c07_announcer: { name: 'Announcer', hp: 30, str: 1, pow: 1, end: 2, desc: 'The tournament\'s announcer. Brave enough to referee two Gods of Destruction.' },
-  c07_vendor: { name: 'Snack Vendor', hp: 45, str: 3, pow: 1, end: 3, desc: 'Runs the only concession stand in the neutral zone. Prices are cosmic.' },
-  c07_galacticKing: { name: 'Galactic King', hp: 900, str: 12, pow: 30, end: 20, desc: 'Ruler of the Galactic Patrol and Jaco\'s boss. Knows a great deal about Hit.' },
-  c08_potage: { name: 'Potage', hp: 60, str: 4, pow: 2, end: 6, desc: 'The last guardian of Potaufeu. Has kept the Commeson sealed for over a century.' },
-  c08_monakaCostume: { name: 'Monaka', hp: '???', str: '???', pow: '???', end: '???', desc: 'The strongest fighter in Universe 7. The scouter insists this is a costume.' },
-  c08_patrolman: { name: 'Patrolman', hp: 700, str: 14, pow: 16, end: 12, desc: 'A Galactic Patrol officer. Considerably more competent than Jaco, according to Jaco\'s file.' },
+  c07_magetta: { name: 'Auta Magetta', kind: 'U6 metal-man / Team U6', hp: 4800, str: 36, pow: 38, end: 44, desc: 'A metal giant from Universe 6. Spits magma and runs hot. Surprisingly sensitive.' },
+  c07_announcer: { name: 'Announcer', kind: 'Nameless Planet / staff', hp: 30, str: 1, pow: 1, end: 2, desc: 'The tournament\'s announcer. Brave enough to referee two Gods of Destruction.' },
+  c07_vendor: { name: 'Snack Vendor', kind: 'Nameless Planet / vendor', hp: 45, str: 3, pow: 1, end: 3, desc: 'Runs the only concession stand in the neutral zone. Prices are cosmic.' },
+  c07_galacticKing: { name: 'Galactic King', kind: 'U7 / Galactic Patrol', hp: 900, str: 12, pow: 30, end: 20, desc: 'Ruler of the Galactic Patrol and Jaco\'s boss. Knows a great deal about Hit.' },
+  c08_potage: { name: 'Potage', kind: 'U7 / Potaufeu', hp: 60, str: 4, pow: 2, end: 6, desc: 'The last guardian of Potaufeu. Has kept the Commeson sealed for over a century.' },
+  c08_monakaCostume: { name: 'Monaka', kind: 'U7 / costume', hp: '???', str: '???', pow: '???', end: '???', desc: 'The strongest fighter in Universe 7. The scouter insists this is a costume.' },
+  c08_patrolman: { name: 'Patrolman', kind: 'U7 / Galactic Patrol', hp: 700, str: 14, pow: 16, end: 12, desc: 'A Galactic Patrol officer. Considerably more competent than Jaco, according to Jaco\'s file.' },
 });
 
 // ------------------------------------------------------------------ props

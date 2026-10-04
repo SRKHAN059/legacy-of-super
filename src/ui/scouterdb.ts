@@ -1,10 +1,9 @@
 import { PAL } from '../art/color';
 import { portrait, spriteSet } from '../art/registry';
-import { SCANS } from '../content/scans';
-import { ENEMIES } from '../content/enemies';
+import { scanRecord } from '../content/scans';
 import { audio } from '../engine/audio';
 import { SCREEN_H, SCREEN_W } from '../engine/constants';
-import { wrap } from '../engine/fontdata';
+import { measure, wrap } from '../engine/fontdata';
 import { font } from '../engine/gfx';
 import type { Input } from '../engine/input';
 import type { Scene } from '../engine/scene';
@@ -18,8 +17,20 @@ interface Entry {
   str: number | string;
   pow: number | string;
   end: number | string;
+  kind: string;
   desc: string;
   npc: boolean;
+}
+
+/** Width of the name column; longer names are cut with "..." so they never run into the detail panel. */
+const LIST_W = 96;
+
+/** `text`, shortened with a trailing "..." until it fits `maxW` pixels. */
+function fit(text: string, maxW: number): string {
+  if (measure(text) <= maxW) return text;
+  let s = text;
+  while (s.length > 1 && measure(`${s}...`) > maxW) s = s.slice(0, -1);
+  return `${s.trimEnd()}...`;
 }
 
 /** Capsule Corp computer: browse every Scouter scan (LoG2's database), alphabetical. */
@@ -32,15 +43,15 @@ export class ScouterDbScene implements Scene {
 
   constructor(game: Game) {
     this.done = new Promise((r) => (this.resolve = r));
-    this.entries = game.state.data.scans.map((id) => {
-      const [kind, key] = id.split(':');
-      if (kind === 'enemy' && ENEMIES[key]) {
-        const e = ENEMIES[key];
-        return { id, name: e.name, sprite: e.sprite, hp: e.hp, str: e.str, pow: e.pow, end: e.end, desc: e.desc, npc: false };
-      }
-      const s = SCANS[key];
-      return { id, name: s?.name ?? 'Earthling', sprite: s ? key : 'townsman', hp: s?.hp ?? 32, str: s?.str ?? 2, pow: s?.pow ?? 1, end: s?.end ?? 2, desc: s?.desc ?? 'An ordinary Earthling.', npc: true };
-    }).sort((a, b) => a.name.localeCompare(b.name));
+    // Stored ids resolve through the shared table, so an old id for a variant sprite files under its base character.
+    const byId = new Map<string, Entry>();
+    for (const stored of game.state.data.scans) {
+      const r = scanRecord(stored);
+      if (byId.has(r.id)) continue;
+      const e = r.entry;
+      byId.set(r.id, { id: r.id, name: e.name, sprite: r.sprite, hp: e.hp, str: e.str, pow: e.pow, end: e.end, kind: e.kind ?? '', desc: e.desc, npc: r.npc });
+    }
+    this.entries = [...byId.values()].sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
     audio.sfx('menuOk');
   }
 
@@ -61,7 +72,7 @@ export class ScouterDbScene implements Scene {
     const start = Math.max(0, Math.min(this.sel - 5, this.entries.length - 12));
     this.entries.slice(start, start + 12).forEach((e, i) => {
       const idx = start + i;
-      font.draw(ctx, e.name, 10, 16 + i * 11, idx === this.sel ? '#f8f040' : '#80c890', '#000');
+      font.draw(ctx, fit(e.name, LIST_W), 10, 16 + i * 11, idx === this.sel ? '#f8f040' : '#80c890', '#000');
     });
     const e = this.entries[this.sel];
     ctx.strokeStyle = '#40f070';
@@ -76,7 +87,8 @@ export class ScouterDbScene implements Scene {
       font.draw(ctx, k, 160, 20 + i * 11, '#40c060', '#000');
       font.drawRight(ctx, String(v), 230, 20 + i * 11, '#c8f8d0', '#000');
     });
-    font.drawLines(ctx, wrap(e.desc, 118).slice(0, 7), 114, 68, '#c8f8d0', '#000', 11);
+    if (e.kind) font.draw(ctx, fit(e.kind, 118), 114, 58, '#60d880', '#000');
+    font.drawLines(ctx, wrap(e.desc, 118).slice(0, 7), 114, 70, '#c8f8d0', '#000', 11);
     font.draw(ctx, 'B: exit', 6, SCREEN_H - 10, '#80c890', '#000');
     void PAL;
   }

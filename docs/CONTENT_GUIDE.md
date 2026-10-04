@@ -58,6 +58,10 @@ Write dialogue in-character and **paraphrase** the anime — never copy dub/sub 
 - **Level gates** (`barriers`): a coloured wall with a number. Only that `character` at ≥ `level` can break it
   (by hitting it). Colours are automatic. `character` omitted + `openIf` = white story gate that opens by flag.
   Gate colours: Goku orange, Vegeta dark blue, Gohan light blue, Trunks purple, Piccolo green, Mr. Satan red.
+  Gates on the critical path (LoG2's grind-and-rotate gates) are **story gates**: one table, `STORY_GATES` in
+  `chapters/common.ts`, places them by overlay with their hint triggers and is tested end to end in
+  `tests/full_game.test.ts` (see `docs/CHAPTERS.md` Story gates). Don't add another gate across a story route in a
+  map file; add a row there. Side gates (caches, trophies) stay in map files as before.
 - **Enemies respawn** every time a map is entered (unless they have an `id`, which makes them one-off).
 - **Drops** (food = HP, ki orbs = EP) are automatic (ROM drop table). Breakable rocks/jars/crates give drops too.
   A breakable with an `id` and a fixed `item` keeps that item where it fell until it is picked up (leaving the map
@@ -67,9 +71,9 @@ Write dialogue in-character and **paraphrase** the anime — never copy dub/sub 
   Boss `exp` is paid in full (scripted reward).
 - **Party**: Goku, Vegeta, Gohan, Trunks, Piccolo (+ secret Mr. Satan). Characters join at fixed story points
   with LoG2-style rolled stats. The story often forces a character (`force(s, id)` = switchTo + `noSwitch` flag).
-  Levels come from EXP: a chapter hand-over lifts only the hero who played the last chapter to the new band start,
-  never the bench (see `docs/CHAPTERS.md` Party timeline); `force()` lifts a benched character to band start − 3
-  so a forced segment is never a wall.
+  Levels come from EXP and the story gates; a chapter hand-over is only a safety net that lifts the hero who played
+  the last chapter to band start − 5, never the bench (see `docs/CHAPTERS.md` Party timeline); `force()` lifts a
+  benched character to band start − 3 so a forced segment is never a wall.
 - **Fights are sealed**: while `fight`/`clearEnemies` runs, doors, map edges, save discs, world signs, flight circles,
   Whis's Charm **and NPC talk** are off (A throws a punch). Action triggers (`onAction`) still work mid-fight, for
   puzzles like the c08 glyph pillars — never warp from one that can fire mid-fight (a warp that leaves a fight

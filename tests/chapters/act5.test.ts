@@ -550,6 +550,9 @@ describe('act 5 chain (Ch12 → Ch14 → post-game)', () => {
     ];
     for (const [id, [sx, sy], goals] of CASES) {
       const sim = new Sim();
+      // The jungle's north trail has a Gohan story gate (common.ts STORY_GATES), broken here; tests/full_game.test.ts
+      // checks that it walls the poacher camp off until then.
+      sim.game.state.set('gate:c13_monster_jungle:c13_g_north');
       sim.start(id);
       const f = sim.game.field;
       if (!f) throw new Error(id);

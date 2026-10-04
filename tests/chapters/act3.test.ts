@@ -430,8 +430,10 @@ function near(r: Set<string>, x: number, y: number): boolean {
 
 describe('act3: map layout sanity', () => {
   const cases: Array<{ map: string; from: [number, number]; flags: string[]; chapter: number }> = [
-    { map: 'c07_nameless_grounds', from: [7, 13], flags: [], chapter: 7 },
-    { map: 'c07_nameless_grounds', from: [7, 13], flags: ['c07_examDone'], chapter: 7 },
+    // The stadium walkway's Piccolo gate (common.ts STORY_GATES) is broken in these cases; tests/full_game.test.ts
+    // checks that it walls the arena off until then.
+    { map: 'c07_nameless_grounds', from: [7, 13], flags: ['gate:c07_nameless_grounds:c07_g_stadium'], chapter: 7 },
+    { map: 'c07_nameless_grounds', from: [7, 13], flags: ['c07_examDone', 'gate:c07_nameless_grounds:c07_g_stadium'], chapter: 7 },
     { map: 'c07_nameless_arena', from: [17, 27], flags: ['c07_examDone'], chapter: 7 },
     { map: 'c07_nameless_rim', from: [0, 22], flags: ['gate:c07_nameless_rim:c07_v27', 'gate:c07_nameless_rim:c07_g28'], chapter: 7 },
     { map: 'c08_potaufeu_landing', from: [18, 13], flags: ['c08_landed', 'c08_boysFound'], chapter: 8 },
@@ -442,7 +444,7 @@ describe('act3: map layout sanity', () => {
     { map: 'cc_yard', from: CC_ENTRY, flags: ['c07_champaDone'], chapter: 7 },
     { map: 'cc_yard', from: CC_ENTRY, flags: [], chapter: 8 },
     { map: 'beerus_grounds', from: [22, 16], flags: [], chapter: 7 },
-    { map: 'c07_nameless_grounds', from: [7, 13], flags: ['c07_examDone', 'c07_done', 'quest:c07_shards'], chapter: 8 },
+    { map: 'c07_nameless_grounds', from: [7, 13], flags: ['c07_examDone', 'c07_done', 'quest:c07_shards', 'gate:c07_nameless_grounds:c07_g_stadium'], chapter: 8 },
   ];
   for (const c of cases) {
     it(`${c.map} (${c.chapter}${c.flags.length ? `, ${c.flags.join('+')}` : ''}): act 3 content is reachable`, () => {

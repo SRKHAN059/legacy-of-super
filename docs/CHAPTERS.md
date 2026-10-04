@@ -29,15 +29,40 @@ Ch9 Trunks rejoins L30 · forms/techs per Guide §5. Level curve (the band each 
 `CHAPTER_MIN_LEVEL` = its start): P 6 · 1: 1–8 · 2: 8–12 · 3: 12–15 · 4: 15–18 · 5: 18–22 · 6: 22–25 · 7: 25–29 ·
 8: 29–31 · 9: 30–34 · 10: 34–37 · 11: 37–40 · 12: 40–42 · 13: 42–45 · 14: 45–48.
 
-**Levels come from EXP, as in LoG2.** Characters join at their story level (LoG2's SetMinLevel). In a playthrough
-that started with the prologue, a hand-over lifts only the hero who played the chapter that just ended (the
-active character when `cNN_start` runs) to `CHAPTER_MIN_LEVEL[N]` — the chapter-end story EXP. Benched characters
-are never raised: they fall behind and must be rotated in to keep up (the coloured level gates and the L50 trophies
+**Levels come from EXP, as in LoG2.** Characters join at their story level (LoG2's SetMinLevel). Nothing raises a
+character to the band in a playthrough that started with the prologue: the band is what normal play plus the
+story gates below deliver. The hand-over is only a safety net: the hero who played the chapter that just ended (the
+active character when `cNN_start` runs) is lifted to `CHAPTER_MIN_LEVEL[N] - HANDOVER_LEVEL_GAP` (band start − 5)
+if they are below it, which only catches a player who avoided nearly every fight. Benched characters are never
+raised: they fall behind and must be rotated in to keep up (the story gates, the side gates and the L50 trophies
 depend on it). The other safety net is `force(s, id)`: when the story puts a character on the field, they are
 lifted to at least band start − 3 (`CHAPTER_MIN_LEVEL[chapter] - FORCED_LEVEL_GAP`) so a forced segment is never a
 wall; a character who joined in that chapter keeps their join level. A chapter started standalone (tests, the
-`?map=` dev entry) still floors the whole party at `CHAPTER_MIN_LEVEL[N]`, so every chapter remains playable on its
-own.
+`?map=` dev entry) still floors the whole party at `CHAPTER_MIN_LEVEL[N]` and opens the story gates of earlier
+chapters, so every chapter remains playable on its own.
+
+### Story gates (LoG2 §6.6: the grind-and-rotate loop)
+
+LoG2 put coloured level gates on the critical path (Piccolo 10 and 25, Vegeta 30, Trunks 30, Goku 40). Ours are
+`STORY_GATES` in `chapters/common.ts`: the table places each barrier and its once-only hint trigger by overlay,
+so act and world map files stay untouched. Each gate's level is the level its character arrives with by normal play
+(`arrive`, what the full-game run measures) plus one or two clears of the hostile zone beside it, computed from the
+EXP table and the ROM kill clamp (`tests/full_game.test.ts` asserts 0.5–2 clears and at least 10 kills, and the
+full run grinds every gate on real enemies and prints the effort).
+
+| Ch | Gate | Where | Save point (switch) | Grind zone | Arrives | LoG2 parallel |
+|---|---|---|---|---|---|---|
+| 3 | Vegeta 15 | Pilaf Castle courtyard gate (`pilaf_castle_out`), Dragon Balls 2–3 behind it | outside the gate | Diablo Desert | 12 | Piccolo 10 (first rotation) |
+| 7 | Piccolo 24 | walkway to the stadium (`c07_nameless_grounds`) | landing site | crater rim | 20 | Piccolo 25 |
+| 9 | Trunks 32 | deep shaft of the mine (`c09_mine`): Excavator, third crystal | beside the shaft | the mine | 30 | Trunks 30 |
+| 10 | Goku 34 | Black's courtyard (`c10_lair`), stands after the raid | below the courtyard (Goku is forced) | ruins + future city | 33 | Vegeta 30 (forced) |
+| 13 | Gohan 40 | north trail to the poacher camp (`c13_monster_jungle`) | south end of the jungle | the jungle | 39 (Lookout training) | Goku 40 |
+
+Rules every story gate keeps (tested): the required character is in the party and switchable at a save point on
+the near side (or is the hero the story is forcing); the far side is unreachable on foot until the gate breaks; the
+hint names the character, the level, where to switch and where to train; a hero who resumes beyond a closed gate
+(a save from before the gate existed) finds it opened behind them (`rescue`). Gates for a scene that plays beyond
+them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
 
 ---
 

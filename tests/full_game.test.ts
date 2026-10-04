@@ -1,17 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { CAST } from '../src/content/cast';
 import type { CharId } from '../src/content/characters';
-import { CHAPTER_MIN_LEVEL, ensureChapterState, FORCED_LEVEL_GAP } from '../src/content/chapters/common';
+import {
+  CHAPTER_MIN_LEVEL, ensureChapterState, FORCED_LEVEL_GAP, HANDOVER_LEVEL_GAP, STORY_GATES, storyGateFlag, storyGateHint,
+  type StoryGate,
+} from '../src/content/chapters/common';
 import { QUESTS } from '../src/content/quests';
 import { MAPS, resolveMap } from '../src/content/registry';
 import { SPOTS, type WorldId } from '../src/content/world';
 import { TILE } from '../src/engine/constants';
 import type { Dir } from '../src/engine/math';
+import type { Line } from '../src/ui/dialogue';
+import { EXP_TABLE, killExp, levelForExp } from '../src/game/leveling';
 import { Shot } from '../src/game/projectiles';
 import { SCRIPTS, type Script, type ScriptApi, type ScriptCtx } from '../src/game/script';
 import { GameState, type SaveData } from '../src/game/state';
 import { setGroundCacheLimit } from '../src/game/world';
-import { Sim } from './sim';
+import { type GrindLog, Sim } from './sim';
 
 /**
  * The whole game on ONE save: newGame -> Prologue -> Chapters 1-14 -> credits -> post-game (trophies, Mr. Satan,
@@ -86,6 +91,8 @@ interface Entry {
   openGold: string[];
   /** Fight-in-progress flags still raised. */
   transient: string[];
+  /** Story gates of earlier chapters the player has not broken. */
+  standing: string[];
 }
 
 // ------------------------------------------------------------------------------------------------ world lookup
@@ -385,6 +392,7 @@ function snapshot(sim: Sim, n: number): Entry {
     chapter: n, map: sim.game.field?.def.id ?? d.map, active: d.active,
     noSwitch: st.flag('noSwitch'), levels, forms, techs, missing, raised, openGold: openGold(d, n),
     transient: TRANSIENT.filter((f) => st.flag(f)),
+    standing: STORY_GATES.filter((g) => g.chapter < n && !st.flag(storyGateFlag(g))).map((g) => g.id),
   };
 }
 
@@ -464,6 +472,40 @@ describe('full game: one save from newGame to the post-game', () => {
     const R = makeRun(sim, watch, (id) => audit(`ch${st.data.chapter} after ${id}`));
     const { settle, enter, run, talk, beat, talkAll, put, collect, openChest, smash, breakGate } = R;
 
+    /** What each story gate cost the run (printed with the hand-over levels). */
+    const grinds: Array<{ gate: StoryGate; log: GrindLog }> = [];
+    /**
+     * A story gate, met the way a player meets it: walk up to it (the hint plays), find it shut to whoever is playing,
+     * switch to its character at its save point (or stay, when the story is forcing that character), grind in its
+     * zone on real enemies until strong enough, smash it, and switch back to the hero the story was following.
+     */
+    const passGate = async (id: string): Promise<void> => {
+      const g = STORY_GATES.find((x) => x.id === id);
+      if (!g) throw new Error(`no story gate ${id}`);
+      expect(st.data.chapter, `${id}: chapter`).toBe(g.chapter);
+      expect(st.flag(storyGateFlag(g)), `${id} still standing`).toBe(false);
+      const story = st.data.active;
+      const forced = st.flag('noSwitch');
+      if (forced) expect(story, `${id}: the story is forcing a hero, so it must be the gate's own`).toBe(g.character);
+      const [sm, sx, sy] = g.save;
+      await enter(sm, sx, sy);
+      await run(storyGateHint(g));
+      const gate = () => sim.game.field?.map.gates.find((x) => x.def.id === g.id);
+      if (story !== g.character || st.char(g.character).level < g.level) {
+        const at = gate();
+        if (at) sim.game.field?.meleeHit(at.rect, 10, 1);
+        expect(gate()?.broken, `${id} holds against ${story} L${st.hero.level}`).toBe(false);
+      }
+      sim.game.switchCharacter(g.character);
+      const log = await sim.grind(g.level, g.zone);
+      grinds.push({ gate: g, log });
+      await enter(sm, sx, sy);
+      breakGate(g.id);
+      if (story !== g.character) sim.game.switchCharacter(story);
+      await settle();
+      expect(sim.errors, `${id} errors`).toEqual([]);
+    };
+
     // Wrap every chapter start: snapshot the hand-over, and let the bot answer each chapter's first prompts with
     // option 0 (as every act chain test does when it starts).
     const entries: Record<number, Entry> = {};
@@ -507,11 +549,13 @@ describe('full game: one save from newGame to the post-game', () => {
         // Levels: nobody over-levelled for the chapter just finished, nobody below the new chapter's floor.
         for (const [id, lv] of Object.entries(e.levels)) expect.soft(lv, `${tag}: ${id} level at hand-over`).toBeLessThanOrEqual(CURVE[n - 1][1] + 3);
       }
-      // LoG2 levels: the hand-over lifts only the hero who played the last chapter to the band start; the bench keeps
-      // its EXP-earned level; a character the story forces is at least band start - FORCED_LEVEL_GAP.
+      // LoG2 levels come from EXP: the hand-over's safety net lifts only the hero who played the last chapter, and only
+      // to band start - HANDOVER_LEVEL_GAP; the bench keeps its EXP-earned level; a character the story forces is at
+      // least band start - FORCED_LEVEL_GAP. Every story gate of an earlier chapter was broken by the player.
       if (e.levels[e.active] !== undefined && e.active !== 'satan') {
-        expect.soft(st.char(e.active).level, `${tag}: ${e.active} (hero at hand-over) level`).toBeGreaterThanOrEqual(CHAPTER_MIN_LEVEL[n]);
+        expect.soft(st.char(e.active).level, `${tag}: ${e.active} (hero at hand-over) level`).toBeGreaterThanOrEqual(CHAPTER_MIN_LEVEL[n] - HANDOVER_LEVEL_GAP);
       }
+      expect.soft(e.standing, `${tag}: story gates of earlier chapters still standing`).toEqual([]);
       expect.soft(e.raised.filter((r) => !r.startsWith(`${e.active} `)), `${tag}: bench raised at the hand-over`).toEqual([]);
       if (forced) expect.soft(st.hero.level, `${tag}: forced ${st.data.active} level`).toBeGreaterThanOrEqual(CHAPTER_MIN_LEVEL[n] - FORCED_LEVEL_GAP);
       // Story costumes: Whis's gi from the end of Chapter 4 through the Frieza arc, Gohan's suit until he changes.
@@ -707,6 +751,7 @@ describe('full game: one save from newGame to the post-game', () => {
       await talk('c03_bulma', 'cc_yard');
 
       await collect('desert_oasis', 'c03_db1');
+      await passGate('c03_g_castle');
       await enter('pilaf_castle_in', 15, 9);
       await run('c03_gate_note');
       await enter('c03_pilaf_vault', 4, 17);
@@ -856,6 +901,7 @@ describe('full game: one save from newGame to the post-game', () => {
       await settle();
       await run('c07_whis_grounds');
       expect(q('c07_shards')).toBe('done');
+      await passGate('c07_g_stadium');
       await enter('c07_nameless_arena', 17, 27);
       await run('c07_beerus_talk');
       expect(q('c07_snacks')).toBe('done');
@@ -916,6 +962,7 @@ describe('full game: one save from newGame to the post-game', () => {
       await enter('c09_mine', 5, 25);
       await run('c09_crystal1');
       await run('c09_crystal2');
+      await passGate('c09_g_shaft');
       await run('c09_excavator_fight');
       await run('c09_crystal3');
       expect(st.count('c09_crystal')).toBe(3);
@@ -958,6 +1005,7 @@ describe('full game: one save from newGame to the post-game', () => {
       await run('c10_pharmacy');
       await talk('c10_runner');
       expect(q('c10_q_medicine')).toBe('done');
+      await passGate('c10_g_courtyard');
       await run('c10_showdown');
       expect(q('c10_q_lair')).toBe('done');
 
@@ -1031,6 +1079,7 @@ describe('full game: one save from newGame to the post-game', () => {
       expect(st.char('piccolo').techs).toContain('hellzoneGrenade');
       await beat('c13_monster_beach', 'c13_beach_enter', 16, 16);
       await beat('c13_monster_hut', 'c13_17_talk', 16, 11);
+      await passGate('c13_g_north');
       await beat('c13_monster_camp', 'c13_camp_boss', 20, 12);
       expect(q('c13_17')).toBe('done');
       const animals: Array<[string, string]> = [
@@ -1180,6 +1229,9 @@ describe('full game: one save from newGame to the post-game', () => {
       // Report the natural hand-over levels (what each chapter really delivered before any level floor).
       const rows = Object.values(entries).map((e) => `c${String(e.chapter).padStart(2, '0')} ${e.map} ${JSON.stringify(e.levels)}${e.raised.length ? ` floor: ${e.raised.join(', ')}` : ''}`);
       console.log(`[full game] hand-over levels\n${rows.join('\n')}`);
+      const effort = grinds.map(({ gate: g, log: l }) => `c${String(g.chapter).padStart(2, '0')} ${g.id} (${g.character} ${g.level}): L${l.from} -> L${l.to}, `
+        + `${l.exp.toLocaleString('en-US')} EXP from ${l.kills} kills over ${l.visits} map visit${l.visits === 1 ? '' : 's'} (${l.maps.join(', ')})`);
+      console.log(`[full game] story-gate grinding\n${effort.join('\n')}`);
       const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {};
       if (env.FULL_GAME_REPORT) {
         console.log(`[full game] in two places at once\n${[...watch.elsewhere].join('\n')}`);
@@ -1231,5 +1283,234 @@ describe('cross-act rules the full run relies on', () => {
     await R.enter('satan_dojo');
     expect(drop().length).toBe(0);
     expect(sim.errors).toEqual([]);
+  });
+});
+
+describe('story gates (LoG2 §6.6: coloured level gates on the critical path)', () => {
+  /** A fresh save at the gate's chapter, standing at its near-side save point; the gate shut, or broken. */
+  async function nearSide(g: StoryGate, broken = false): Promise<Sim> {
+    const sim = new Sim();
+    const st = sim.game.state;
+    st.data.chapter = g.chapter;
+    if (g.standsIf) st.set(g.standsIf);
+    if (broken) st.set(storyGateFlag(g));
+    const [m, x, y] = g.save;
+    sim.start(m, x, y);
+    await sim.tick(2);
+    return sim;
+  }
+
+  /** Tiles of the gate's map that lie beyond it: its far regions, and the doors and edge exits to its far maps. */
+  function farTiles(g: StoryGate): string[] {
+    const def = resolveMap(g.map);
+    if (!def) throw new Error(`no map ${g.map}`);
+    const W = def.grid[0].length;
+    const H = def.grid.length;
+    const out = new Set<string>();
+    const area = (x0: number, y0: number, w: number, h: number) => {
+      for (let y = Math.floor(y0); y < Math.ceil(y0 + h); y++) for (let x = Math.floor(x0); x < Math.ceil(x0 + w); x++) out.add(`${x},${y}`);
+    };
+    for (const f of g.far) {
+      if (typeof f !== 'string') { if (f[0] === g.map) area(f[1], f[2], f[3], f[4]); continue; }
+      for (const w of def.warps ?? []) if (w.to === f) area(w.x, w.y, w.w, w.h);
+      for (const [side, ex] of Object.entries(def.exits ?? {})) {
+        if (ex?.to !== f) continue;
+        if (side === 'north') area(0, 0, W, 1);
+        if (side === 'south') area(0, H - 1, W, 1);
+        if (side === 'west') area(0, 0, 1, H);
+        if (side === 'east') area(W - 1, 0, 1, H);
+      }
+    }
+    return [...out];
+  }
+
+  /** Base EXP of every regular enemy a player can reach on each zone visit at the gate's chapter. */
+  async function zoneVisits(g: StoryGate): Promise<number[][]> {
+    const visits: number[][] = [];
+    for (const [m, x, y] of g.zone) {
+      const sim = new Sim();
+      sim.game.state.data.chapter = g.chapter;
+      if (g.standsIf) sim.game.state.set(g.standsIf);
+      sim.start(m, x, y);
+      await sim.tick(2);
+      const f = sim.game.field;
+      if (!f) throw new Error(`no field on ${m}`);
+      const reach = sim.reach();
+      visits.push(f.enemies.filter((e) => !e.dead && !e.isBoss && !e.uid && !e.def.invulnerable && e.def.exp > 0 && Sim.inReach(reach, e)).map((e) => e.def.exp));
+    }
+    return visits;
+  }
+
+  /**
+   * Kills a player arriving at `g.arrive` needs, fighting through the zone in order with the ROM kill clamp, and the
+   * zone clears that makes (every zone map visited once = 1).
+   */
+  function effort(g: StoryGate, visits: number[][]): { kills: number; clears: number } {
+    let exp = EXP_TABLE[g.arrive];
+    let kills = 0;
+    const perClear = visits.reduce((n, v) => n + v.length, 0);
+    for (let pass = 0; pass < 20 && levelForExp(exp) < g.level; pass++) {
+      for (const base of visits.flat()) {
+        if (levelForExp(exp) >= g.level) break;
+        exp += killExp(base, levelForExp(exp));
+        kills++;
+      }
+    }
+    return { kills, clears: kills / perClear };
+  }
+
+  /** Capture every dialogue line shown. */
+  function record(sim: Sim): Line[] {
+    const said: Line[] = [];
+    const say = sim.game.say.bind(sim.game);
+    sim.game.say = (lines: Line[]) => { said.push(...lines); return say(lines); };
+    return said;
+  }
+
+  it('lists four to six gates in story order, one per chapter, covering the whole party (LoG2: Piccolo, Vegeta, Trunks, Goku)', () => {
+    expect(STORY_GATES.length).toBeGreaterThanOrEqual(4);
+    expect(STORY_GATES.length).toBeLessThanOrEqual(6);
+    const chapters = STORY_GATES.map((g) => g.chapter);
+    expect(chapters).toEqual([...chapters].sort((a, b) => a - b));
+    expect(new Set(chapters).size).toBe(chapters.length);
+    expect(new Set(STORY_GATES.map((g) => g.character))).toEqual(new Set(['goku', 'vegeta', 'gohan', 'trunks', 'piccolo']));
+    // Each asks for more than the character arrives with, and no more than that chapter's band allows.
+    for (const g of STORY_GATES) {
+      expect(g.level, g.id).toBeGreaterThan(g.arrive);
+      expect(g.level, g.id).toBeLessThanOrEqual(CHAPTER_MIN_LEVEL[g.chapter + 1]);
+    }
+  });
+
+  for (const g of STORY_GATES) {
+    describe(`${g.id} (${g.character} ${g.level}, chapter ${g.chapter})`, () => {
+      it('stands on its map in its character\'s colour, with a hint trigger, its scripts and a near-side save point', () => {
+        const def = resolveMap(g.map);
+        const bar = def?.barriers?.find((b) => b.id === g.id);
+        expect(bar).toMatchObject({ x: g.rect[0], y: g.rect[1], w: g.rect[2], h: g.rect[3], level: g.level, character: g.character });
+        expect(def?.triggers?.find((t) => t.script === storyGateHint(g))).toMatchObject({ once: true, hideIf: storyGateFlag(g) });
+        expect(SCRIPTS[storyGateHint(g)]).toBeTruthy();
+        g.rescue.forEach((_, i) => expect(SCRIPTS[`${g.id}_rescue${i}`]).toBeTruthy());
+        const [m, x, y] = g.save;
+        expect(resolveMap(m)?.objects?.some((o) => o.type === 'save' && o.x === x && o.y === y), `save point ${m} (${x},${y})`).toBe(true);
+      });
+
+      it('walls off the far side until it breaks, and the hint and the save point are on the near side', async () => {
+        const shut = await nearSide(g);
+        const reach = shut.reach();
+        const far = farTiles(g);
+        expect(far.length, 'far tiles').toBeGreaterThan(0);
+        expect(far.filter((t) => reach.has(t)), 'far side reachable past a closed gate').toEqual([]);
+        const [hx, hy, hw, hh] = g.hint;
+        let hint = 0;
+        for (let yy = hy; yy < hy + hh; yy++) for (let xx = hx; xx < hx + hw; xx++) if (reach.has(`${xx},${yy}`)) hint++;
+        expect(hint, 'reachable hint tiles').toBeGreaterThan(0);
+        const open = (await nearSide(g, true)).reach();
+        expect(far.filter((t) => open.has(t)).length, 'far side reachable once broken').toBeGreaterThan(0);
+        expect(shut.errors).toEqual([]);
+      });
+
+      it('costs about one or two clears of its zone from the level a player arrives with (EXP table + ROM kill clamp)', async () => {
+        const visits = await zoneVisits(g);
+        for (const [i, v] of visits.entries()) expect(v.length, `regular enemies within reach on ${g.zone[i][0]}`).toBeGreaterThan(0);
+        const { kills, clears } = effort(g, visits);
+        console.log(`[story gate] ${g.id}: ${g.character} L${g.arrive} -> L${g.level} = ${kills} kills, ${clears.toFixed(2)} clears of `
+          + `${g.zone.map((z) => z[0]).join(' + ')} (${visits.map((v) => v.length).join('+')} enemies in reach)`);
+        // A real grind (LoG2's gates were never free), but never more than two passes through the zone.
+        expect(kills).toBeGreaterThanOrEqual(10);
+        expect(clears).toBeGreaterThanOrEqual(0.5);
+        expect(clears).toBeLessThanOrEqual(2);
+      });
+
+      it('explains itself the first time: who, what level, where to switch and where to train', async () => {
+        const other = g.character === 'goku' ? 'vegeta' : 'goku';
+        const sim = await nearSide(g);
+        const st = sim.game.state;
+        st.join(g.character, g.arrive);
+        st.join(other, g.level);
+        sim.game.switchCharacter(other);
+        const said = record(sim);
+        expect(await sim.run(storyGateHint(g))).toBe(true);
+        const name = g.character === 'goku' ? 'Goku' : g.character[0].toUpperCase() + g.character.slice(1);
+        const text = said.map((l) => l.text).join(' ');
+        expect(said.length).toBeGreaterThanOrEqual(3);
+        expect(text).toContain(`only to ${name}. This one needs level ${g.level}.`);
+        expect(text).toContain(`${name} is level ${g.arrive}.`);
+        expect(text).toContain(`Switch to ${name} at ${g.saveAt}.`);
+        expect(text).toContain(g.train);
+        // Played as the gate's own character, strong enough: no switching, just the go-ahead.
+        st.join(g.character, g.level);
+        sim.game.switchCharacter(g.character);
+        said.length = 0;
+        expect(await sim.run(storyGateHint(g))).toBe(true);
+        expect(said.map((l) => l.text).join(' ')).toContain('strong enough: hit the barrier');
+        expect(sim.errors).toEqual([]);
+      });
+
+      it('breaks only for its own character at its level', async () => {
+        const sim = await nearSide(g);
+        const st = sim.game.state;
+        const f = () => sim.game.field;
+        const gate = () => f()?.map.gates.find((x) => x.def.id === g.id);
+        const other = g.character === 'goku' ? 'vegeta' : 'goku';
+        st.join(other, 50);
+        sim.game.switchCharacter(other);
+        const r = gate()?.def;
+        const rect = { x: g.rect[0] * TILE, y: g.rect[1] * TILE, w: g.rect[2] * TILE, h: g.rect[3] * TILE };
+        expect(r).toBeTruthy();
+        f()?.meleeHit(rect, 10, 1);
+        expect(gate()?.broken, 'another character at L50').toBe(false);
+        st.join(g.character, g.level - 1);
+        sim.game.switchCharacter(g.character);
+        f()?.meleeHit(rect, 10, 1);
+        expect(gate()?.broken, `${g.character} at L${g.level - 1}`).toBe(false);
+        st.join(g.character, g.level);
+        sim.game.switchCharacter(g.character);
+        f()?.meleeHit(rect, 10, 1);
+        expect(gate()?.broken, `${g.character} at L${g.level}`).toBe(true);
+        expect(st.flag(storyGateFlag(g))).toBe(true);
+      });
+
+      for (const [i, place] of g.rescue.entries()) {
+        const [m, region] = typeof place === 'string' ? [place, undefined] : [place[0], place.slice(1) as number[]];
+        it(`opens behind a hero resuming beyond it (${m}${region ? ` ${region.join(',')}` : ''}), so an old save is never walled in`, async () => {
+          const sim = new Sim();
+          const st = sim.game.state;
+          st.data.chapter = g.chapter;
+          if (g.standsIf) st.set(g.standsIf);
+          const save = resolveMap(m)?.objects?.find((o) => o.type === 'save');
+          const [x, y] = region ? [region[0] + Math.floor(region[2] / 2), region[1] + Math.floor(region[3] / 2)] : [save?.x, save?.y];
+          sim.start(m, x, y);
+          await sim.idle();
+          expect(st.flag(storyGateFlag(g)), `rescue ${i}`).toBe(true);
+          if (m === g.map) expect(sim.game.field?.map.gates.find((x2) => x2.def.id === g.id)?.broken).toBe(true);
+          // The same entry on the near side leaves the gate alone.
+          const near = await nearSide(g);
+          await near.idle();
+          expect(near.game.state.flag(storyGateFlag(g))).toBe(false);
+        });
+      }
+    });
+  }
+
+  it('a chapter start opens the story gates of earlier chapters (standalone starts), and a story hand-over only nets the hero at band - 5', () => {
+    const api = (st: GameState): ScriptApi => ({
+      state: st, unlockRegion: (id: string) => { if (!st.data.regions.includes(id)) st.data.regions.push(id); },
+    }) as unknown as ScriptApi;
+    const st = new GameState();
+    ensureChapterState(api(st), 10);
+    for (const g of STORY_GATES) expect(st.flag(storyGateFlag(g)), g.id).toBe(g.chapter < 10);
+    // Story run: the outgoing hero below the net is lifted to it, never to the band; nobody else moves.
+    const run = new GameState();
+    ensureChapterState(api(run), 0);
+    run.join('goku', 20);
+    run.join('vegeta', 25);
+    run.data.active = 'goku';
+    run.data.chapter = 7;
+    ensureChapterState(api(run), 8);
+    expect(run.char('goku').level).toBe(CHAPTER_MIN_LEVEL[8] - HANDOVER_LEVEL_GAP);
+    expect(run.char('vegeta').level).toBe(25);
+    run.join('goku', 26);
+    ensureChapterState(api(run), 8);
+    expect(run.char('goku').level).toBe(26);
   });
 });

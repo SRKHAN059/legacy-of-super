@@ -1,7 +1,7 @@
 import { PAL } from '../art/color';
 import { portrait } from '../art/registry';
 import { CAST_NAMES } from '../content/cast';
-import { SCANS } from '../content/scans';
+import { scanNpc } from '../content/scans';
 import { audio } from '../engine/audio';
 import { SCREEN_H, SCREEN_W } from '../engine/constants';
 import { wrap } from '../engine/fontdata';
@@ -21,6 +21,8 @@ interface Readout {
   str: number | string;
   pow: number | string;
   end: number | string;
+  /** Race / universe / affiliation line (named entries only). */
+  kind: string;
   desc: string;
   actor: Actor;
 }
@@ -55,14 +57,13 @@ export class ScouterScene implements Scene {
   private scan(a: Actor): Readout {
     if (a instanceof Enemy) {
       const d = a.def;
-      return { id: `enemy:${d.id}`, name: d.name, hp: a.maxHp, str: d.str, pow: d.pow, end: d.end, desc: d.desc, actor: a };
+      return { id: `enemy:${d.id}`, name: d.name, hp: a.maxHp, str: d.str, pow: d.pow, end: d.end, kind: '', desc: d.desc, actor: a };
     }
     const n = a as Npc;
-    const sid = n.spriteId;
-    const entry = SCANS[sid];
-    const name = n.def.name || CAST_NAMES[sid] || entry?.name || 'Unknown';
-    if (entry) return { id: `npc:${sid}`, name, hp: entry.hp, str: entry.str, pow: entry.pow, end: entry.end, desc: entry.desc, actor: a };
-    return { id: `npc:human`, name, hp: 32, str: 2, pow: 1, end: 2, desc: 'An ordinary Earthling. No notable power level.', actor: a };
+    const r = scanNpc(n.spriteId, n.def.id);
+    const e = r.entry;
+    const name = n.def.name || CAST_NAMES[n.spriteId] || e.name;
+    return { id: r.id, name, hp: e.hp, str: e.str, pow: e.pow, end: e.end, kind: e.kind ?? '', desc: e.desc, actor: a };
   }
 
   update(input: Input): void {
@@ -130,6 +131,7 @@ export class ScouterScene implements Scene {
     const por = r.actor instanceof Npc ? portrait(r.actor.spriteId) : null;
     if (por) ctx.drawImage(por, 186, 26);
     else { font.drawCentered(ctx, 'NO', 204, 36, '#307040'); font.drawCentered(ctx, 'PORTRAIT', 204, 46, '#307040'); }
+    if (r.kind) font.drawLines(ctx, wrap(r.kind, SCREEN_W - 124).slice(0, 2), 108, 80, '#60d880', '#000', 10);
     font.drawLines(ctx, wrap(r.desc, SCREEN_W - 40).slice(0, 4), 16, 104, '#c8f8d0', '#000', 11);
   }
 }
