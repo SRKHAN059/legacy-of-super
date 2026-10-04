@@ -112,6 +112,13 @@ export class Enemy extends Actor {
       const r = f.col.move(this.box(), this.kx, this.ky, this.flying);
       this.x += r.dx;
       this.y += r.dy;
+      // Tournament of Power: a hard knock into the void is a ring-out.
+      if ((r.hitX || r.hitY) && Math.hypot(this.kx, this.ky) > 1.2 && this.state !== 'dying' && !this.ended) {
+        if (f.canRingOut(this) && f.voidAt(this.x + Math.sign(this.kx) * (this.w / 2 + 4), this.y + Math.sign(this.ky) * 4)) {
+          f.ringOut(this);
+          return;
+        }
+      }
       this.kx *= 0.75;
       this.ky *= 0.75;
       if (Math.abs(this.kx) < 0.1) this.kx = 0;

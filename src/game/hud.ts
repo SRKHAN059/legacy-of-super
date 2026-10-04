@@ -121,6 +121,18 @@ export function drawHud(ctx: CanvasRenderingContext2D, f: Field): void {
     ctx.fillRect(ix + 6, iy + 5, 2, 3);
   }
 
+  // Carried quest object (LoG2 shows an icon top-right).
+  if (f.carrying) {
+    const ix = SCREEN_W - 26;
+    const iy = f.hostile ? 4 : 4;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(ix - 1, iy - 1, 11, 11);
+    ctx.fillStyle = '#f8f0d0';
+    ctx.beginPath(); ctx.ellipse(ix + 4.5, iy + 5, 4, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#d0c090';
+    ctx.fillRect(ix + 2, iy + 6, 2, 2);
+  }
+
   // Countdown timer.
   if (f.timer) {
     const s = Math.ceil(f.timer.frames / 60);

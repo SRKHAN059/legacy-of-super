@@ -45,6 +45,8 @@ export interface MapDef {
   exits?: Partial<Record<'north' | 'south' | 'east' | 'west', EdgeExit>>;
   /** Interactive world objects. */
   objects?: ObjectDef[];
+  /** Enemies knocked hard into `void` tiles are eliminated (Tournament of Power rules). */
+  ringOut?: boolean;
 }
 
 /** Edge connection. */

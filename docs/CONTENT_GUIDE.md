@@ -146,10 +146,14 @@ c01_chichi_talk: async (s) => {
 Key calls (see doc comments for all): `say(who,text,expr)`, `talk([...])`, `narrate`, `ask(who,text,opts)`,
 `flag/set/clear/check/num/inc`, `give/take/has/count`, `quest/done`, `join/switchTo/learn/learnCharged/setForm/
 transformNow/outfit/heal/exp`, `chapter(n,title,subtitle)` (title card + sets chapter), `warp(map,x,y,dir)`,
-`fadeOut/fadeIn/wait/seconds/shake/flash/letterbox/music/sfx/banner/toast`, `pan(x,y,frames)/follow()`,
+`fadeOut/fadeIn/wait/seconds/shake/flash/tint/letterbox/music/sfx/banner/toast`, `hasScript/call` (run another script inline), `pan(x,y,frames)/follow()`,
 `spawn(id,sprite,x,y,dir,name)/remove/walk/walkAll/place/face/pose/sprite/aura/show/silhouette/lift/flyTo/emote/
 powerUp/boom/blast/clash`, `spawnEnemy/waitDefeat/clearEnemies`, `fight(type,{x,y,uid,survive,loseOk})`,
-`unlockRegion(spotId)`, `worldMap(world)`, `free()/lock()`.
+`unlockRegion(spotId)`, `worldMap(world)`, `free()/lock()`, `carry(label, onBreakScript)/drop()/carrying`
+(LoG2 egg-escort: no attacking while carrying, a hit breaks it), `beamStruggle(heroCastId, foeCastId, heroColor,
+foeColor, taunts[], pressure)` (unlosable mash-A clash for finales), `scouterDatabase()` (CC computer).
+Maps with `ringOut: true` (Tournament of Power) eliminate enemies knocked hard into `void` tiles (counts as a kill;
+bosses only if `boss.ringOut`).
 
 Speakers: a cast id (`'bulma'`), an NPC id on the current map, `'hero'`, or `'narrator'`. Expressions:
 `neutral happy angry shock sad smirk shout hurt`.

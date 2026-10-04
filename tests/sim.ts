@@ -49,7 +49,7 @@ export class Sim {
   private bot(): void {
     const g = this.game;
     const top = g.scenes.top?.constructor.name ?? '';
-    if (/Dialogue|TitleCard|GameOver/.test(top)) {
+    if (/Dialogue|TitleCard|GameOver|BeamStruggle/.test(top)) {
       this.pressA = !this.pressA;
       this.input.inject('A', this.pressA);
     } else if (/Choice/.test(top)) {

@@ -85,8 +85,9 @@ function buildTexture(world: WorldId): WorldTex {
         const lat = y / TEX;
         if (h < 0.08) { r = 32; g = 88; b = 192; if (h > 0.04) { r = 56; g = 128; b = 216; } }
         else if (h < 0.11) { r = 224; g = 208; b = 144; }
-        else if (h > 0.42) { r = 240; g = 240; b = 248; }
-        else if (h > 0.33) { r = 136; g = 112; b = 88; }
+        else if (h > 0.56 && hash2(x >> 2, y >> 2, seed + 3) > 0.3) { r = 240; g = 240; b = 248; }
+        else if (h > 0.47) { r = 136; g = 112; b = 88; }
+        else if (h > 0.43) { r = 112; g = 128; b = 80; }
         else if (lat > 0.72 && moist < 0.45) { r = 216; g = 184; b = 112; }
         else if (lat < 0.18) { r = 208; g = 224; b = 232; }
         else if (moist > 0.55) { r = 48; g = 128; b = 56; }
@@ -123,6 +124,7 @@ export class WorldMapScene implements Scene {
   private readonly frameBmp: Bitmap;
   private readonly frameCtx: CanvasRenderingContext2D;
   private landing = false;
+  private paused = false;
   private fadeIn = 16;
 
   constructor(private readonly game: Game) {
@@ -192,6 +194,12 @@ export class WorldMapScene implements Scene {
     const pyC = Math.max(8, Math.min(TEX - 8, this.py));
     this.x += pxC - this.px;
     this.y += pyC - this.py;
+    if (input.pressed('start') && !this.paused) {
+      this.paused = true;
+      void this.game.openPauseOverWorld().then(() => { this.paused = false; });
+      return;
+    }
+    if (this.paused) return;
     if (input.pressed('A')) {
       const s = this.nearSpot();
       if (s) void this.land(s);

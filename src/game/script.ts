@@ -84,6 +84,20 @@ export class ScriptApi {
     return this.ctx.npc;
   }
 
+  // ---------------------------------------------------------------- composition
+
+  /** True if a script id is registered (guard cross-act handoffs). */
+  hasScript(id: string): boolean {
+    return !!SCRIPTS[id];
+  }
+
+  /** Run another script inline (same lock, same context) and wait for it. */
+  async call(id: string): Promise<void> {
+    const fn = SCRIPTS[id];
+    if (!fn) throw new Error(`Unknown script "${id}"`);
+    await fn(new ScriptApi(this.game, this.ctx));
+  }
+
   // ---------------------------------------------------------------- flags
 
   flag(name: string): boolean { return this.state.flag(name); }
@@ -281,6 +295,8 @@ export class ScriptApi {
   async fadeIn(frames = 20): Promise<void> { await this.game.fadeTo(0, frames); }
 
   shake(frames = 20, mag = 2): void { this.field.camera.shake(frames, mag); }
+  /** Tint the screen (e.g. 'rgba(20,20,80,0.45)' for night, 'rgba(120,0,40,0.3)' for a nightmare); null clears. */
+  tint(color: string | null): void { this.field.tintOverride = color; }
   flash(color = '#ffffff', frames = 10): void { this.field.flashScreen(color, frames); }
   /** Cinematic letterbox bars on/off. */
   letterbox(on: boolean): void { this.field.letterbox = on ? 12 : 0; }
@@ -553,6 +569,39 @@ export class ScriptApi {
     f.boss = null;
     f.player.lock(true);
     return result;
+  }
+
+  /** Start carrying a fragile quest object (no attacking; a hit breaks it and runs `onBreak`). */
+  carry(label: string, onBreak?: string): void {
+    this.field.carrying = { label, onBreak };
+  }
+
+  /** Stop carrying (delivered). Returns true if the object was still intact. */
+  drop(): boolean {
+    const had = !!this.field.carrying;
+    this.field.carrying = null;
+    return had;
+  }
+
+  /** True while carrying an intact object. */
+  get carrying(): boolean {
+    return !!this.game.field?.carrying;
+  }
+
+  /**
+   * LoG2-style scripted beam struggle: mash A until the hero overpowers the foe (cannot be lost).
+   * `hero`/`foe` are cast ids for portraits.
+   */
+  async beamStruggle(hero: string, foe: string, heroColor: string, foeColor: string, lines: string[] = [], pressure = 0.18): Promise<void> {
+    await this.game.beamStruggle({
+      heroName: CAST_NAMES[hero] ?? hero, foeName: CAST_NAMES[foe] ?? foe, heroColor, foeColor,
+      heroPortrait: portrait(hero, 'shout'), foePortrait: portrait(foe, 'angry'), lines: lines.map((l) => this.fmt(l)), pressure,
+    });
+  }
+
+  /** Open the Capsule Corp Scouter database viewer. */
+  async scouterDatabase(): Promise<void> {
+    await this.game.openScouterDb();
   }
 
   /** Wait until every enemy on the map is defeated (field battles). */

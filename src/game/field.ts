@@ -79,6 +79,8 @@ export class Field implements Scene {
   /** Edge-exit cooldown so arriving on an edge does not bounce back. */
   private exitCd = 30;
   private triggersInside = new Set<string>();
+  /** Script-controlled screen tint (night, dreams). undefined = use the map's own tint. */
+  tintOverride: string | null | undefined = undefined;
   /** Countdown timer shown on the HUD (seconds), or null. */
   timer: { frames: number; label: string } | null = null;
 
@@ -116,7 +118,7 @@ export class Field implements Scene {
 
   /** Player may attack right now. */
   get canFight(): boolean {
-    return this.hostile && !this.locked;
+    return this.hostile && !this.locked && !this.carrying;
   }
 
   /** True while a cutscene owns the controls. */
@@ -216,6 +218,13 @@ export class Field implements Scene {
     audio.sfx('hurt');
     if (!opts.noKnock) p.onHurt(fromX, fromY);
     else { p.flash = 3; }
+    if (this.carrying) {
+      const c = this.carrying;
+      this.carrying = null;
+      this.fx.explode(p.x, p.y - 20, 10, '#f8f0d0');
+      this.toast([`The ${c.label} broke!`], '#f86060');
+      if (c.onBreak) this.runScript(c.onBreak);
+    }
     if (p.cs.hp <= 0) this.playerDown();
     return dmg;
   }
@@ -226,10 +235,46 @@ export class Field implements Scene {
     p.state = 'dead';
     p.pose = 'ko';
     p.revert();
+    this.carrying = null;
     audio.sfx('die');
     audio.stopMusic();
     void this.game.gameOver();
   }
+
+  /** True when the map is a ring-out arena and this enemy can be knocked out of bounds. */
+  canRingOut(e: Enemy): boolean {
+    if (!this.def.ringOut || e.def.invulnerable) return false;
+    return !e.isBoss || !!e.def.boss?.ringOut;
+  }
+
+  /** Terrain at a world pixel is the void. */
+  voidAt(x: number, y: number): boolean {
+    const tx = Math.floor(x / TILE);
+    const ty = Math.floor(y / TILE);
+    const row = this.map.grid[ty];
+    if (!row) return true;
+    const t = row[tx];
+    return t === undefined || t === 'void';
+  }
+
+  /** Eliminate an enemy by ring-out: counts as defeated (EXP, flags, onDefeat). */
+  ringOut(e: Enemy): void {
+    this.fx.number(e.x, e.y - 34, 'RING OUT!', '#f8e040');
+    this.camera.shake(10, 2);
+    if (e.isBoss && e.def.boss && e.def.boss.endAt > 0) {
+      e.hp = Math.max(1, Math.ceil(e.maxHp * e.def.boss.endAt));
+      e.ended = true;
+      e.state = 'ended';
+      e.hidden = true;
+      return;
+    }
+    e.hp = 0;
+    this.killEnemy(e);
+    e.hidden = true;
+  }
+
+  /** Quest object being carried (LoG2 egg escort): no attacking; a hit breaks it. */
+  carrying: { label: string; onBreak?: string } | null = null;
 
   /** Melee hit test against enemies, breakables, gates and bags. Returns enemies hit. */
   meleeHit(r: Rect, atk: number, mult: number, opts: MeleeOpts = {}): number {
@@ -793,8 +838,9 @@ export class Field implements Scene {
     for (const s of this.shots) s.render(ctx, cx, cy, this.tick);
     this.fx.render(ctx, cx, cy);
 
-    if (this.def.tint) {
-      ctx.fillStyle = this.def.tint;
+    const tint = this.tintOverride !== undefined ? this.tintOverride : this.def.tint;
+    if (tint) {
+      ctx.fillStyle = tint;
       ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
     }
     if (this.skipT > 0) {

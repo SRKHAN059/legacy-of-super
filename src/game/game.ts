@@ -13,6 +13,8 @@ import { PauseMenu } from '../ui/pause';
 import { RegionMapScene } from '../ui/regionmap';
 import { SaveMenu } from '../ui/savemenu';
 import { ScouterScene } from '../ui/scouter';
+import { ScouterDbScene } from '../ui/scouterdb';
+import { BeamStruggleScene, type StruggleOpts } from '../ui/beamstruggle';
 import { TitleCardScene } from '../ui/titlecard';
 import { TitleScene } from '../ui/title';
 import { WorldMapScene } from '../ui/worldmap';
@@ -266,8 +268,19 @@ export class Game {
   // ---- overlays ----
   async openSaveMenu(): Promise<void> { await this.overlay(new SaveMenu(this)); }
   async openPause(): Promise<void> { await this.overlay(new PauseMenu(this)); }
+  /** Pause menu over the world map (no field underneath). */
+  async openPauseOverWorld(): Promise<void> {
+    const m = new PauseMenu(this);
+    this.scenes.push(m);
+    try { await m.done; } finally { this.scenes.remove(m); this.input.swallow(); }
+  }
   async openScouter(): Promise<void> { await this.overlay(new ScouterScene(this)); }
   async openRegionMap(): Promise<void> { await this.overlay(new RegionMapScene(this)); }
+  async openScouterDb(): Promise<void> { await this.overlay(new ScouterDbScene(this)); }
+  async beamStruggle(o: StruggleOpts): Promise<void> {
+    this.hideHud = true;
+    try { await this.overlay(new BeamStruggleScene(o)); } finally { this.hideHud = false; }
+  }
   async openWorldMap(): Promise<void> {
     if (!this.field) return;
     this.lockDepth++;
@@ -299,7 +312,8 @@ export class Game {
     const f = this.field;
     if (!f) return;
     this.lockDepth = 999;
-    await f.wait(70);
+    await f.wait(50);
+    await this.say([{ text: 'You have died!' }]);
     await this.fadeTo(1, 30);
     this.lockDepth = 0;
     this.scenes.replace(new GameOverScene(this));

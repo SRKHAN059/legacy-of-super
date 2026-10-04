@@ -1,6 +1,7 @@
 import { registerEnemies } from '../enemies';
 import { registerMaps } from '../registry';
 import { registerScripts } from '../../game/script';
+import { registerSpots } from '../world';
 
 /** Developer test maps exercising every engine feature. Reachable via ?map=dev_sandbox. */
 registerEnemies([
@@ -121,3 +122,8 @@ registerScripts({
     }
   },
 });
+
+registerSpots([
+  { id: 'spot_dev', name: 'Test Meadow', world: 'earth', x: 110, y: 110, map: 'dev_sandbox', tx: 4, ty: 9, icon: 'house' },
+  { id: 'spot_dev2', name: 'Test Arena', world: 'earth', x: 160, y: 140, map: 'dev_arena', tx: 3, ty: 5, icon: 'arena' },
+]);
