@@ -5,11 +5,23 @@ import { battle, bossFight, BUSY, forceFade, freeNear, heroTile, npcWithSprite, 
 import { HUB } from './hubs';
 
 /**
- * Chapter 12 — "Days of Peace" (L40→42). A LoG2-style free-roam hub: four peacetime episodes, any two of
- * which finish the gold quest and roll into Chapter 13 (the other two stay available as side content).
+ * Chapter 12 — "Days of Peace" (L40→42). A LoG2-style free-roam hub: six peacetime episodes, any two of which
+ * finish the gold quest and roll into Chapter 13 (the rest stay available as side content, and again after the
+ * credits). Four arrive as messages at the start and go straight into the Journal; "Whose Wish?" (c12_wish.ts) and
+ * the baseball game (c12_baseball.ts) find the player instead, King Kai's call and Champa's visit, and get their
+ * Journal entries when they are taken up, the way LoG2 adds a task when its giver hands it over.
+ *
+ * Two stays the bar with six on offer: the chapter's level band (40-42) and the story gates and fights after it are
+ * tuned for a hero arriving with two episodes' EXP, and LoG2's free-roam stretches never made the player clear a
+ * side list to move on.
  */
 
-const EPISODES = ['c12_hit', 'c12_pan', 'c12_saiyaman', 'c12_krillin'] as const;
+/** Episodes whose quest-givers phone in at the start (Journal entries from `c12_start`). */
+const CALLED = ['c12_hit', 'c12_pan', 'c12_saiyaman', 'c12_krillin'] as const;
+/** Every episode that counts towards the gold quest. */
+export const EPISODES = [...CALLED, 'c12_wish', 'c12_ball'] as const;
+/** Episodes needed to finish Days of Peace. */
+export const EPISODES_NEEDED = 2;
 
 /** Pan's hiding spots in the Paozu Highlands, in chase order. */
 const PAN_SPOTS: Array<[number, number]> = [[8, 7], [29, 4], [33, 20], [6, 21]];
@@ -86,12 +98,21 @@ registerScripts({
       ['goku', 'Heh, see? Everyone needs me after all!', 'happy'],
       ['goten', 'Also Whis came by. He said Lord Beerus is at Capsule Corp, and something about "an assassin who works nights." He was giggling.'],
       ['goku', 'An assassin? Now THAT sounds fun!', 'smirk'],
+      ['goten', 'And Trunks says his mom is building something secret on the old time machine pad. And a big purple cat ate all their snacks!', 'happy'],
+      ['goku', 'A purple cat? That\'s gotta be Lord Champa! He never visits without a reason...', 'neutral'],
+    ]);
+    // King Kai has been dead since the Cell Games, and he has noticed the peace too.
+    s.flash('#f8f0a0', 6);
+    await s.talk([
+      ['kingKai', 'Goku! Gooookuuu! It\'s King Kai! Still dead, by the way. Since the Cell Games. Not that anyone is counting!', 'angry'],
+      ['goku', 'Oh! Hi, King Kai! Uh... I\'ll get the Dragon Balls and wish you back! Soon! Promise!', 'happy'],
+      ['kingKai', 'You said that last year!', 'angry'],
     ]);
     s.unlockRegion('spot_snow');
     await s.narrate('Bulma has also opened a dinosaur preserve in the Snowy Highlands for "research". It is now on the world map. The level 50 gates up there guard old trophies.');
-    await s.narrate('DAYS OF PEACE: help your friends! Finish any two of the four episodes in your Journal to continue the story.');
+    await s.narrate(`DAYS OF PEACE: help your friends! Finish any ${EPISODES_NEEDED} of the episodes to continue the story. Four are in your Journal; Bulma's secret project and Champa's visit wait at Capsule Corp.`);
     await s.quest('c12_days', true);
-    for (const q of EPISODES) await s.quest(q, true);
+    for (const q of CALLED) await s.quest(q, true);
     await s.narrate('Journal updated!');
     if (tempChichi) removeAll(s, 'act5_chichi'); else s.place('act5_chichi', HUB.home.chichi[0], HUB.home.chichi[1], 'down');
     if (tempGoten) removeAll(s, 'act5_goten'); else s.place('act5_goten', HUB.home.goten[0], HUB.home.goten[1], 'down');
@@ -102,8 +123,8 @@ registerScripts({
   c12_progress: async (s) => {
     const n = episodesDone(s);
     if (s.state.data.chapter !== 12 || s.flag('c12_finished')) return;
-    if (n < 2) {
-      await s.narrate(`Days of Peace: ${n} of 2 episodes complete. Your friends are waiting!`);
+    if (n < EPISODES_NEEDED) {
+      await s.narrate(`Days of Peace: ${n} of ${EPISODES_NEEDED} episodes complete. Your friends are waiting!`);
       return;
     }
     s.set('c12_finished');
@@ -783,6 +804,9 @@ registerScripts({
       'Whis says I should "relax more". I am relaxing. Can\'t you tell?',
       'Bulma\'s baby is due any day now. Vegeta has threatened me twice already. Adorable.',
       'Whis keeps asking about rare Earth delicacies. Bring him some, or he will never stop talking about them.',
+      // After the two late episodes (c12_wish.ts, c12_baseball.ts).
+      ...(s.flag('c12_labGone') ? ['A time machine. On MY favourite restaurant\'s lawn. Bulma is lucky I like her cooking.'] : []),
+      ...(s.flag('c12_ballDone') ? ['That Yamcha has a good arm. For a weakling. Do not tell him I said so.'] : []),
     ];
     await s.say('beerus', lines[s.inc('act5_beerusTalks') % lines.length], 'smirk');
   },

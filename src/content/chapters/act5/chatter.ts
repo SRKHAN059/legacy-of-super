@@ -6,7 +6,7 @@ import { trophyCount } from './post';
  * Chi-Chi and Goten at the Son house, Bulma and Vegeta at Capsule Corp, from Chapter 12 to the post-game.
  */
 
-const EPISODES = ['c12_hit', 'c12_pan', 'c12_saiyaman', 'c12_krillin'] as const;
+const EPISODES = ['c12_hit', 'c12_pan', 'c12_saiyaman', 'c12_krillin', 'c12_wish', 'c12_ball'] as const;
 
 /** Where to find each Days of Peace episode, in Goten's words (he talks to his brother differently). */
 function episodeHint(s: ScriptApi, q: (typeof EPISODES)[number]): string {
@@ -19,6 +19,8 @@ function episodeHint(s: ScriptApi, q: (typeof EPISODES)[number]): string {
     case 'c12_saiyaman': return gohan
       ? 'There\'s a movie director yelling outside the ZTV studio in Satan City. He wants YOU, big brother! You\'re late!'
       : 'There\'s a movie director yelling outside the ZTV studio in Satan City. He wants Gohan!';
+    case 'c12_wish': return 'Trunks says his mom hid something under a sheet on the old time machine pad. She won\'t even let HIM look!';
+    case 'c12_ball': return 'A big purple cat is eating everything at Capsule Corp! Trunks says he wants to challenge Lord Beerus to something.';
     default: return 'Krillin\'s at Kame House with Master Roshi. He sounded really, really sad on the phone.';
   }
 }
@@ -117,6 +119,14 @@ registerScripts({
         : 'My Gohan, a brilliant scholar, in a movie! In a helmet and a cape! ...Is it out in theatres yet?');
     }
     if (done.includes('c12_krillin')) lines.push('Krillin shaved his head again? 18 must be thrilled. Or furious. With her it\'s hard to tell.');
+    if (done.includes('c12_wish')) {
+      lines.push(goku
+        ? 'Gohan told me. You gave the wish to Pan, for her fever. ...Thank you, Goku. That\'s all. Thank you.'
+        : gohan
+          ? 'Your father gave the wish to Pan, for her fever. ...Tell him thank you from me. And don\'t tell him I cried.'
+          : 'Gohan told me. Goku gave the wish to Pan, for her fever. ...Tell him thank you from me.');
+    }
+    if (done.includes('c12_ball')) lines.push(goku ? 'BASEBALL? Against a god of destruction? ...Did you at least win?' : 'Goku played BASEBALL against a god of destruction. ...Did they at least win?');
     await s.say('chichi', rotate(s, 'act5_chichi12', lines), 'smirk');
   },
 

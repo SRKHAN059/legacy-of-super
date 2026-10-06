@@ -1,4 +1,4 @@
-import { registerEnemies, type EnemyDef } from '../../enemies';
+import { type BossDef, registerEnemies, type EnemyDef } from '../../enemies';
 
 /**
  * Chapter 14 set-piece bestiary (Guide §6: T7 regulars, 45-50 band bosses). The set-piece bosses sit below the
@@ -39,7 +39,9 @@ const PRIDE_SQUAD: EnemyDef[] = [
 
 const FIREBALLS: EnemyDef[] = [
   {
-    id: 'c14_kakunsa', name: 'Kakunsa', sprite: 'c14_suroas', hp: 8400, str: 62, pow: 48, end: 54, exp: 300000, ai: 'boss', speed: 1.25,
+    // She steps into the fight as Sanka Ku, in her everyday look and under that name (`c14_fireballs` dresses the
+    // spawned fighter down); the transformation at her first phase change makes her Kakunsa, as this entry reads.
+    id: 'c14_kakunsa', name: 'Kakunsa', sprite: 'c14_kakunsa', hp: 8400, str: 62, pow: 48, end: 54, exp: 300000, ai: 'boss', speed: 1.25,
     desc: 'A Kamikaze Fireball of Universe 2. Love transforms her into a snarling beast-warrior.',
     boss: {
       endAt: 0.5, ringOut: true, kiColor: '#f8a0d0',
@@ -124,9 +126,99 @@ const TRICKSTERS: EnemyDef[] = [
   },
 ];
 
+// ---------------------------------------------------------------- the middle of the west-ring relay (eps 103-107)
+// Short set pieces between the headliners: the finale band's HP with early scripted ends, so each lasts a minute or
+// two. Master Roshi and Tien are played over Goku (`c14_guests.ts`) with no Z form, so their opponents are tuned for
+// Goku L42 in base form (Roshi at Max Power against Ganos); Obni for Gohan L42 in his Ultimate form.
+// Canon finishes several of these fighters its own way (Caway jumps, Dercori is sealed in a jar, Vegeta throws
+// Magetta out), so they carry a `boss.endAt` although they fight as regular enemies: the engine then stops them at
+// that fraction instead of knocking them out (`Field.applyDamage`), and `c14_veterans.ts` (`daze`) leaves them dazed
+// on the stage for the scene that ends them. Only a ring-out takes them out first.
+
+/** Where a regular fighter of these episodes stops, dazed, for canon's own finish. */
+const DAZED: BossDef = { endAt: 0.3, phases: [] };
+
+/** Obni's afterimages (`c14_obni.ts`): a summoned decoy that vanishes at the first touch. */
+export const OBNI_IMAGE = 'c14_obniImage';
+
+/** Harmira holds his sniper's nest while his HP stays above this fraction (`c14_veterans.ts` snipes for him). */
+export const SNIPER_NEST = 0.97;
+
+const VETERANS: EnemyDef[] = [
+  {
+    id: 'c14_obni', name: 'Obni', sprite: 'c14_obni', hp: 8200, str: 54, pow: 52, end: 60, exp: 320000, ai: 'boss', speed: 1.3,
+    desc: 'Universe 10\'s last fighter. Splits into afterimages, and every blow carries the weight of the family waiting for him.',
+    boss: {
+      // The void cannot take him mid-fight: canon's finish is the scripted end, Gohan's cross-counter and the
+      // Kamehameha that throws him out of the ring (`c14_obni.ts`).
+      endAt: 0.35, kiColor: '#c0a040', minion: OBNI_IMAGE,
+      phases: [
+        { until: 0.7, moves: ['chase', 'summon', 'dash', 'chase'], rest: 46 },
+        { until: 0, moves: ['teleport', 'summon', 'charge', 'chase'], rest: 34, speed: 1.15, onStart: 'c14_obni_p2' },
+      ],
+    },
+  },
+  {
+    id: OBNI_IMAGE, name: 'Obni', sprite: 'c14_obni', hp: 1, str: 1, pow: 1, end: 0, exp: 0, ai: 'idle', speed: 0, drops: 'none',
+    desc: 'One of Obni\'s afterimages. Fades the moment anything touches it, and it casts no shadow.',
+  },
+  { id: 'c14_caway', name: 'Caway', sprite: 'c14_caway', hp: 2400, str: 50, pow: 46, end: 46, exp: 56000, ai: 'rusher', speed: 1.4, boss: DAZED, desc: 'A Universe 4 fighter who counts on a pretty smile to make her opponents drop their guard.' },
+  { id: 'c14_dercori', name: 'Dercori', sprite: 'c14_dercori', hp: 2200, str: 40, pow: 52, end: 44, exp: 54000, ai: 'shooter', speed: 1.0, boss: DAZED, shot: { color: '#9060c0', cooldown: 110, speed: 2.6, mult: 0.45 }, desc: 'A hooded Universe 4 fighter who throws dark ki from a safe distance.' },
+  {
+    id: 'c14_ganos', name: 'Ganos', sprite: 'c14_ganos', hp: 8200, str: 48, pow: 46, end: 56, exp: 320000, ai: 'boss', speed: 1.2,
+    desc: 'A Universe 4 fighter who turns into a bird of prey when he is cornered, and grows faster the harder he is pushed.',
+    boss: {
+      endAt: 0.45, ringOut: true, kiColor: '#f0a020',
+      phases: [
+        { until: 0.65, moves: ['chase', 'dash', 'shot'], rest: 48 },
+        // The bird swoops (dashes) far more than it walks.
+        { until: 0, moves: ['dash', 'chase', 'dash', 'rain'], rest: 40, speed: 1.25, onStart: 'c14_ganos_bird' },
+      ],
+    },
+  },
+  {
+    // Universe 2's decoy (ep 106): his body is a mirror. Fists and ki pass him by, and `c14_veterans.ts` bounces
+    // Harmira's shots (and the hero's ki blasts) off him; canon has Vegeta blast him off the stage once Harmira is out.
+    id: 'c14_prum', name: 'Prum', sprite: 'c14_prum', hp: 1800, str: 1, pow: 56, end: 42, exp: 0, ai: 'idle', speed: 0, invulnerable: true, drops: 'none',
+    desc: 'Universe 2\'s lookout. His body turns to a mirror that bounces his partner\'s shots at targets from angles nobody expects.',
+  },
+  {
+    // Universe 2's sniper (ep 106). From a hiding place across the ring he fires at Prum, who bounces the shots on
+    // (`c14_veterans.ts`); he holds his nest until the first blows land, then fights head-on. No ring-out: canon ends
+    // it with Tien's Multi-Form dragging him down (the scripted end).
+    id: 'c14_harmira', name: 'Harmira', sprite: 'c14_harmira', hp: 8200, str: 52, pow: 52, end: 52, exp: 320000, ai: 'boss', speed: 1.0,
+    desc: 'Universe 2\'s sniper. Tracks his targets by their body heat and fires from a hiding place, bouncing his shots off Prum.',
+    boss: {
+      endAt: 0.6, kiColor: '#f878b8',
+      phases: [
+        // In his nest: he only snipes (the script fires the shots) and does not stir.
+        { until: SNIPER_NEST, moves: ['guard'], rest: 600, speed: 0 },
+        { until: 0.8, moves: ['shot', 'charge', 'chase', 'volley'], rest: 48, onStart: 'c14_harmira_found' },
+        { until: 0, moves: ['charge', 'chase', 'volley', 'rain'], rest: 38, speed: 1.15, onStart: 'c14_harmira_p2' },
+      ],
+    },
+  },
+  {
+    // Frost holds the jar Vegeta is sealed in (ep 107). He must not fall here: Frieza eliminates him in ep 108.
+    id: 'c14_frostJar', name: 'Frost', sprite: 'frost', hp: 8200, str: 47, pow: 47, end: 54, exp: 300000, ai: 'boss', speed: 1.2,
+    desc: 'Frost with the jar that holds Vegeta tucked under his arm. Strike him hard enough and he will have to let go.',
+    boss: {
+      endAt: 0.65, kiColor: '#a070f0',
+      phases: [
+        // No poison-needle grab here: the jar is under his arm (the needles come out against Frieza in ep 108).
+        { until: 0.8, moves: ['shot', 'dash', 'chase', 'guard'], rest: 48 },
+        { until: 0, moves: ['teleport', 'volley', 'dash', 'chase'], rest: 40, speed: 1.15, onStart: 'c14_frostJar_p2' },
+      ],
+    },
+  },
+  // Fists do half damage against the metal giant, as in the Tournament of Destroyers: he is Frost's shield, not the goal.
+  // Dazed, he waits for the freed Vegeta to throw him out (canon).
+  { id: 'c14_magetta', name: 'Auta Magetta', sprite: 'c07_magetta', hp: 4000, str: 42, pow: 44, end: 54, exp: 58000, ai: 'heavy', speed: 0.6, resMelee: 0.5, boss: DAZED, box: { w: 16, h: 8 }, desc: 'Universe 6\'s metal giant, guarding Frost\'s back. Punching him burns your fists; ki works better.' },
+];
+
 /** Free-roam Pride Troopers for the late tournament, when Universe 11 is the only rival left standing. */
 const ROAMERS: EnemyDef[] = [
   { id: 'c14_prideLancer', name: 'Pride Lancer', sprite: 'prideTrooper', hp: 5200, str: 64, pow: 1, end: 56, exp: 62000, ai: 'reach', speed: 1.2, desc: 'A Pride Trooper who strikes from beyond arm\'s length with a ki spear.' },
 ];
 
-registerEnemies([...PRIDE_SQUAD, ...FIREBALLS, ...PRIDE_TAG, ...NAMEKIANS, ...TRICKSTERS, ...ROAMERS]);
+registerEnemies([...PRIDE_SQUAD, ...FIREBALLS, ...PRIDE_TAG, ...NAMEKIANS, ...TRICKSTERS, ...VETERANS, ...ROAMERS]);

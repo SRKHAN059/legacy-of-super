@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import '../src/content';
 import { propArt } from '../src/art/props';
 import { CAST, CAST_NAMES } from '../src/content/cast';
@@ -8,7 +8,7 @@ import { ENEMIES } from '../src/content/enemies';
 import { ITEMS } from '../src/content/items';
 import { QUESTS } from '../src/content/quests';
 import { MAPS, resolveMap } from '../src/content/registry';
-import { GENERIC_SCAN_KEY, GENERIC_SCAN_SPRITES, NPC_SCAN_OVERRIDES, SCAN_ALIASES, SCANS, scanKey, scanNpc } from '../src/content/scans';
+import { GENERIC_SCAN_KEY, GENERIC_SCAN_SPRITES, namedScanCount, NPC_SCAN_OVERRIDES, SCAN_ALIASES, SCANS, scanEntries, scanEntryCount, scanKey, scanNpc } from '../src/content/scans';
 import { SPOTS } from '../src/content/world';
 import { FORMS } from '../src/content/characters';
 import { TECHNIQUES } from '../src/content/techniques';
@@ -19,6 +19,8 @@ import { SCREEN_W, TILE } from '../src/engine/constants';
 import { measure, wrap } from '../src/engine/fontdata';
 import { ScouterScene } from '../src/ui/scouter';
 import { ScouterDbScene } from '../src/ui/scouterdb';
+import { DEV_QUESTS } from '../src/content/dev/quests';
+import { DEV_ENEMIES, DEV_MAPS, DEV_SCRIPTS, DEV_SPOTS } from '../src/content/dev/sandbox';
 import { Sim } from './sim';
 
 const sprite = (id: string) => !!(CAST[id] || CREATURES[id]);
@@ -307,4 +309,119 @@ describe('scouter scan and database', () => {
       sim.input.poll();
     }
   });
+});
+
+/** Registries of a freshly loaded content graph, as a build whose `import.meta.env.DEV` is `dev` holds them. */
+async function loadContent(dev: boolean) {
+  vi.stubEnv('DEV', dev);
+  vi.resetModules();
+  try {
+    await import('../src/content');
+    const registry = await import('../src/content/registry');
+    return {
+      maps: registry.MAPS,
+      resolveMap: registry.resolveMap,
+      enemies: (await import('../src/content/enemies')).ENEMIES,
+      scripts: (await import('../src/game/script')).SCRIPTS,
+      spots: (await import('../src/content/world')).SPOTS,
+      quests: (await import('../src/content/quests')).QUESTS,
+    };
+  } finally {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  }
+}
+
+describe('developer content stays out of production builds', () => {
+  it('the dev server and the tests register the test maps, sparring robot, scripts, spots and dev quest', () => {
+    for (const m of DEV_MAPS) expect(MAPS[m.id], m.id).toBe(m);
+    for (const e of DEV_ENEMIES) expect(ENEMIES[e.id], e.id).toBe(e);
+    for (const [id, fn] of Object.entries(DEV_SCRIPTS)) expect(SCRIPTS[id], id).toBe(fn);
+    for (const sp of DEV_SPOTS) expect(SPOTS[sp.id], sp.id).toBe(sp);
+    for (const q of DEV_QUESTS) expect(QUESTS[q.id], q.id).toBe(q);
+  });
+
+  it('with import.meta.env.DEV off (a production build) the registries and the journal hold none of it', async () => {
+    const dev = await loadContent(true);
+    const prod = await loadContent(false);
+    expect(prod.maps).not.toBe(dev.maps);
+    // Fresh graphs both: production holds everything the dev build does, minus exactly the dev content.
+    const minus = (all: Record<string, unknown>, drop: string[]) => Object.keys(all).filter((id) => !drop.includes(id)).sort();
+    expect(Object.keys(prod.maps).sort()).toEqual(minus(dev.maps, DEV_MAPS.map((m) => m.id)));
+    expect(Object.keys(prod.enemies).sort()).toEqual(minus(dev.enemies, DEV_ENEMIES.map((e) => e.id)));
+    expect(Object.keys(prod.scripts).sort()).toEqual(minus(dev.scripts, Object.keys(DEV_SCRIPTS)));
+    expect(Object.keys(prod.spots).sort()).toEqual(minus(dev.spots, DEV_SPOTS.map((sp) => sp.id)));
+    expect(Object.keys(prod.quests).sort()).toEqual(minus(dev.quests, DEV_QUESTS.map((q) => q.id)));
+    for (const m of DEV_MAPS) expect(dev.maps[m.id], m.id).toBeTruthy();
+    // Nothing left in production leads to a dev map: no map in the dev region, and no exit, warp or flight circle
+    // (chapter overlays included) or landing spot into one.
+    const devRegions = new Set(DEV_MAPS.map((m) => m.region));
+    for (const id of Object.keys(prod.maps)) {
+      const m = prod.resolveMap(id);
+      expect(m, id).toBeTruthy();
+      if (!m) continue;
+      expect(devRegions.has(m.region), `${m.id} region ${m.region}`).toBe(false);
+      for (const ex of Object.values(m.exits ?? {})) if (ex) expect(prod.maps[ex.to], `${m.id} exit to ${ex.to}`).toBeTruthy();
+      for (const w of m.warps ?? []) expect(prod.maps[w.to], `${m.id} warp to ${w.to}`).toBeTruthy();
+      for (const o of m.objects ?? []) if (o.type === 'flight') expect(prod.maps[o.to], `${m.id} flight to ${o.to}`).toBeTruthy();
+    }
+    for (const sp of Object.values(prod.spots)) if (sp.map) expect(prod.maps[sp.map], `${sp.id} lands on ${sp.map}`).toBeTruthy();
+    // The production journal: every gold (main story) objective carries its world-map star, as in LoG2, and every
+    // star points at a landing spot that ships.
+    const starless = Object.values(prod.quests).filter((q) => q.star === 'gold' && !q.region).map((q) => q.id);
+    expect(starless).toEqual([]);
+    for (const q of Object.values(prod.quests)) if (q.region) expect(prod.spots[q.region], `${q.id} star on ${q.region}`).toBeTruthy();
+  });
+});
+
+describe('scouter scan counts (pause screen, database and Bulma\'s errand agree)', () => {
+  // A save from before the alias table: Vegeta filed twice (casual outfit and base), Goku twice (Whis gi and base),
+  // a townsperson, a creature stand-in and Krillin.
+  const OLD_SAVE = ['npc:vegetaCasual', 'npc:vegeta', 'npc:gokuWhis', 'npc:goku', `npc:${GENERIC_SCAN_KEY}`, 'enemy:c09_excavator', 'npc:krillin'];
+
+  it('counts unique database entries: a variant id and its base character are one entry', () => {
+    expect(scanEntries(OLD_SAVE)).toEqual(['npc:vegeta', 'npc:goku', `npc:${GENERIC_SCAN_KEY}`, 'enemy:c09_excavator', 'npc:krillin']);
+    expect(scanEntryCount(OLD_SAVE)).toBe(5);
+    expect(namedScanCount(OLD_SAVE)).toBe(3);
+    expect(scanEntryCount([])).toBe(0);
+    // Ids the game no longer knows read as the generic Earthling entry, so they never inflate either count.
+    expect(scanEntryCount(['npc:noSuchCharacter', `npc:${GENERIC_SCAN_KEY}`, 'enemy:noSuchEnemy'])).toBe(1);
+    expect(namedScanCount(['npc:noSuchCharacter', 'enemy:c09_excavator'])).toBe(0);
+  });
+
+  it('the Capsule Corp database lists exactly the counted entries', () => {
+    const sim = new Sim();
+    sim.start('cc_yard');
+    sim.game.state.data.scans = [...OLD_SAVE];
+    const db = new ScouterDbScene(sim.game);
+    const entries = (db as unknown as { entries: Array<{ id: string }> }).entries;
+    expect(entries.length).toBe(scanEntryCount(OLD_SAVE));
+    expect(entries.map((e) => e.id).sort()).toEqual(scanEntries(OLD_SAVE).sort());
+  });
+
+  it('Bulma\'s Scouter test wants five different guests, not five stored ids', async () => {
+    const sim = new Sim();
+    const st = sim.game.state;
+    st.data.chapter = 2;
+    st.join('vegeta', 9);
+    st.data.active = 'vegeta';
+    st.set('c02_boarded');
+    st.set('c02_scouter');
+    st.addQuest('c02_scan');
+    sim.start('c02_deck', 20, 7);
+    for (let i = 0; i < 4000 && sim.game.lockDepth > 0; i += 10) await sim.tick(10);
+    const bulma = sim.game.field?.npcs.find((n) => n.def.id === 'c02_bulma');
+    expect(bulma).toBeTruthy();
+    const talk = async () => expect(await sim.run(bulma?.def.talk ?? '', bulma ? { npc: bulma } : {})).toBe(true);
+    // Five stored ids but four guests: an old save filed Goku in Whis's gi apart from Goku.
+    st.data.scans = ['npc:krillin', 'npc:android18', 'npc:yamcha', 'npc:gokuWhis', 'npc:goku'];
+    await talk();
+    expect(st.data.journal.c02_scan).toBe('active');
+    expect(st.count('pow1')).toBe(0);
+    st.data.scans.push('npc:tien');
+    await talk();
+    expect(st.data.journal.c02_scan).toBe('done');
+    expect(st.count('pow1')).toBe(1);
+    expect(sim.errors).toEqual([]);
+  }, 120000);
 });

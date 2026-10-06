@@ -1,8 +1,11 @@
 import { registerScripts } from '../../../game/script';
 import { ensureChapterState, force, unforce } from '../common';
 import './c14_enemies';
+import { takeOffGuest } from './c14_guests';
 import { clearStage, eliminated, erased, FIGHT_MARGIN, onStage, QUIET, ringOut, stageOn, wave } from './c14_kit';
+import './c14_obni';
 import './c14_setpieces';
+import './c14_veterans';
 import { battle, bossFight, handOff, heroTile, readyGuest, refresh, removeAll, stage, sweepRivals, warpTo } from './helpers';
 import { HUB } from './hubs';
 
@@ -11,7 +14,9 @@ import { HUB } from './hubs';
  * a relay of forced characters across the three ring-out stage sections (A west → B centre → C east),
  * with save points between sections. Guests Android 17 and Frieza are playable via `switchTo`.
  * The relays run the anime's set pieces in episode order; the ones with their own mechanics (squad formation,
- * transformations, fighting partners, a twin boss, an invisible fighter) live in `c14_setpieces.ts`.
+ * transformations, fighting partners, a twin boss, an invisible fighter) live in `c14_setpieces.ts`, Obni's
+ * afterimages in `c14_obni.ts`, and the veterans' episodes (Master Roshi and Tien, played as guests over Goku) in
+ * `c14_veterans.ts`.
  */
 
 registerScripts({
@@ -136,6 +141,8 @@ registerScripts({
   // ================================================================ Stage A (west ring)
   c14_stageA: async (s) => {
     if (s.flag('c14_stageA')) return;
+    // A relay left mid-way restarts from the top: a guest costume still on (Roshi, Tien) comes off first.
+    takeOffGuest(s);
     s.set(QUIET);
     s.letterbox(true);
     await clearStage(s);
@@ -299,15 +306,19 @@ registerScripts({
     await s.call('c14_pride');
     await s.call('c14_fireballs');
 
-    // --- 6. Universe 10 falls in the dark (ep 103); Goku and Hit team up against Dyspo and K'nsi (ep 104).
-    await s.fadeOut(20);
-    await erased(s, 'Twenty minutes in. Gohan knocks out Universe 10\'s last fighter, Obuni... and Zeno erases Universe 10.');
+    // --- 6. Gohan throws Obni, Universe 10's last fighter, out of the ring (ep 103); Goku and Hit team up against Dyspo
+    //        and K'nsi (ep 104).
+    await s.call('c14_obni');
     await s.call('c14_dyspoTag');
 
-    // --- 7. More time passes in the dark (eps 105-107), then Frieza vs Frost (ep 108; Frieza is a guest).
+    // --- 7. The veterans' hour (eps 105-107): Master Roshi against Universe 4, Tien against Universe 2's snipers, and
+    //        Frost's trap on Vegeta, Roshi and Tien played as guests. Then Frieza vs Frost (ep 108; Frieza is a guest).
+    await s.call('c14_roshi');
+    await s.call('c14_snipers');
+    await s.call('c14_frostTrap');
     readyGuest(s, 'frieza', 47);
     await s.fadeOut(20);
-    await s.narrate('Tien takes Universe 2\'s sniper out of the ring with him; Master Roshi frees Vegeta from Frost\'s trap, then retires on his own two feet.');
+    await s.narrate('Frost slips away from the furious prince... and runs straight into the one fighter he wanted to find.');
     force(s, 'frieza');
     refresh(s, 'frieza');
     await s.fadeIn(20);

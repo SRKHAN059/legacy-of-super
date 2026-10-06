@@ -11,7 +11,8 @@ Read these before writing anything:
 - `../research/dbs_story.md` — the DBS story bible (arc beats, battles, locations, NPC ideas, chapter plan).
 - `src/game/script.ts` — the full `ScriptApi` (every method is documented).
 - `src/game/mapdef.ts` — the map format.
-- `src/content/dev/sandbox.ts` — a small working example of maps + scripts + a boss.
+- `src/content/dev/sandbox.ts` — a small working example of maps + scripts + a boss (developer content: dev
+  server and tests only, never in a production build; see §9).
 
 **Quality bar.** This should feel like a real, finished LoG2-style game: dense hand-made maps with landmarks
 and paths (not empty rectangles), NPCs with personality who say different things as the story progresses,
@@ -282,8 +283,8 @@ a kill. Also: `refillAt/refillTo` (Perfect Cell refill), `stamina` (Golden Friez
   toppo dyspo prideTrooper basil lavender bergamo ribrianne gamisalas poacher babarian universeFighter townsman
   townswoman oldMan kidNpc police scientist farmer reporter waiter bandit banditChief.
   Add more with `registerCast({ c07_magetta: {...HumanoidSpec} }, { c07_magetta: 'Magetta' })` — see
-  `src/art/humanoid.ts` for spec fields and `src/art/hair.ts` for hair styles. `?gallery` / `?portraits` in the
-  browser preview all cast.
+  `src/art/humanoid.ts` for spec fields and `src/art/hair.ts` for hair styles. `?gallery` / `?portraits` (and
+  `?creatures`) on the dev server preview all cast (dev-only, see §9).
 - **Creatures** (`src/content/creatures.ts`): wolf timberWolf snowWolf direWolf sabertooth iceSabertooth bear greyBear
   boar tRex blueTRex blackTRex raptor redRaptor pterodactyl stormPtero hawk bat cave_bat fireBat snake viper sandSnake
   giantSnake pilafRobot mechTrooper redMech goldMech drone greenDrone goldDrone rescueDrone slime mudSlime voidSlime
@@ -390,6 +391,15 @@ Frieza attack). World builders own ambient NPCs; chapter agents own story NPCs v
    trigger/talk script directly with `sim.start(map)` + `sim.run(id)`), asserting the flags/quests/joins at each step,
    ending with the next chapter's start. This proves the chapter is completable.
 3. Browser check (optional): `npm run dev`, then `http://127.0.0.1:5173/?map=<id>&x=<tile>&y=<tile>&char=goku&lv=12&chapter=3`.
+   **Developer content is dev-only.** The `?map=` entry (and `?nointro`), the art viewers (`?creatures`,
+   `?portraits`, `?gallery=<filter>`), the console harness (`window.__game`, `__t`) and everything in
+   `src/content/dev/` (the Test Meadow and Test Arena maps, the sparring robot, their world-map spots and the
+   `dev_q1` journal entry) exist only where `import.meta.env.DEV` is true: `npm run dev` and vitest. A production
+   build (`npm run build`) folds the flag to false and drops all of it, so none of it reaches a player's journal,
+   world map or URL bar. Dev modules export their data and a `register…` function and are registered only from
+   `src/content/dev/index.ts` under that flag; keep new debug content there, never as a side effect of another
+   import. `tests/content.test.ts` (developer content block) reloads the content with the flag off and checks the
+   registries and journal are exactly the dev ones minus the dev content.
 4. Fair-play balance (`tests/balance.test.ts`, `npm run test:balance`, part of the default suite, about 45 s). A
    fair bot (`tests/fairbot.ts`) plays fights with real input only: it takes real damage, eats Senzu through the
    pause menu, transforms and fires techniques, and hunts down free-roam waves by walking distance. The file checks:
@@ -419,3 +429,27 @@ Frieza attack). World builders own ambient NPCs; chapter agents own story NPCs v
 
 List: files created, maps (ids + one-line description), scripts, quests, bosses, any engine requests, anything you
 couldn't finish. Do not describe the story back — just what exists and how to verify it.
+
+## 11. LoG2-parity notes (deliberate deviations)
+
+Rules where the game knowingly departs from LoG2 (`../research/log2_mechanics.md`) and a reader checking parity
+could take the difference for a bug. Each entry names the LoG2 rule, what this game does instead and why; add one
+when you knowingly depart from a LoG2 rule. Differences of scale (more chapters, maps, forms and techniques for
+the longer DBS story) are covered in §5 and §6 and in `CHAPTERS.md`, not here.
+
+- **Mr. Satan joins alongside Goku instead of replacing him** (LoG2 §16: all five trophies unlock Hercule, who
+  *takes Goku's slot*). LoG2's swap follows its story: Goku dies at the Cell Games, so the post-game has no Goku and
+  Hercule fills the empty slot. Dragon Ball Super ends with Goku alive (Universe 7 wins the Tournament of Power in
+  ep 131 and he goes home with the others), and the post-game opens as him (`post_start` switches to Goku), so
+  removing him would contradict the story the game tells and take its lead away from the player. Mr. Satan is
+  therefore a sixth roster member (`MAIN_ROSTER` in `src/content/characters.ts`), switched in at save points like
+  everyone else. Two LoG2 rules shift with it:
+  - Goku's trophy comes from his own L50 gate (`g50_goku` in `snow_peak`) like the other four, where LoG2 gave it
+    automatically for beating Cell (Goku left the party there).
+  - The join level keeps LoG2's rule (L40 if Goku was strong enough at the final battle, else L1) but reads Goku's
+    level when Universe 7 won (`c14_gokuLv` against `SATAN_RULE_GOKU_LEVEL` = 48 in `chapters/act5/post.ts`; that
+    file explains why 48 matches LoG2's "L45 at Cell").
+  Everything else is LoG2's Hercule: Hercule's base stats and halved stat gains (`satan` in `characters.ts`), the
+  Victory Pose camera-flash stun as his only ki technique (6 EP), per-hero NPC reactions (mockery as in LoG2, mixed
+  with the fan worship DBS's World Champion gets; the Z Fighters needle him), and the red L50 gate only he can
+  break (`ztv_gate` in `satan_plaza`), which opens the ZTV press-conference alternate ending (`post_ztv_ending`).

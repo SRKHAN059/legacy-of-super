@@ -1,6 +1,6 @@
 import { PAL } from '../art/color';
 import { portrait, spriteSet } from '../art/registry';
-import { scanRecord } from '../content/scans';
+import { scanEntries, scanRecord } from '../content/scans';
 import { audio } from '../engine/audio';
 import { SCREEN_H, SCREEN_W } from '../engine/constants';
 import { measure, wrap } from '../engine/fontdata';
@@ -43,15 +43,13 @@ export class ScouterDbScene implements Scene {
 
   constructor(game: Game) {
     this.done = new Promise((r) => (this.resolve = r));
-    // Stored ids resolve through the shared table, so an old id for a variant sprite files under its base character.
-    const byId = new Map<string, Entry>();
-    for (const stored of game.state.data.scans) {
-      const r = scanRecord(stored);
-      if (byId.has(r.id)) continue;
+    // Stored ids resolve through the shared table (scanEntries), so an old id for a variant sprite files under its base
+    // character and this list always has as many entries as the pause screen's scan count.
+    this.entries = scanEntries(game.state.data.scans).map((id): Entry => {
+      const r = scanRecord(id);
       const e = r.entry;
-      byId.set(r.id, { id: r.id, name: e.name, sprite: r.sprite, hp: e.hp, str: e.str, pow: e.pow, end: e.end, kind: e.kind ?? '', desc: e.desc, npc: r.npc });
-    }
-    this.entries = [...byId.values()].sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+      return { id: r.id, name: e.name, sprite: r.sprite, hp: e.hp, str: e.str, pow: e.pow, end: e.end, kind: e.kind ?? '', desc: e.desc, npc: r.npc };
+    }).sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
     audio.sfx('menuOk');
   }
 

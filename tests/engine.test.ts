@@ -1391,3 +1391,81 @@ describe('save-code panel and opening: details', () => {
     }
   });
 });
+
+describe('pause screen Scouter count', () => {
+  it('counts unique database entries, so an old save holding a variant id beside its base counts that character once', () => {
+    const sim = new Sim();
+    const st = sim.game.state;
+    st.join('goku', 10);
+    st.data.active = 'goku';
+    sim.start('cc_yard');
+    st.data.scans = ['npc:vegetaCasual', 'npc:vegeta', 'npc:krillin', 'enemy:wolf', 'npc:krillin'];
+    const m = new PauseMenu(sim.game);
+    // LoG2 ring from Status: L -> Journal, L -> Options.
+    for (let i = 0; i < 2; i++) {
+      sim.input.inject('L', true);
+      sim.input.poll();
+      m.update(sim.input);
+      sim.input.inject('L', false);
+      sim.input.poll();
+    }
+    expect((m as unknown as { page: string }).page).toBe('options');
+    const drawn: string[] = [];
+    const spy = vi.spyOn(font, 'draw').mockImplementation((_ctx, text) => { drawn.push(text); });
+    try {
+      m.render(testCtx());
+    } finally {
+      spy.mockRestore();
+    }
+    const line = drawn.find((t) => t.includes('Scouter scans'));
+    expect(line).toMatch(/Scouter scans 3$/);
+  });
+});
+
+describe('a dev-server save in a production build', () => {
+  it('loads without the dev content: resumes on a real landing spot, and the journal and Scouter skip the dev ids', async () => {
+    // A file saved on the dev server inside the Test Arena, with the dev quest open, the test spots unlocked and the
+    // sparring robot scanned, then continued in a build where import.meta.env.DEV is false (a fresh content graph).
+    vi.stubEnv('DEV', false);
+    vi.resetModules();
+    try {
+      const { Sim: ProdSim } = await import('./sim');
+      const { MAPS } = await import('../src/content/registry');
+      const { SPOTS: PROD_SPOTS } = await import('../src/content/world');
+      const { newGame: prodNewGame } = await import('../src/game/state');
+      const { PauseMenu: ProdPause } = await import('../src/ui/pause');
+      const { scanEntries: prodEntries } = await import('../src/content/scans');
+      expect(MAPS.dev_arena).toBeUndefined();
+      expect(PROD_SPOTS.spot_dev).toBeUndefined();
+      const d = prodNewGame();
+      d.chapter = 2;
+      d.chars.goku.joined = true;
+      d.chars.goku.level = 10;
+      d.active = 'goku';
+      d.map = 'dev_arena';
+      d.x = 4 * TILE + 8;
+      d.y = 8 * TILE + 14;
+      d.regions = ['spot_dev', 'spot_dev2', 'spot_westcity'];
+      d.journal = { dev_q1: 'active', c02_scan: 'active' };
+      d.journalOrder = ['c02_scan', 'dev_q1'];
+      d.scans = ['enemy:devBoss', 'npc:krillin'];
+      const sim = new ProdSim();
+      sim.game.saves.save(3, d);
+      try {
+        expect(sim.game.continueGame(3)).toBe(true);
+        // The only unlocked spot that still ships.
+        expect(sim.game.field?.def.id).toBe(PROD_SPOTS.spot_westcity.map);
+        // The dev quest stays in the save but never shows in the journal; the robot reads as an unknown Earthling.
+        const m = new ProdPause(sim.game);
+        expect((m as unknown as { quests(): string[] }).quests()).toEqual(['c02_scan']);
+        expect(prodEntries(sim.game.state.data.scans)).toEqual(['npc:human', 'npc:krillin']);
+        expect(sim.errors).toEqual([]);
+      } finally {
+        sim.game.saves.erase(3);
+      }
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
+});

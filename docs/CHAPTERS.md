@@ -195,13 +195,98 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
 ## ACT 5 (folder `chapters/act5`) — Chapters 12, 13, 14, Epilogue, Post-game
 
 ### Chapter 12 — "Days of Peace" (hub; L40→42) — LoG2 parallel: free roam before the finale
-- Gold quest: complete any 2 of 4 episodes to continue: **Hit's contract** (Goku vs Hit, rooftop at night in
-  `satan_plaza` overlay, `endAt`), **Pan's first flight** (babysitting chase), **Great Saiyaman** movie shoot
-  (Gohan, comedy fights vs costumed "Watagash"), **Krillin's comeback** (Forest of Terror illusion rush). Unlock
-  `spot_snow` (late-game grinding, trophy gates).
+- Gold quest `c12_days`: complete any 2 of 6 episodes (`EPISODES` / `EPISODES_NEEDED` in `c12.ts`) to continue:
+  **Hit's contract** (Goku vs Hit, rooftop at night in `satan_plaza` overlay, `endAt`), **Pan's first flight**
+  (babysitting chase), **Great Saiyaman** movie shoot (Gohan, comedy fights vs costumed "Watagash"), **Krillin's
+  comeback** (Forest of Terror illusion rush), **"Whose Wish?"** (ep 68) and the **Universe 6 vs. Universe 7 baseball
+  game** (ep 70). The first four phone in at `c12_start` and go straight into the Journal; the last two find the player
+  at Capsule Corp (King Kai's call, Goten's word about Bulma's secret project and a purple cat) and get their silver
+  entries when taken up; Goten's hints and Chi-Chi's reactions at the Son house (`chatter.ts`) cover all six. The bar
+  stays at two: the level band and everything after Chapter 12 are tuned for a hero arriving with two episodes' EXP,
+  and LoG2's free roam never made the player clear a side list to move on. The four called episodes left over stay
+  open through Chapters 13-14 and the post-game; the two at Capsule Corp can be taken up in Chapter 12 or after the
+  credits (a "Whose Wish?" already under way can be finished at any time). Unlock `spot_snow` (late-game grinding,
+  trophy gates).
+- **"Whose Wish?"** (ep 68; `c12_wish.ts`, maps and props `c12_eps_maps.ts`, art `c12_eps_art.ts`, items, journal and
+  bestiary `c12_eps_data.ts`; silver `c12_wish`). Pressing A at the tarp on the old time machine pad (`cc_yard`, Chapter
+  12 or post-game) starts it: Bulma lends the Dragon Radar for a metal from the Earth's core. Seven Dragon Balls
+  (`WISH_BALLS`), one per Earth region, some hidden (A to examine), shown only while the episode is open; Bulma's status
+  at the tarp names the next place on the radar. The drill pod (A on the pad) takes a forced Goku down in the heat suit
+  (`c12_heatSuit` outfit) to the **Earth's core**, two hostile `indoor` maps (no Whis's Charm; the pod is the way out):
+  `c12_core_mantle` (lava rivers with stone bridges, Magma Slime, Cinder Bat, Crust Crab, Lava Serpent, a flight-circle
+  ledge with a capsule cache, four coolant vents, a save) and `c12_core_heart` (an arena before the crystal island). The
+  heat hazard: a 90 s coolant tank on the HUD (`COOLANT`), refilled by the blue vents; dry, the heat burns 2% of max HP
+  a second, never below 1 HP; paused in cutscenes and in the guardian fight. Guardian: the **Mantle Wyrm** (3 phases,
+  summons slimes, `endAt` 0, rises from a trigger band across the arena). Cutting the alloy reels Goku back up; Bulma
+  takes it (`c12_alloyDelivered`). The pod stays on the pad from the moment Bulma wheels it out (`POD_OUT`), so the core
+  can be revisited like any LoG2 dungeon, after the alloy and after the episode: its cache and rocks are never lost and
+  its tunnels stay a place to level. With all seven balls in hand the summoning plays on the Capsule Corp lawn: the
+  argument over the wishes is a two-round dialogue choice (King Kai, Pilaf, Android 18, Master Roshi and Oolong, Goten
+  and Trunks; the one backed first, `c12_wishBacked`, gives a consolation present), Goku lets Gohan make the first wish
+  to cure Pan's fever, Beerus smells the time-machine metal and erases the workshop (`c12_labGone`; a crater until the
+  story moves on), and Shenron leaves before King Kai's wish (King Kai and Bubbles wait on his planet afterwards). Flags
+  `c12_wyrmDown`, `c12_alloyCut`, `c12_summoned`, `c12_wishDone`. Episode 69 (the Dr. Slump crossover) is left out on
+  purpose, another property; in Chapter 12 Bulma's last line only sends Goku off to guard the inventors' fair.
+- **Baseball** (ep 70; `c12_baseball.ts`, map `c12_ballpark`; silver `c12_ball`). Champa and Vados wait at the Capsule
+  Corp garden table (Chapter 12 and post-game); Champa's challenge plays the ninth inning at West City Ballpark as a
+  LoG2-scale minigame on the normal controls, the player as Yamcha (a costume over the active hero, no fighting, HUD
+  hidden, the map sealed). Top: fly balls to centre field, a chalk ring marks the landing spot, walk or run under it
+  (`CATCH_RADIUS`); Magetta, Botamo and Goten make their own outs, so the half always ends. Bottom: Champa's fastball,
+  curve and "godly" pitch that stops in mid-air; A as the ball crosses the plate (`SWING_WINDOW`, `SWEET_SPOT`: a home
+  run), else the umpires rule the godly pitch illegal (ki); on base, Goku's hit sends Yamcha home and A at the plate
+  slides under Botamo's tag (`SLIDE_WINDOW`), else Champa's glowing tag is ruled destruction. Universe 7 bats in one
+  order (Goku, Krillin, Gohan, Piccolo, Trunks, Yamcha) and claws back the runs Universe 6 scored with the bases left
+  empty, so Yamcha always comes up with two out, the game tied and Goku on deck, and always scores the winning run; how
+  it was played is his MVP score (`c12_ballMvp`, at most `MVP_MAX` 6), and `MVP_BONUS` 5 earns Beerus's bonus on top of
+  the signed game ball and a capsule. Flag `c12_ballDone`.
+- Tests: `tests/chapters/act5.test.ts` "Chapter 12: "Whose Wish?" and the baseball game" (hub count, both chains,
+  every wish backer, the heat, map reachability, the core revisited after the episode, the ball game on real input
+  and its rally for every score); fair play: `tests/balance.test.ts`
+  "tuned fights: Chapter 12, the Earth's core" (the Mantle Wyrm at Goku L37 in Blue, and the mantle tunnels cleared as
+  a grind zone with the heat running: no knock-out, at most one Senzu).
 
 ### Chapter 13 — "Universe Survival" (L42→45) — LoG2 parallel: the pre-Cell-Games collection chapter
-- Zeno Expo: Goku vs **Toppo** exhibition (`endAt` 0.5); Zeno announces the **Tournament of Power**.
+- **Zeno Expo** (eps 78-82, `c13_expo.ts` + `c13_expo_data.ts`, gold `c13_expo` with its star on Zeno's palace): the
+  Grand Priest's one-hour deadline (Gohan and Buu join Goku), Universe 9 met at `zeno_palace`, then the bouts in the
+  World of Void (`c13_expo`) before both Zenos and every god (Universe 9's Sidra, Roh and Mojito; the hooded Toppo in
+  Universe 11's box). The palace meeting stages Universe 7 west of the throne-room carpet and Universe 9 east of it,
+  clear of the arch and the pillar ranks. The Expo's rules are canon's: one against one, anything goes, and a match
+  goes on until Zeno is satisfied or a fighter cannot continue (Universe 7's ring-out rule does not count).
+  - **Buu vs. Basil** (ep 79), played as Buu: an outfit over a forced Goku (Cabba's precedent). Buu is not a party
+    member and the guest roster (`CharId`: Android 17, Frieza) would need a new character with its own save data,
+    curve and NPC reactions for one bout. Buu has Goku's level and base stats, Ki Blast and Kamehameha, no Z form, and a
+    rubber body that snaps back once per bout (at 35% HP, to 75%). Basil's blast through Buu, the blasts Buu bats into
+    the stands (one floors Mr. Satan; the hooded Toppo puts another out and scolds Buu, speaking without a face or a
+    name) make Buu furious (STR/POW +8). At phase three Buu knocks Basil out of the ring and Goku calls a ring-out, but
+    the Grand Priest rules that Universe 7's rules don't apply and the Zenos want more; Basil crawls back in, asks Roh
+    for "that", and the "tonic" pumps him into Danger Doping (`c13_basilDoped`; Beerus cries foul, "anything goes").
+    `endAt` 0.15: Basil's Wolfgang Pressure, Buu's full-power Kamehameha, and the drug wears off. Back in the stands
+    Buu heals Mr. Satan and the Grand Priest mends the ring with a snap of his fingers. No EXP (Goku only lends Buu his
+    stats).
+  - **Gohan vs. Lavender** (ep 80), forced Gohan: the mist (phase two) blinds him: darkened view, Lavender cloaked, a
+    toxin that drains HP (never below 1). Cues: footstep dust, the hiss before a strike, a flicker, a reveal after each
+    landed blow, hearing while standing still; Super Saiyan reads his ki like a radar (no cloak) but triples the toxin
+    (the first time, `c13_lavender_radar`: Gohan senses him and Whis warns about the poison). Phase three he flies (no
+    footsteps). `endAt` 0.3: Gohan's Kamehameha against the poison blast (beam struggle), then he grabs Lavender from
+    behind and slams them both into the ring, a double knock-out, a draw. Gohan is
+    healed with one of the Supreme Kai's Senzu Beans (canon: Shin brought a bag and offered it mid-bout; Dende is not
+    at the Expo), the Supreme Kai tops the pouch up, and the Grand Priest tells every god about the mortal-level ranking
+    (Universe 7 3.18, Universe 9 1.86; 1, 5, 8 and 12 exempt) and the erasure.
+  - **Goku vs. Bergamo** (ep 81): his speech turns the gods against Goku and Zeno grants his wish (no erasure if
+    Universe 9 wins). He grows with the blows he absorbs, at 80% and 55% (`c13_bergamoL`, `c13_bergamoXL`: 1.5x and
+    2x sprite, bigger hurtbox, harder hits, slower); `endAt` 0.3: Blue Kaio-ken Kamehameha against the Wolfgang
+    Penetrator (beam struggle), a knock-out; he shrinks back as he falls.
+  - **Goku vs. Toppo** (eps 81-82): Toppo jumps down uninvited; Goku opens in Super Saiyan; Justice Tornado, the
+    Justice Crusher hold, Blue, and a point-blank Kamehameha (Instant Transmission) that tears his uniform; a short
+    bout (`endAt` 0.5 or the 45 s `MATCH` clock); as Goku adds Kaio-ken and charges a Kamehameha the Grand Priest stops
+    it before anyone dies: a draw. Toppo names Jiren and refuses Goku's handshake; then the Tournament of Power's rules (eight
+    universes, ten warriors each, 100 tak / 48 minutes, ring-outs, no killing, weapons or flying, the Super Dragon
+    Balls, erasure, about forty hours away).
+  - A knock-out at the Expo is never a Game Over: Zeno asks for an encore and the bout restarts (Toppo's ends in the
+    draw). Finished bouts set `c13_expoBuu/Gohan/Bergamo/Toppo`, so a replayed Expo (Beerus at Capsule Corp) resumes at
+    the next one (Goku comes down from his seat into the ring for Toppo); `c13_expoSeen` when it is over. Cutscene
+    beats staged around a fighter are clamped inside the ring (`inRing`), never onto the void. Fair-play checks: `tests/balance.test.ts` "tuned fights: the Zeno
+    Expo" (Basil ratio 3.1, Lavender 2.8, Bergamo 3.3, Toppo 4.1; 5/5 seeds, at most 1.2 Senzu).
 - Recruit Team U7 (gold `c13_team` with four silver sub-objectives, any order): Krillin & 18; Tien & Roshi;
   **Gohan** trains with Piccolo (`setForm('gohan','ultimate')`, learns `kamehameha`; spar Piccolo); **Android 17**
   on Monster Island (`c13_monster_*`, Galactic Poachers mooks + Poacher boss; Goku vs 17 spar). Piccolo learns
@@ -242,8 +327,10 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
 
 ### Chapter 14 — "The Tournament of Power" (L45→48 + god-mode finale) — LoG2 parallel: the Cell Games gauntlet
 - Files: `c14.ts` (start, departure, the three stage relays, epilogue hand-off), `c14_setpieces.ts` (the set pieces
-  with their own mechanics), `c14_assist.ts` (fighting partner, invisibility cues, twin boss), `c14_kit.ts` (staging
-  and ring-outs), `c14_enemies.ts`, `c14_cast.ts` (sprites + Scouter entries). Stage maps: `world/farC/top.ts`.
+  with their own mechanics), `c14_obni.ts` (ep 103), `c14_veterans.ts` (eps 105-107: Master Roshi, Tien, Frost's
+  trap), `c14_guests.ts` (guest costumes), `c14_assist.ts` (fighting partner, invisibility cues, twin boss),
+  `c14_kit.ts` (staging and ring-outs), `c14_edge.ts` (cutscene ring-out geometry), `c14_enemies.ts`, `c14_cast.ts`
+  (sprites + Scouter entries). Stage maps: `world/farC/top.ts`.
 - Staging rule: every Chapter 14 actor and fighter is placed with `onStage`/`stageOn` (`c14_kit.ts`), on a tile the
   hero can walk to. The rings have floating rocks that only a flight circle reaches, fights seal the circles and shots
   stop at the void, so a fighter staged there could never be hit. Fighters also start `FIGHT_MARGIN` (3) tiles clear
@@ -252,34 +339,81 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
   Three relays, one per ring, each run inline (LoG2 hand-offs: fade, the outgoing fighter stays on stage, the next
   forced fighter steps in fresh); a relay left before it is won restarts from its top. Order follows the anime:
   - **Stage A** (west ring, runs on arrival): opening melee waves (Gohan) → Trio de Dangers, U9 erased (Vegeta) →
-    Krillin out → Goku vs Caulifla (ep 100: Goku shows her Super Saiyan 2, which Chapter 13 leaves for this moment,
-    and she copies it on the spot) → berserk Kale (`survive`, Goku), Jiren stops her → **Pride Trooper squad** (ep 101,
-    Goku: Kahseral is
-    `vulnerableIf: c14_squadDown` until his four troopers, Tupper, Zoiray, Kettle and Cocotte, are down; no summons,
-    as Goku comes straight from surviving Kale, and Caulifla fights at his side as an AI partner; Kale takes control and blasts Kahseral out: five troopers lost) →
-    **Kamikaze Fireballs** (ep 102, guest Android 17: Kakunsa plus Ribrianne and Rozie untouchable in the back; all
-    three transform at Kakunsa's first phase change; 17 throws Kakunsa out) → U10 erased → **Goku & Hit vs Dyspo and
-    K'nsi** (ep 104, Goku in SSG; Hit is an AI partner whose Time-Skip freezes his target; K'nsi out, Dyspo retreats) →
-    Tien/Roshi in the dark → Frieza (guest) vs Frost → Goku vs **Jiren** (`spiritBomb`, beam struggle, UI -Sign-) →
-    **Hit vs Jiren** (ep 111, cutscene: Time-Skips read, Time Release on one spot, Time Prison, Hit out; Jiren walks
-    away, he is not eliminated).
-  - **Stage B** (central ring, trigger band): **Kefla** (-Sign- returns) → **17 & 18 vs Ribrianne** (eps 117-118, 18 as
-    AI partner; Super Ribrianne at her phase change; 18 knocks her out; Goku, 17 and 18 throw Rozie out) → **Gohan &
-    Piccolo vs Saonel and Pirina** (ep 118, Piccolo as AI partner; twin boss: a downed twin regenerates to 60% unless
-    the other falls within 10 s (HUD `REGEN`); canon's twist at the phase change: every Namekian of their world fused
-    into them) → U6 and U2 erased → **Gamisalas** (ep 119, Piccolo: invisible except for dust footprints, a shimmer
-    before each strike, a flicker, a reveal after each blow the hero lands, and Piccolo's hearing while the hero
-    stands still;
-    then Damom eliminates Piccolo, Gohan avenges him, U4 erased) → **Anilaza** (17; reactor puzzle, 18 out, U3 erased).
+    Krillin out (nine left) → Goku vs Caulifla (ep 100: Goku shows her Super Saiyan 2, which Chapter 13 leaves for this
+    moment, and she copies it on the spot) → berserk Kale (`survive`, Goku), Jiren stops her → **Pride Trooper squad**
+    (ep 101, Goku: Kahseral is `vulnerableIf: c14_squadDown` until his four troopers, Tupper, Zoiray, Kettle and
+    Cocotte, are down; no summons, as Goku comes straight from surviving Kale, and Caulifla fights at his side as an
+    AI partner; Kale takes control and blasts Kahseral out: five troopers lost) → **Kamikaze Fireballs** (ep 102, guest
+    Android 17: Kakunsa plus Ribrianne and Rozie untouchable in the back. All three fight in their everyday looks and
+    under their everyday names, Sanka Ku, Brianne and Su Roas, on the boss bar and the Scouter, and become Kakunsa,
+    Ribrianne and Rozie when they transform together at Kakunsa's first phase change; 17 throws Kakunsa out) →
+    **Gohan vs Obni** (ep 103, `c14_obni.ts`: Universe 10's last fighter hides his ki; his pattern summons
+    afterimages, `c14_obniImage`, that run a circle around the hero, are drawn faint and cast no shadow, vanish at the
+    first touch and fade after five seconds; a second phase at 70%; no ring-out mid-fight. At `endAt` 0.35 canon's
+    finish: Gohan lets Obni's punch land to find the real one, a cross-counter, and a Kamehameha throws him out of the
+    ring; the locket he drops (his wife and daughter) fades from Gohan's hand as Zeno erases U10) → **Goku & Hit vs
+    Dyspo and K'nsi** (ep 104, Goku in SSG; Hit is an AI partner whose Time-Skip freezes his target; K'nsi out, Dyspo
+    retreats) → **Master Roshi vs Universe 4** (ep 105, `c14_roshi`, Roshi as a guest: a two-fighter wave, Caway and
+    Dercori, who stop dazed at 30% (see below); then canon's finishes: Roshi bats Caway's last blast aside and flexes,
+    and she jumps off the stage herself; his Evil Containment Wave seals Dercori in a jar he throws off the stage, and
+    Zeno finds it neat, so the Grand Priest allows it. Then Max Power against **Ganos**, who turns into a bird of prey
+    at 65% and swoops; `endAt` 0.45, then Roshi's Kamehameha from his own life force (beam struggle) throws Ganos out,
+    Roshi's heart stops, and he comes round with a joke) → **Tien and the snipers** (ep 106, `c14_snipers`, Tien as a
+    guest while Roshi rests: **Harmira**, the real sniper, lies hidden in a nest across the ring (faint, shadowless) and
+    fires at **Prum**, whose mirror body bounces each shot on at Tien; a glint at the scope gives the nest away, the
+    shot's first leg points back to it, and Prum is untouchable (`invulnerable`: ki blasts come straight back, fists
+    glance off). Tien's Multi-Form sends copies to watch the ring; coming close or landing a blow finds Harmira
+    (`c14_sniperFound`), who holds his nest above 97% HP and then fights head-on. At `endAt` 0.6 he shoots the stage out
+    from under Tien, Tien's three copies drag him down with Tien, and Vegeta's Galick Gun throws Prum out: eight left)
+    → **Frost's trap** (ep 107, `c14_frostTrap`, Roshi again: Frost dodges the first Evil Containment Wave and turns
+    the second back on Vegeta, who is sealed in Roshi's jar; Magetta has his ears plugged against Vegeta's insults.
+    Roshi fights `c14_frostJar` with Magetta (metal: fists do half; dazed at 30%) at his back until Frost drops the jar
+    at `endAt` 0.65; Frost cannot be rung out, as Frieza eliminates him next. Roshi smashes the jar, Vegeta goes Blue
+    and throws Magetta out, Frost slips away, and Roshi retires on his own two feet: seven left) →
+    Frieza (guest) vs Frost (ep 108) → Goku vs **Jiren** (`spiritBomb`, beam struggle, UI -Sign-) → **Hit vs Jiren**
+    (ep 111, cutscene: Time-Skips read, Time Release on one spot, Time Prison, Hit out; Jiren walks away, he is not
+    eliminated).
+  - **Guests** (`c14_guests.ts`): Master Roshi and Tien are not party members. As Chapter 13 plays Cabba and Chapter
+    11 plays Vegito, each is a costume (`outfit`) over a forced Goku: Goku's level, HP/EP growth and stats, the guest's
+    own sprite and techniques (Ki Blast and the Kamehameha for both), no Z form. Putting a costume on stashes Goku's HP,
+    EP, Z form and technique list (`c14_guestStash`) and steps the guest in fresh; Roshi's Max Power swaps in
+    `c14_roshiMax` and adds +12 STR/POW/END, removed exactly when it ends. Taking the costume off gives Goku back
+    exactly what he had; stage A takes any costume off before it (re)starts, so a reload mid-episode never leaves Goku
+    dressed up. The guests' EXP goes to Goku.
+  - **Dazed fighters** (`c14_veterans.ts` `daze`): Caway, Dercori and Magetta are regular fighters that carry a
+    `boss.endAt` of 0.3 (`DAZED` in `c14_enemies.ts`). The engine stops any fighter at its `boss.endAt` instead of
+    knocking it out, and `daze` then leaves it standing hurt, untouchable and out of the battle, so the scene after the
+    fight finishes it the way canon does (and pays its regular EXP). A fighter rung out before that is simply gone, and
+    the scene skips it.
+  - **Stage B** (central ring, trigger band): Cabba's last stand (ep 112, narrated: Super Saiyan 2 against Universe
+    4's Monna, then Frieza throws him out and Vegeta promises to wish Universe 6 back) → Goku shows Caulifla and Kale
+    **Super Saiyan 3** (ep 113, cutscene; it drains him too fast to hold against a fusion) and they put on the Potara →
+    **Kefla** (-Sign- returns) → **17 & 18 vs Ribrianne** (eps 117-118, 18 as AI partner; Super Ribrianne at her phase
+    change; 18 knocks her out; Goku, 17 and 18 throw Rozie out) → **Gohan & Piccolo vs Saonel and Pirina** (ep 118,
+    Piccolo as AI partner; twin boss: a downed twin regenerates to 60% unless the other falls within 10 s (HUD
+    `REGEN`); canon's twist at the phase change: every Namekian of their world fused into them) → U6 and U2 erased →
+    **Gamisalas** (ep 119, Piccolo: invisible except for dust footprints, a shimmer before each strike, a flicker, a
+    reveal after each blow the hero lands, and Piccolo's hearing while the hero stands still; then Damom eliminates
+    Piccolo, Gohan avenges him, U4 erased) → **Anilaza** (17; reactor puzzle, 18 out, U3 erased).
   - **Stage C** (east ring, trigger band): Vegeta reaches SSB Evolved (`finalFlash`) → Gohan & Frieza vs **Dyspo**
     (Gohan out) → **Toppo (God of Destruction)** vs Vegeta → Goku masters Ultra Instinct vs **Jiren** (god-mode) →
     the last stand (Frieza → Android 17), triple ring-out, 17 is the last one standing → Super Shenron, the wish.
-- Set-piece flags: `c14_prideDone`, `c14_fireballsDone`, `c14_dyspoTagDone`, `c14_hitOut`, `c14_ribrianneDone`,
-  `c14_namekDone`, `c14_gamisalasDone`. Every set-piece boss is tuned to a LoG2 hits ratio ≤ 4 for its forced fighter
-  (twins ≤ 2.5 each) and stays below Kefla. Partners add only a small share of the damage, so the hero still wins
-  the fight; Hit's real help is the opening his freeze gives. A test bot that walks up and fights with the real
-  damage rules both ways (no dodging; a Senzu counted at 20% HP) wins every set piece with at most four Senzu and
-  loses a real share of its HP in each.
+- Journal: the four episodes of eps 103-107 are gold entries that open quietly and close inside their own scripts
+  (Chapter 13's cutaway pattern, star on Zeno's palace): `c14_epObni`, `c14_epRoshi`, `c14_epSnipers`,
+  `c14_epFrostTrap`.
+- Set-piece flags: `c14_prideDone`, `c14_fireballsDone`, `c14_obniDone`, `c14_dyspoTagDone`, `c14_roshiDone`,
+  `c14_snipersDone`, `c14_frostTrapDone`, `c14_hitOut`, `c14_ribrianneDone`, `c14_namekDone`, `c14_gamisalasDone`.
+  Every set-piece boss is tuned to a LoG2 hits ratio ≤ 4 for its forced fighter (twins ≤ 2.5 each; the guests'
+  opponents for Goku L42 in base form, Max Power against Ganos) and stays below Kefla. Partners add only a small
+  share of the damage, so the hero still wins the fight; Hit's real help is the opening his freeze gives. A test bot
+  that walks up and fights with the real damage rules both ways (no dodging; a Senzu counted at 20% HP) wins every
+  set piece with at most four Senzu (two for eps 103-107) and loses a real share of its HP in each; the fair bot
+  (`tests/balance.test.ts`, "tuned fights: c14 west ring, eps 103-107") wins each of the new episodes on at least 4
+  of 5 seeds with at most 2 Senzu at the story's levels, and plays the whole stage A relay (fourteen fights) from the
+  top on the party's one bag of three Senzu: at least 4 of 5 seeds without a knockout. Stage A is the longest relay
+  in the game (twice LoG2's seven-fight Cell Games), so its new episodes are tuned to cost well under a full HP bar
+  each (Obni about 70%, the others 25-60%), and the relay picks up in the middle of the ring after each time skip
+  (`ringCentre`, `c14_edge.ts`) so no set piece is staged against the east exit.
 - Free roam between relays (LoG2 hostile zone, 10-12 rivals per ring, T7): between stages A and B fighters of
   Universes 2, 3, 4 and 11 (U9 and U10 are already erased); after stage B only Universe 11's Pride Troopers; in the
   post-game every restored universe trains on all three rings. Relays sweep them first (`fc_topQuiet` during stage A).
@@ -287,8 +421,10 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
 ### Epilogue & Post-game (`post_` prefix)
 - After credits: free roam continues (LoG2 post-game), talk to Whis/Beerus to see the "true ending" scene.
 - **Trophies**: L50 gates already exist (world builders): Gohan `paozu_peaks`, Vegeta `waste_mesa`, Trunks/Piccolo/Goku
-  `snow_peak`. Collecting all five unlocks **Mr. Satan** as a playable character (`join('satan', …)`; LoG2 rule:
-  L40 if Goku ≥ L45 else L1) with his own NPC reactions.
+  `snow_peak`. Collecting all five unlocks **Mr. Satan** as a playable character (`join('satan', …)`; LoG2's rule
+  with the mark moved for the steeper L45+ curve: L40 if Goku was L48+ when Universe 7 won (`c14_gokuLv`), else L1)
+  with his own NPC reactions. Unlike LoG2's Hercule he joins alongside Goku rather than taking his slot, because
+  Goku is alive after the tournament (Guide §11, LoG2-parity notes).
 - **Alternate ending**: Mr. Satan at L50 breaks the red ZTV gate in `satan_plaza` → press conference where he claims
   he beat the God of Destruction → credits (`post_ztv_ending`).
 - **Delicacies** (25) → Whis gives `whisStaff`. **Monster Island animals** (7) → 17 → optional superboss (Hit, no

@@ -1,10 +1,17 @@
-import { registerEnemies } from '../enemies';
+import type { MapDef } from '../../game/mapdef';
+import { registerScripts, type Script } from '../../game/script';
+import { registerEnemies, type EnemyDef } from '../enemies';
 import { registerMaps } from '../registry';
-import { registerScripts } from '../../game/script';
-import { registerSpots } from '../world';
+import { registerSpots, type LandingSpot } from '../world';
 
-/** Developer test maps exercising every engine feature. Reachable via ?map=dev_sandbox. */
-registerEnemies([
+/*
+ * Developer test maps exercising every engine feature, reachable on the dev server via ?map=dev_sandbox. Nothing here
+ * runs at import: `registerDevSandbox` is called only from `dev/index.ts` under `import.meta.env.DEV`, so a production
+ * build tree-shakes this whole module away (the maps, the sparring boss, the scripts and the world-map spots).
+ */
+
+/** The sparring robot fought in the Test Arena. */
+export const DEV_ENEMIES: EnemyDef[] = [
   {
     id: 'devBoss', name: 'Sparring Robot', sprite: 'mechTrooper', hp: 600, str: 10, pow: 12, end: 6, exp: 500, ai: 'boss', speed: 1.0,
     desc: 'A Capsule Corp sparring robot.',
@@ -16,9 +23,10 @@ registerEnemies([
       ],
     },
   },
-]);
+];
 
-registerMaps([
+/** Test Meadow (every object, prop and gate type) and the Test Arena east of it. */
+export const DEV_MAPS: MapDef[] = [
   {
     id: 'dev_sandbox', name: 'Test Meadow', music: 'field', hostile: true, region: 'Dev Region',
     legend: { '.': 'grass', ',': 'darkGrass', '=': 'path', '~': 'water', '#': 'cliff', 's': 'sand' },
@@ -83,9 +91,10 @@ registerMaps([
     triggers: [{ id: 'devBossT', x: 8, y: 3, w: 2, h: 4, script: 'dev_boss', once: true }],
     backdrop: '#100820',
   },
-]);
+];
 
-registerScripts({
+/** Bulma's engine walkthrough, the wolf pan and the sparring-robot boss fight. */
+export const DEV_SCRIPTS: Record<string, Script> = {
   dev_bulma: async (s) => {
     const n = s.inc('dev_bulma_talks');
     if (n === 1) {
@@ -121,9 +130,18 @@ registerScripts({
       await s.done('dev_q1', false);
     }
   },
-});
+};
 
-registerSpots([
+/** World-map landings for the two test maps. */
+export const DEV_SPOTS: LandingSpot[] = [
   { id: 'spot_dev', name: 'Test Meadow', world: 'earth', x: 110, y: 110, map: 'dev_sandbox', tx: 4, ty: 9, icon: 'house' },
   { id: 'spot_dev2', name: 'Test Arena', world: 'earth', x: 160, y: 140, map: 'dev_arena', tx: 3, ty: 5, icon: 'arena' },
-]);
+];
+
+/** Register the test maps, their scripts, the sparring robot and their world-map spots (dev builds only). */
+export function registerDevSandbox(): void {
+  registerEnemies(DEV_ENEMIES);
+  registerMaps(DEV_MAPS);
+  registerScripts(DEV_SCRIPTS);
+  registerSpots(DEV_SPOTS);
+}

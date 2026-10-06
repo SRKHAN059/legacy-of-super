@@ -1,4 +1,5 @@
-import { registerScripts } from '../../../game/script';
+import { registerScripts, type ScriptApi } from '../../../game/script';
+import { ENEMIES } from '../../enemies';
 import { ally, cloakCues, everyFrame, twinFight, type TwinOutcome } from './c14_assist';
 import './c14_cast';
 import { SQUAD, TWIN_EXP } from './c14_enemies';
@@ -14,6 +15,29 @@ import { bossFight, handOff, heroTile, readyGuest, removeAll, sweepRivals } from
  * Each one sets its `c14_*Done` flag when it ends. Like the rest of a relay, a set piece replays from the top when
  * its stage restarts.
  */
+
+/** The Kamikaze Fireballs before they transform (ep 102): fight uid, everyday name, everyday look. */
+const EVERYDAY: Array<[string, string, string]> = [
+  ['c14_kakunsa1', 'Sanka Ku', 'c14_suroas'], ['c14_brianneE', 'Brianne', 'c14_brianne'], ['c14_sankaE', 'Su Roas', 'c14_sanka'],
+];
+
+/**
+ * Dress a spawned fighter down to her everyday self: her look, and her name on the boss bar and the Scouter (a copy of
+ * her bestiary entry under the everyday name; stats, moves and phases stay her own).
+ */
+function everyday(s: ScriptApi, uid: string, name: string, sprite: string): void {
+  const e = s.field.enemies.find((x) => x.uid === uid);
+  if (!e) return;
+  e.def = { ...e.def, name };
+  s.sprite(uid, sprite);
+}
+
+/** Give a transformed fighter her own bestiary entry (and name) back. */
+function transformed(s: ScriptApi, uid: string): void {
+  const e = s.field.enemies.find((x) => x.uid === uid);
+  const def = e ? ENEMIES[e.def.id] : undefined;
+  if (e && def) e.def = def;
+}
 
 registerScripts({
   // ================================================================ stage A
@@ -116,8 +140,9 @@ registerScripts({
   },
 
   /**
-   * Ep 102: Android 17 (guest) against Universe 2's Kamikaze Fireballs. They start in their everyday looks; at the
-   * first phase change all three transform (`c14_fireballs_transform`) and Kakunsa turns into a beast-warrior.
+   * Ep 102: Android 17 (guest) against Universe 2's Kamikaze Fireballs. They start in their everyday looks and names
+   * (Sanka Ku, Brianne, Su Roas); at the first phase change all three transform (`c14_fireballs_transform`) and Sanka Ku
+   * becomes Kakunsa, a beast-warrior.
    * Ribrianne and Rozie hang back behind a barrier of love. 17 throws Kakunsa out; the other two retreat.
    */
   c14_fireballs: async (s) => {
@@ -142,9 +167,13 @@ registerScripts({
     s.letterbox(false);
     s.music('boss');
     removeAll(s, 'c14_brianneF', 'c14_sankaF', 'c14_suroasF');
+    // All three fight in their everyday looks and under their everyday names (boss bar, Scouter) until the
+    // transformation hands them back their Kamikaze Fireball entries.
     s.spawnEnemy('c14_brianneEscort', bx, by, 'c14_brianneE');
     s.spawnEnemy('c14_rozieEscort', rx, ry, 'c14_sankaE');
-    await bossFight(s, 'c14_kakunsa', { x: kx, y: ky, uid: 'c14_kakunsa1' });
+    s.spawnEnemy('c14_kakunsa', kx, ky, 'c14_kakunsa1');
+    for (const [uid, name, sprite] of EVERYDAY) everyday(s, uid, name, sprite);
+    await bossFight(s, 'c14_kakunsa', { uid: 'c14_kakunsa1', existing: true });
     s.letterbox(true);
     // However the fight went, the Fireballs end it transformed.
     if (!s.flag('c14_fireballsUp')) await s.call('c14_fireballs_transform');
@@ -185,6 +214,7 @@ registerScripts({
     const looks: Array<[string, string]> = [['c14_kakunsa1', 'c14_kakunsa'], ['c14_brianneE', 'ribrianne'], ['c14_sankaE', 'c14_rozie']];
     for (const [id, sp] of looks) {
       if (!s.exists(id)) continue;
+      transformed(s, id);
       s.sprite(id, sp);
       const a = s.actor(id);
       s.field.fx.explode(a.x, a.y - 12, 14, '#f878b8');

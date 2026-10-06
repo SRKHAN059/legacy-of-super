@@ -14,7 +14,7 @@ registerItems([
 
 registerQuests([
   // Chapter 12
-  { id: 'c12_days', title: 'Days of Peace: finish any two episodes', star: 'gold', region: 'spot_satancity', desc: 'Earth is quiet for once. Help your friends: Hit\'s contract (Beerus and Whis at Capsule Corp), Pan\'s first flight (Videl in Mt. Paozu), the Saiyaman movie (Satan City) or Krillin\'s comeback (Kame House). Any two will do.' },
+  { id: 'c12_days', title: 'Days of Peace: finish any two episodes', star: 'gold', region: 'spot_satancity', desc: 'Earth is quiet for once. Help your friends: Hit\'s contract (Beerus and Whis at Capsule Corp), Pan\'s first flight (Videl in Mt. Paozu), the Saiyaman movie (Satan City), Krillin\'s comeback (Kame House), King Kai\'s wish (Bulma\'s secret project on the Capsule Corp pad) or Champa\'s challenge (the Capsule Corp garden). Any two will do.' },
   { id: 'c12_hit', title: 'The unseen assassin', star: 'silver', region: 'spot_satancity', desc: 'Someone has hired the legendary assassin Hit to take Goku out. Ask Beerus and Whis at Capsule Corp, then take Hotel Satan\'s roof stairs at night (talk to the night porter).' },
   { id: 'c12_pan', title: 'Pan\'s first flight', star: 'silver', region: 'spot_paozu', desc: 'Videl needs a babysitter, and baby Pan has just learned to fly. Catch her and carry her back without letting anything hit you.' },
   { id: 'c12_saiyaman', title: 'Great Saiyaman: the movie', star: 'silver', region: 'spot_satancity', desc: 'Barry Kahn hired Gohan as his stunt double to humiliate him. Report to the film lot in Satan City.' },

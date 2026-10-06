@@ -1185,3 +1185,304 @@ describe.skipIf(!env.LOS_FIGHTS)('balance report (LOS_FIGHTS=<recording>)', () =
     expect(report.errors).toEqual([]);
   }, 60 * 60 * 1000);
 });
+
+// ------------------------------------------------------------------------------------------------ tuned fights: the Zeno Expo
+
+/**
+ * The Zeno Expo (Chapter 13 opening, src/content/chapters/act5/c13_expo.ts): every bout the player fights there, played
+ * by the fair bot from a save holding the party a story run brings to Chapter 13 (the recording's chapter-12 ending:
+ * Goku L37 in Blue, Gohan benched at L19, Vegeta L29, Trunks L35, Piccolo L24) and the three Senzu Beans the pouch
+ * holds after Chapter 12's reward. The Expo forces its fighters, which lifts Goku and Gohan to L39 (the Chapter 13 floor
+ * for a forced segment); Buu fights at Goku's level in base stats. Band: 4/5 wins or better, at most 2 Senzu, hits ratio
+ * between 1 and LoG2's story band (4). Toppo's bout is the existing Chapter 13 Toppo, now fought after Bergamo on the same
+ * bag: it must stay winnable (a draw the Grand Priest calls), its ratio is the regression's business.
+ */
+describe('tuned fights: the Zeno Expo', () => {
+  type Member = { level: number; hp: number; hpMax: number; epMax: number; str: number; pow: number; end: number; form: string | null; techs: string[] };
+  const PARTY: Record<'goku' | 'vegeta' | 'gohan' | 'trunks' | 'piccolo', Member> = {
+    goku: { level: 37, hp: 844, hpMax: 844, epMax: 125, str: 54, pow: 57, end: 47, form: 'ssb', techs: ['kiBlast', 'kamehameha', 'godKamehameha'] },
+    vegeta: { level: 29, hp: 574, hpMax: 574, epMax: 110, str: 42, pow: 38, end: 42, form: 'ssb', techs: ['kiBlast', 'bigBang', 'galickGun'] },
+    gohan: { level: 19, hp: 242, hpMax: 242, epMax: 74, str: 33, pow: 34, end: 29, form: 'ssj', techs: ['kiBlast', 'masenko'] },
+    trunks: { level: 35, hp: 865, hpMax: 865, epMax: 120, str: 57, pow: 38, end: 40, form: 'rage', techs: ['kiBlast', 'burningAttack', 'swordBlast'] },
+    piccolo: { level: 24, hp: 376, hpMax: 376, epMax: 88, str: 32, pow: 34, end: 34, form: 'unweighted', techs: ['kiBlast', 'specialBeamCannon'] },
+  };
+
+  /** The Expo from Capsule Corp (Beerus's way back in), skipping the bouts already won (`done` flags). */
+  const expo = (done: string[], fights: Array<[string, string, 'goku' | 'gohan']>): RecordedRoot => {
+    const st = freshState();
+    st.data.chapter = 13;
+    for (const [id, m] of Object.entries(PARTY) as Array<[keyof typeof PARTY, Member]>) {
+      st.join(id, m.level);
+      Object.assign(st.char(id), { ...m, ep: m.epMax, selected: 0, charged: true });
+    }
+    st.data.active = 'goku';
+    st.data.inv = { senzu: 3 };
+    for (const f of ['_storyRun', ...done]) st.set(f);
+    return {
+      game: 0, script: 'c13_expo', map: 'cc_yard', x: 22 * 16 + 8, y: 18 * 16 + 14, dir: 'up', npc: null, onEnter: false, save: JSON.stringify(st.data),
+      carrying: null,
+      fights: fights.map(([type, uid, hero], seq) => ({ seq, kind: 'boss', type, opts: { uid }, hero, level: 39, map: 'c13_expo', chapter: 13, roster: [], result: null })),
+    };
+  };
+
+  /** Five fair-bot seeds: each recorded bout's first-attempt statistics, in order. */
+  const play = async (root: RecordedRoot): Promise<FightStats[]> => {
+    const runs: FightRun[] = [];
+    for (let seed = 1; seed <= 5; seed++) {
+      const rep = await replayRoot(root, seed);
+      expect(rep.errors).toEqual([]);
+      expect(rep.stopped, `seed ${seed}`).toBe('done');
+      runs.push(...rep.runs.filter((x) => x.attempt === 1));
+    }
+    return root.fights.map((f) => statsFor(runs.filter((x) => x.seq === f.seq)));
+  };
+
+  const inBand = (name: string, st: FightStats, band: number | null): void => {
+    expect(st.wins, `${name}: won ${st.wins}/${st.seeds}`).toBeGreaterThanOrEqual(4);
+    expect(st.avgSenzu, `${name}: Senzu per fight`).toBeLessThanOrEqual(2);
+    if (band === null) return;
+    const ratio = st.ratio?.ratio ?? 0;
+    expect(ratio, `${name}: hits ratio`).toBeGreaterThanOrEqual(1);
+    expect(ratio, `${name}: hits ratio`).toBeLessThanOrEqual(band);
+  };
+
+  it('Buu (Goku\'s level, base stats) beats Basil through Danger Doping; forced Gohan draws with Lavender through the toxin', async () => {
+    const [basil, lavender] = await play(expo([], [['c13_basil', 'c13_basil1', 'goku'], ['c13_lavender', 'c13_lavender1', 'gohan']]));
+    inBand('Basil (Buu)', basil, 4);
+    inBand('Lavender (Gohan, blinded)', lavender, 4);
+    // Buu fights without a Z form; Gohan can use his Super Saiyan radar.
+    expect(basil.form).toBeNull();
+    expect(lavender.form).toBe('ssj');
+  }, REPLAY_TIMEOUT);
+
+  it('Goku beats Bergamo through both growth steps, then holds Toppo to a draw on the same bag of Senzu', async () => {
+    const [bergamo, toppo] = await play(expo(['c13_expoMet', 'c13_expoOpened', 'c13_expoBuu', 'c13_expoGohan'], [
+      ['c13_bergamo', 'c13_bergamo1', 'goku'], ['c13_toppo', 'c13_toppo1', 'goku'],
+    ]));
+    inBand('Bergamo', bergamo, 4);
+    inBand('Toppo', toppo, null);
+  }, REPLAY_TIMEOUT);
+});
+
+// ------------------------------------------------------------------------------------------------ Chapter 14, eps 103-107
+
+/**
+ * Tuned fights in the middle of the west-ring relay (`c14_obni.ts`, `c14_veterans.ts`), each replayed on its own on the
+ * west ring from a save holding the tournament party at the levels the story gives it (Goku, Vegeta and Gohan at the
+ * forced floor, L42; the guests at their join levels) and the relay's bag of three Senzu Beans: Gohan against Obni,
+ * Master Roshi (a guest worn over Goku, in base form, Max Power for Ganos) against Caway, Dercori and Ganos, Tien (worn
+ * over Goku) against Universe 2's snipers (Harmira in his nest, his shots bounced off Prum's mirror), and Roshi against
+ * Frost and Magetta. Band: the fair bot wins at least 4 of 5 seeds with at most 2 Senzu on average, and each boss's
+ * hits ratio sits between 1 and 4.
+ */
+describe('tuned fights: c14 west ring, eps 103-107 (Obni, Roshi, the snipers, Frost\'s trap)', () => {
+  type Who = 'goku' | 'vegeta' | 'gohan' | 'trunks' | 'piccolo' | 'android17' | 'frieza';
+  type Member = { level: number; hp: number; hpMax: number; epMax: number; str: number; pow: number; end: number; form: string | null; techs: string[] };
+  type Fight = Pick<RecordedFight, 'kind' | 'type' | 'opts' | 'hero' | 'level'>;
+
+  /** The full-game run's tournament party, Goku through Gohan lifted to the forced floor the relay puts them at. */
+  const PARTY: Record<Who, Member> = {
+    goku: { level: 42, hp: 1235, hpMax: 1235, epMax: 138, str: 63, pow: 63, end: 51, form: 'ssb', techs: ['kiBlast', 'kamehameha', 'godKamehameha'] },
+    vegeta: { level: 42, hp: 1216, hpMax: 1216, epMax: 147, str: 60, pow: 55, end: 61, form: 'ssb', techs: ['kiBlast', 'bigBang', 'galickGun'] },
+    gohan: { level: 42, hp: 1075, hpMax: 1075, epMax: 151, str: 68, pow: 69, end: 59, form: 'ultimate', techs: ['kiBlast', 'masenko', 'kamehameha'] },
+    trunks: { level: 35, hp: 904, hpMax: 904, epMax: 117, str: 57, pow: 38, end: 41, form: 'rage', techs: ['kiBlast', 'burningAttack', 'swordBlast'] },
+    piccolo: { level: 24, hp: 381, hpMax: 381, epMax: 88, str: 31, pow: 37, end: 32, form: 'unweighted', techs: ['kiBlast', 'specialBeamCannon', 'hellzoneGrenade'] },
+    android17: { level: 46, hp: 1998, hpMax: 1998, epMax: 160, str: 68, pow: 70, end: 67, form: null, techs: ['kiBlast', 'barrier'] },
+    frieza: { level: 47, hp: 1720, hpMax: 1720, epMax: 169, str: 71, pow: 72, end: 62, form: 'goldenFrieza', techs: ['kiBlast', 'deathBeam'] },
+  };
+
+  /** One episode run on its own on the west ring, rivals cleared, with `active` handing over to the episode's fighter. */
+  const episode = (script: string, active: Who, fights: Fight[]): RecordedRoot => {
+    const st = freshState();
+    st.data.chapter = 14;
+    for (const [id, m] of Object.entries(PARTY) as Array<[Who, Member]>) {
+      st.join(id, m.level);
+      Object.assign(st.char(id), { ...m, ep: m.epMax, selected: 0, charged: id !== 'android17' && id !== 'frieza' });
+    }
+    st.data.active = active;
+    st.data.inv = { senzu: 3 };
+    for (const f of ['_storyRun', 'c14_departed', 'fc_topQuiet']) st.set(f);
+    st.addQuest('c14_top');
+    return {
+      game: 0, script, map: 'top_arena_a', x: 22 * 16 + 8, y: 16 * 16 + 14, dir: 'up', npc: null, onEnter: false, save: JSON.stringify(st.data),
+      carrying: null, fights: fights.map((f, seq) => ({ seq, map: 'top_arena_a', chapter: 14, roster: [], result: null, ...f })),
+    };
+  };
+
+  /** Five fair-bot seeds: each recorded fight's first-attempt statistics, in order. */
+  const play = async (root: RecordedRoot): Promise<FightStats[]> => {
+    const runs: FightRun[] = [];
+    for (let seed = 1; seed <= 5; seed++) {
+      const rep = await replayRoot(root, seed);
+      expect(rep.errors).toEqual([]);
+      expect(rep.stopped, `${root.script} seed ${seed}`).toBe('done');
+      runs.push(...rep.runs.filter((x) => x.attempt === 1));
+    }
+    return root.fights.map((f) => statsFor(runs.filter((x) => x.seq === f.seq)));
+  };
+
+  const inBand = (name: string, st: FightStats, boss: boolean): void => {
+    expect(st.wins, `${name}: won ${st.wins}/${st.seeds}`).toBeGreaterThanOrEqual(4);
+    expect(st.avgSenzu, `${name}: Senzu per fight`).toBeLessThanOrEqual(2);
+    if (!boss) return;
+    const ratio = st.ratio?.ratio ?? 0;
+    expect(ratio, `${name}: hits ratio`).toBeGreaterThanOrEqual(1);
+    expect(ratio, `${name}: hits ratio`).toBeLessThanOrEqual(4);
+  };
+
+  const boss = (type: string, uid: string, hero: Who): Fight => ({ kind: 'boss', type, opts: { uid }, hero, level: PARTY[hero].level });
+  const wave = (hero: Who): Fight => ({ kind: 'wave', type: '', opts: {}, hero, level: PARTY[hero].level });
+
+  it('ep 103: Gohan L42 in his Ultimate form knocks out Obni through the afterimages', async () => {
+    expect(ENEMIES.c14_obni.boss?.minion).toBe('c14_obniImage');
+    const [obni] = await play(episode('c14_obni', 'android17', [boss('c14_obni', 'c14_obni1', 'gohan')]));
+    inBand('Obni', obni, true);
+  }, REPLAY_TIMEOUT);
+
+  it('ep 105: Master Roshi (Goku L42 underneath) outfoxes Caway and Dercori, then beats Ganos at Max Power', async () => {
+    const [pair, ganos] = await play(episode('c14_roshi', 'goku', [wave('goku'), boss('c14_ganos', 'c14_ganos1', 'goku')]));
+    inBand('Caway and Dercori', pair, false);
+    inBand('Ganos', ganos, true);
+  }, REPLAY_TIMEOUT);
+
+  it('ep 106: Tien (Goku L42 underneath) traces the sniper\'s shots past Prum\'s mirror to his nest, then wears Harmira down', async () => {
+    expect(ENEMIES.c14_prum.invulnerable).toBe(true);
+    const [harmira] = await play(episode('c14_snipers', 'goku', [boss('c14_harmira', 'c14_harmira1', 'goku')]));
+    inBand('Prum and Harmira', harmira, true);
+  }, REPLAY_TIMEOUT);
+
+  it('ep 107: Master Roshi makes Frost drop Vegeta\'s jar with Magetta at his back', async () => {
+    const [frost] = await play(episode('c14_frostTrap', 'goku', [boss('c14_frostJar', 'c14_frostJar1', 'goku')]));
+    inBand('Frost (the jar)', frost, true);
+  }, REPLAY_TIMEOUT);
+
+  it('the whole west-ring relay, eps 97-111, on the one bag of three Senzu the party brings: the new episodes fit in it', async () => {
+    // Stage A from the top (the west ring's onEnter), Goku, Vegeta and Gohan at the levels the full-game run arrives
+    // with (the forced fighters are lifted to the floor as the relay hands over), every fight of the relay recorded.
+    const arrival: Partial<Record<Who, Partial<Member>>> = {
+      goku: { level: 41, hp: 1171, hpMax: 1171, epMax: 135, str: 61, pow: 62, end: 50 },
+      vegeta: { level: 39, hp: 1016, hpMax: 1016, epMax: 135, str: 56, pow: 51, end: 57 },
+      gohan: { level: 40, hp: 938, hpMax: 938, epMax: 146, str: 65, pow: 66, end: 56 },
+    };
+    const st = freshState();
+    st.data.chapter = 14;
+    for (const [id, m] of Object.entries(PARTY) as Array<[Who, Member]>) {
+      const a = { ...m, ...arrival[id] };
+      st.join(id, a.level);
+      Object.assign(st.char(id), { ...a, ep: a.epMax, selected: 0, charged: id !== 'android17' && id !== 'frieza' });
+    }
+    st.data.active = 'goku';
+    st.data.inv = { senzu: 3 };
+    for (const f of ['_storyRun', 'c14_departed', 'c14_opened']) st.set(f);
+    st.addQuest('c14_top');
+    const fights: Fight[] = [
+      wave('gohan'), wave('gohan'), boss('c14_bergamo', 'c14_bergamo1', 'vegeta'),
+      { ...boss('c14_kaleBerserk', 'c14_kale1', 'goku'), opts: { uid: 'c14_kale1', survive: 25, label: 'SURVIVE' } },
+      boss('c14_kahseral', 'c14_kahseral1', 'goku'), boss('c14_kakunsa', 'c14_kakunsa1', 'android17'),
+      boss('c14_obni', 'c14_obni1', 'gohan'), boss('c14_dyspoA', 'c14_dyspoA1', 'goku'),
+      wave('goku'), boss('c14_ganos', 'c14_ganos1', 'goku'), boss('c14_harmira', 'c14_harmira1', 'goku'), boss('c14_frostJar', 'c14_frostJar1', 'goku'),
+      boss('c14_frost', 'c14_frost1', 'frieza'), { ...boss('c14_jiren1', 'c14_jiren1', 'goku'), opts: { uid: 'c14_jiren1', loseOk: true } },
+    ];
+    const relay: RecordedRoot = {
+      game: 0, script: 'c14_topA_enter', map: 'top_arena_a', x: 22 * 16 + 8, y: 19 * 16 + 14, dir: 'up', npc: null, onEnter: true,
+      save: JSON.stringify(st.data), carrying: null, fights: fights.map((f, seq) => ({ seq, map: 'top_arena_a', chapter: 14, roster: [], result: null, ...f })),
+    };
+    const runs: FightRun[] = [];
+    let clean = 0;
+    for (let seed = 1; seed <= 5; seed++) {
+      const rep = await replayRoot(relay, seed);
+      expect(rep.errors).toEqual([]);
+      expect(rep.stopped, `seed ${seed}`).toBe('done');
+      const first = rep.runs.filter((x) => x.attempt === 1);
+      // The relay plays exactly these fourteen fights, in this order.
+      expect(first.map((x) => x.seq), `seed ${seed}`).toEqual(fights.map((_, k) => k));
+      if (!first.some((x) => x.ko || x.assisted)) clean++;
+      runs.push(...first);
+    }
+    // The relay as a whole gets through on the one bag without a knockout on at least 4 of 5 seeds, and each new
+    // episode is won on at least 4 of 5 seeds in it.
+    expect(clean, 'relays cleared without a knockout').toBeGreaterThanOrEqual(4);
+    const named: Array<[number, string]> = [[6, 'Obni'], [8, 'Caway and Dercori'], [9, 'Ganos'], [10, 'Harmira'], [11, 'Frost (the jar)']];
+    for (const [seq, name] of named) {
+      const st2 = statsFor(runs.filter((x) => x.seq === seq));
+      expect(st2.wins, `${name} in the relay: won ${st2.wins}/${st2.seeds}`).toBeGreaterThanOrEqual(4);
+    }
+  }, REPLAY_TIMEOUT);
+});
+
+// ------------------------------------------------------------------------------------------------ Chapter 12, ep 68
+
+/**
+ * "Whose Wish?" (ep 68, `c12_wish.ts`): Goku goes down to the Earth's core in Bulma's heat suit. Replayed from a save
+ * holding the party the full-game run has in Chapter 12 (Goku L37 in Super Saiyan Blue, as on Hit's roof) and a bag of
+ * three Senzu Beans:
+ * - the guardian, the Mantle Wyrm, on the heart's arena (the suit's coolant is paused for the fight). Band: the fair bot
+ *   wins at least 4 of 5 seeds with at most 2 Senzu on average, hits ratio between 1 and 4 (Hit's band).
+ * - the mantle tunnels as a grind zone, with the heat running: the fair bot clears every regular enemy from the pod
+ *   (critic round 2, gap 1: a grind zone costs no knock-out and at most one Senzu at the level the story gives).
+ */
+describe('tuned fights: Chapter 12, the Earth\'s core (ep 68)', () => {
+  type Member = { level: number; hp: number; hpMax: number; epMax: number; str: number; pow: number; end: number; form: string | null; techs: string[] };
+  type Fight = Pick<RecordedFight, 'kind' | 'type' | 'opts' | 'hero' | 'level'>;
+  const PARTY: Record<'goku' | 'vegeta' | 'trunks' | 'piccolo', Member> = {
+    goku: { level: 37, hp: 906, hpMax: 906, epMax: 122, str: 56, pow: 56, end: 46, form: 'ssb', techs: ['kiBlast', 'kamehameha', 'godKamehameha'] },
+    vegeta: { level: 29, hp: 552, hpMax: 552, epMax: 105, str: 42, pow: 38, end: 43, form: 'ssb', techs: ['kiBlast', 'bigBang', 'galickGun'] },
+    trunks: { level: 35, hp: 904, hpMax: 904, epMax: 117, str: 57, pow: 38, end: 41, form: 'rage', techs: ['kiBlast', 'burningAttack', 'swordBlast'] },
+    piccolo: { level: 24, hp: 381, hpMax: 381, epMax: 88, str: 31, pow: 37, end: 32, form: 'unweighted', techs: ['kiBlast', 'specialBeamCannon', 'hellzoneGrenade'] },
+  };
+  /** The grind-zone check: the regular enemies of the mantle tunnels as one free-roam wave. */
+  const CLEAR = 'bal_c12_mantleClear';
+  registerScripts({ [CLEAR]: async (s) => { await s.clearEnemies(); } });
+
+  /** A beat on a core map with the episode open and Goku in his heat suit (forced, as the drill pod leaves him). */
+  const core = (script: string, map: string, tile: [number, number], fights: Fight[]): RecordedRoot => {
+    const st = freshState();
+    st.data.chapter = 12;
+    for (const [id, m] of Object.entries(PARTY) as Array<[keyof typeof PARTY, Member]>) {
+      st.join(id, m.level);
+      Object.assign(st.char(id), { ...m, ep: m.epMax, selected: 0, charged: true });
+    }
+    st.char('goku').outfit = 'c12_heatSuit';
+    st.data.active = 'goku';
+    st.data.inv = { senzu: 3 };
+    for (const f of ['_storyRun', 'noSwitch', 'c12_coreIntro']) st.set(f);
+    st.addQuest('c12_days');
+    st.addQuest('c12_wish');
+    return {
+      game: 0, script, map, x: tile[0] * 16 + 8, y: tile[1] * 16 + 14, dir: 'down', npc: null, onEnter: false, save: JSON.stringify(st.data),
+      carrying: null, fights: fights.map((f, seq) => ({ seq, map, chapter: 12, roster: [], result: null, ...f })),
+    };
+  };
+
+  /** Five fair-bot seeds: each recorded fight's first-attempt statistics, in order. */
+  const play = async (root: RecordedRoot): Promise<FightStats[]> => {
+    const runs: FightRun[] = [];
+    for (let seed = 1; seed <= 5; seed++) {
+      const rep = await replayRoot(root, seed);
+      expect(rep.errors).toEqual([]);
+      expect(rep.stopped, `${root.script} seed ${seed}`).toBe('done');
+      runs.push(...rep.runs.filter((x) => x.attempt === 1));
+    }
+    return root.fights.map((f) => statsFor(runs.filter((x) => x.seq === f.seq)));
+  };
+
+  it('Goku L37 in Super Saiyan Blue beats the Mantle Wyrm guarding the core alloy', async () => {
+    // Its second phase calls magma slimes up out of the lava (they burst when beaten).
+    expect(ENEMIES.c12_mantleWyrm.boss?.minion).toBe('c12_magmaSlime');
+    expect(ENEMIES.c12_mantleWyrm.boss?.endAt).toBe(0);
+    const [wyrm] = await play(core('c12_wyrm_fight', 'c12_core_heart', [15, 10], [
+      { kind: 'boss', type: 'c12_mantleWyrm', opts: { uid: 'c12_wyrm1' }, hero: 'goku', level: 37 },
+    ]));
+    expect(wyrm.wins, `the Mantle Wyrm: won ${wyrm.wins}/${wyrm.seeds}`).toBeGreaterThanOrEqual(4);
+    expect(wyrm.avgSenzu, 'the Mantle Wyrm: Senzu per fight').toBeLessThanOrEqual(2);
+    expect(wyrm.ratio?.ratio ?? 0, 'the Mantle Wyrm: hits ratio').toBeGreaterThanOrEqual(1);
+    expect(wyrm.ratio?.ratio ?? 0, 'the Mantle Wyrm: hits ratio').toBeLessThanOrEqual(4);
+  }, REPLAY_TIMEOUT);
+
+  it('the mantle tunnels are a place to level, not a Senzu sink: Goku L37 clears them with the heat running', async () => {
+    const [mantle] = await play(core(CLEAR, 'c12_core_mantle', [7, 6], [{ kind: 'wave', type: '', opts: {}, hero: 'goku', level: 37 }]));
+    expect(mantle.kos, 'mantle tunnels: knock-outs').toBe(0);
+    expect(mantle.wins, `mantle tunnels: cleared ${mantle.wins}/${mantle.seeds}`).toBe(mantle.seeds);
+    expect(mantle.avgSenzu, 'mantle tunnels: Senzu per clear').toBeLessThanOrEqual(1);
+  }, REPLAY_TIMEOUT);
+});

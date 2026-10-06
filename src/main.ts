@@ -10,18 +10,23 @@ import { textSettings } from './ui/dialogue';
 import { IntroScene } from './ui/intro';
 import { installHarness } from './debug/harness';
 
-const params = new URLSearchParams(location.search);
-if (params.has('creatures')) {
-  showCreatures();
-  throw new Error('creature mode');
-}
-if (params.has('portraits')) {
-  showPortraits();
-  throw new Error('portrait mode');
-}
-if (params.has('gallery')) {
-  showGallery(params.get('gallery') ?? '');
-  throw new Error('gallery mode');
+// Developer tooling (the art viewers below, the ?map= entry and the console harness) is dev-server only: a production
+// build folds import.meta.env.DEV to false, so these branches and the debug modules they use never ship.
+// Art viewers: ?creatures, ?portraits and ?gallery=<filter> replace the page with a sprite sheet.
+if (import.meta.env.DEV) {
+  const params = new URLSearchParams(location.search);
+  if (params.has('creatures')) {
+    showCreatures();
+    throw new Error('creature mode');
+  }
+  if (params.has('portraits')) {
+    showPortraits();
+    throw new Error('portrait mode');
+  }
+  if (params.has('gallery')) {
+    showGallery(params.get('gallery') ?? '');
+    throw new Error('gallery mode');
+  }
 }
 
 const canvas = document.getElementById('screen') as HTMLCanvasElement | null;
@@ -68,21 +73,33 @@ input.onFirstGesture = () => audio.unlock();
 canvas.addEventListener('pointerdown', () => audio.unlock());
 const game = new Game(input);
 
-// Dev entry: ?map=<id>&x=<tile>&y=<tile>&char=<id>&lv=<n>&chapter=<n>&flags=a,b&scouter ; ?nointro boots to the title.
-const devMap = params.get('map');
-if (devMap) {
-  const st = game.state;
-  const ch = (params.get('char') ?? 'goku') as CharId;
-  const lv = parseInt(params.get('lv') ?? '5', 10);
-  st.data.chapter = parseInt(params.get('chapter') ?? '1', 10);
-  for (const f of (params.get('flags') ?? '').split(',').filter(Boolean)) st.set(f);
-  st.join(ch, lv);
-  st.data.active = ch;
-  if (params.has('scouter')) st.give('scouter', 1, 1);
-  game.startField(devMap, parseFloat(params.get('x') ?? '5'), parseFloat(params.get('y') ?? '5'), 'down');
-} else if (params.has('nointro')) {
-  game.toTitle();
-} else {
+/**
+ * Dev-server entry points: ?map=<id>&x=<tile>&y=<tile>&char=<id>&lv=<n>&chapter=<n>&flags=a,b&scouter drops a fresh
+ * party member straight into a map; ?nointro boots to the title. False when the URL asks for neither.
+ */
+function devBoot(): boolean {
+  const params = new URLSearchParams(location.search);
+  const devMap = params.get('map');
+  if (devMap) {
+    const st = game.state;
+    const ch = (params.get('char') ?? 'goku') as CharId;
+    const lv = parseInt(params.get('lv') ?? '5', 10);
+    st.data.chapter = parseInt(params.get('chapter') ?? '1', 10);
+    for (const f of (params.get('flags') ?? '').split(',').filter(Boolean)) st.set(f);
+    st.join(ch, lv);
+    st.data.active = ch;
+    if (params.has('scouter')) st.give('scouter', 1, 1);
+    game.startField(devMap, parseFloat(params.get('x') ?? '5'), parseFloat(params.get('y') ?? '5'), 'down');
+    return true;
+  }
+  if (params.has('nointro')) {
+    game.toTitle();
+    return true;
+  }
+  return false;
+}
+
+if (!(import.meta.env.DEV && devBoot())) {
   // Cold boot: fan-project splash and the story opening, then the title (A / Start skips to it at any point).
   game.scenes.replace(new IntroScene(game, { splash: true }));
 }
@@ -97,9 +114,11 @@ const loop = new Loop(
 );
 loop.start();
 
-// Expose for automated play-testing from the browser console.
-const w = window as unknown as Record<string, unknown>;
-w.__game = game;
-w.__loop = loop;
-w.__input = input;
-installHarness(game, input);
+// Console play-test hooks (window.__game, __loop, __input and the __t harness): dev server only.
+if (import.meta.env.DEV) {
+  const w = window as unknown as Record<string, unknown>;
+  w.__game = game;
+  w.__loop = loop;
+  w.__input = input;
+  installHarness(game, input);
+}

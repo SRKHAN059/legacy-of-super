@@ -4,13 +4,13 @@ import { battle, bossFight, forceFade, freeNear, heroTile, refresh, rememberHero
 import { HUB } from './hubs';
 
 /**
- * Chapter 13 — "Universe Survival" (L42→45). Zeno Expo exhibition (Goku vs Toppo), then the LoG2
- * "collection chapter": recruit the Mighty Ten through four silver sub-objectives, then the tenth warrior
- * (Frieza from Hell). Canon interludes play where the anime puts them (`c13_u6.ts`, `c13_leader.ts`): Cabba recruits
- * Caulifla on Sadala once Gohan has trained or Tien has joined (eps 88-89), Goku vs. Gohan once both are in (ep 90),
- * and Caulifla's Super Saiyan and Kale's berserk form between Goku's Frieza plan and his trip to Hell (eps 92-93).
- * Side: Monster Island's seven escaped animals (LoG2's missing Namekians), three of them in old Earth regions behind
- * coloured gates.
+ * Chapter 13 — "Universe Survival" (L42→45). The Zeno Expo (`c13_expo.ts`: Buu, Gohan and Goku against the Trio de
+ * Dangers, then Toppo), then the LoG2 "collection chapter": recruit the Mighty Ten through four silver sub-objectives,
+ * then the tenth warrior (Frieza from Hell). Canon interludes play where the anime puts them (`c13_u6.ts`,
+ * `c13_leader.ts`): Cabba recruits Caulifla on Sadala once Gohan has trained or Tien has joined (eps 88-89), Goku vs.
+ * Gohan once both are in (ep 90), and Caulifla's Super Saiyan and Kale's berserk form between Goku's Frieza plan and
+ * his trip to Hell (eps 92-93). Side: Monster Island's seven escaped animals (LoG2's missing Namekians), three of them
+ * in old Earth regions behind coloured gates.
  */
 
 const RECRUITS = ['c13_krillin', 'c13_tien', 'c13_gohan', 'c13_17'] as const;
@@ -57,110 +57,9 @@ registerScripts({
     } else {
       await s.narrate('Goku remembers a promise: Lord Zeno wanted a tournament of all the universes. So he goes to remind him.');
     }
-    await s.narrate('A few confused days later, the Grand Priest gathers every God of Destruction for an exhibition: the Zeno Expo.');
+    await s.narrate('Zeno remembers, and loves the idea. A tournament of all the universes it is... and Zeno wants a taste of it first: the Zeno Expo.');
+    // The Expo itself (eps 78-82, the Trio de Dangers bouts and Toppo): c13_expo.ts.
     await s.call('c13_expo');
-  },
-
-  /**
-   * The Zeno Expo: Universe 7 vs Universe 9, Goku vs Toppo and the rules of the tournament, then the team
-   * planning at Capsule Corp. Replayable from Beerus at Capsule Corp if the Expo was ever left mid-fight.
-   */
-  c13_expo: async (s) => {
-    if (s.flag('c13_expoSeen')) { await s.call('c13_planning'); return; }
-    if (s.hero !== 'goku') {
-      await s.fadeOut(12);
-      s.switchTo('goku');
-    }
-    await warpTo(s, 'c13_expo', 16, 16, 'up');
-    s.letterbox(true);
-    s.music('godly');
-    // The gallery of gods.
-    s.spawn('c13_zeno', 'zeno', 16, 4, 'down', 'Zeno');
-    s.spawn('c13_gp', 'grandPriest', 18, 4, 'down', 'Grand Priest');
-    s.spawn('c13_beerusX', 'beerus', 8, 3, 'down', 'Beerus');
-    s.spawn('c13_whisX', 'whis', 9, 4, 'down', 'Whis');
-    s.spawn('c13_skX', 'supremeKai', 7, 4, 'down', 'Supreme Kai');
-    s.spawn('c13_champaX', 'champa', 24, 3, 'down', 'Champa');
-    s.spawn('c13_vadosX', 'vados', 25, 4, 'down', 'Vados');
-    // The fighters.
-    s.spawn('c13_gohanX', 'gohan', 13, 16, 'up', 'Gohan');
-    s.spawn('c13_buuX', 'majinBuu', 19, 16, 'up', 'Buu');
-    s.spawn('c13_basilX', 'basil', 12, 11, 'down', 'Basil');
-    s.spawn('c13_lavenderX', 'lavender', 16, 11, 'down', 'Lavender');
-    s.spawn('c13_bergamoX', 'bergamo', 20, 11, 'down', 'Bergamo');
-    await s.pan(16, 6, 40);
-    await s.talk([
-      ['grandPriest', 'Welcome, gods of every universe, to the Zeno Expo! Today Universe 7 and Universe 9 will give us a preview of the grand tournament.', 'happy'],
-      ['zeno', 'Fight, fight! It\'ll be fun!', 'happy'],
-      ['beerus', '(Goku... what have you DONE?)', 'angry'],
-    ]);
-    s.follow();
-    await s.narrate('Round one: Buu versus Basil.');
-    await s.walkAll([['c13_buuX', 15, 13, 1.5], ['c13_basilX', 14, 12, 1.5]]);
-    await s.clash('c13_buuX', 'c13_basilX', 60);
-    await s.walk('c13_basilX', 4, 10, 4);
-    s.remove('c13_basilX');
-    await s.say('majinBuu', 'Buu win! Buu want candy now.', 'happy');
-    await s.walk('c13_buuX', 19, 16, 1.5);
-    await s.narrate('Round two: Gohan versus Lavender. Lavender\'s poison blinds Gohan, but Gohan fights on by feel...');
-    await s.walkAll([['c13_gohanX', 15, 13, 1.5], ['c13_lavenderX', 16, 12, 1.5]]);
-    await s.blast('c13_lavenderX', 'c13_gohanX', '#a050e0');
-    await s.clash('c13_gohanX', 'c13_lavenderX', 60);
-    s.pose('c13_gohanX', 'ko');
-    s.pose('c13_lavenderX', 'ko');
-    await s.narrate('Both fighters collapse at the same moment. A draw!');
-    s.remove('c13_lavenderX');
-    s.pose('c13_gohanX', null);
-    s.place('c13_gohanX', 13, 16, 'up');
-    await s.narrate('Final round: Goku versus Bergamo.');
-    await s.walk('c13_bergamoX', 16, 13, 1);
-    await s.talk([
-      ['bergamo', 'Gods of all universes, hear me! This man is the reason this deadly tournament exists! He asked Zeno for it!', 'shout'],
-      ['bergamo', 'I propose a deal: if I win, Universe 9 is spared from the tournament!', 'smirk'],
-      ['goku', 'Huh? But... there\'s no erasing. Right? It\'s just for fun... right?', 'shock'],
-      ['grandPriest', 'Oh, there will most certainly be erasing.', 'happy'],
-    ]);
-    s.sprite('hero', 'gokuSSB');
-    s.aura('hero', '#f83838');
-    await s.powerUp('hero', '#f83838', 40);
-    await s.clash('hero', 'c13_bergamoX', 70);
-    await s.walk('c13_bergamoX', 28, 13, 4);
-    s.remove('c13_bergamoX');
-    s.aura('hero', null);
-    s.sprite('hero', 'goku');
-    await s.narrate('Bergamo is knocked clean out of the ring!');
-    // Toppo cuts in.
-    s.spawn('c13_toppoX', 'toppo', 22, 4, 'down', 'Toppo');
-    s.sfx('dash');
-    await s.walk('c13_toppoX', 18, 12, 4);
-    await s.talk([
-      ['toppo', 'Halt! I am Toppo, leader of Universe 11\'s Pride Troopers. A man who starts a war for fun is no hero.', 'angry'],
-      ['toppo', 'In the name of justice, I will judge you myself!', 'shout'],
-      ['goku', 'Ooh, you\'re strong! Okay, let\'s go!', 'happy'],
-    ]);
-    s.letterbox(false);
-    s.music('boss');
-    const [tx, ty] = freeNear(s, 18, 12);
-    s.remove('c13_toppoX');
-    await bossFight(s, 'c13_toppo', { x: tx, y: ty, uid: 'c13_toppo1' });
-    s.letterbox(true);
-    await s.talk([
-      ['grandPriest', 'That will do! Save it for the real thing.', 'neutral'],
-      ['toppo', 'Hmph. Know this, Son Goku: our Jiren is far stronger than I am.', 'smirk'],
-    ]);
-    removeAll(s, 'c13_toppo1');
-    s.music('tense');
-    await s.talk([
-      ['grandPriest', 'Now, the rules of the Tournament of Power. Eight universes. Ten warriors each. A battle royale lasting forty-eight minutes.', 'neutral'],
-      ['grandPriest', 'Knock opponents off the stage to eliminate them. No killing. No weapons. No flying, unless you have wings.', 'neutral'],
-      ['grandPriest', 'The last universe standing wins the Super Dragon Balls. Every universe that loses will be erased. Along with its gods.', 'happy'],
-      ['zeno', 'Erase, erase! Hehe!', 'happy'],
-      ['beerus', 'GOKUUU!!', 'shout'],
-    ]);
-    removeAll(s, 'c13_zeno', 'c13_gp', 'c13_beerusX', 'c13_whisX', 'c13_skX', 'c13_champaX', 'c13_vadosX', 'c13_gohanX', 'c13_buuX');
-    s.letterbox(false);
-    s.set('c13_expoSeen');
-    await s.call('c13_planning');
   },
 
   /** Team planning at Capsule Corp: Bulla is born, the Mighty Ten are drafted and the recruitment quests open. */
@@ -197,10 +96,6 @@ registerScripts({
     for (const q of RECRUITS) await s.quest(q, true);
     await s.narrate('Journal updated! Recruit Krillin and 18 (Satan City), Tien and Roshi (ask at Kame House), train Gohan (the Lookout) and find Android 17 (Monster Island), in any order.');
     s.letterbox(false);
-  },
-
-  c13_toppo_p2: async (s) => {
-    await s.say('toppo', 'Justice... RUSH!', 'shout');
   },
 
   /**

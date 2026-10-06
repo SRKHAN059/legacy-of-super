@@ -231,3 +231,21 @@ export function scanRecord(id: string): ScanReading {
   if (k) return { id: `npc:${k}`, sprite: k, entry: SCANS[k], npc: true };
   return { id: `npc:${GENERIC_SCAN_KEY}`, sprite: 'townsman', entry: GENERIC_SCAN, npc: true };
 }
+
+/**
+ * The database entries a save's stored scan ids file under, unique and in first-scanned order. A save from before
+ * the alias table can hold a variant id (`npc:vegetaCasual`) beside its base (`npc:vegeta`); both are one entry.
+ */
+export function scanEntries(stored: readonly string[]): string[] {
+  return [...new Set(stored.map((id) => scanRecord(id).id))];
+}
+
+/** Number of Scouter database entries: the pause screen's "Scouter scans" and the Capsule Corp database's count. */
+export function scanEntryCount(stored: readonly string[]): number {
+  return scanEntries(stored).length;
+}
+
+/** Number of distinct named characters scanned: NPC entries other than the generic Earthling (Bulma's scan errand). */
+export function namedScanCount(stored: readonly string[]): number {
+  return scanEntries(stored).filter((id) => id.startsWith('npc:') && id !== `npc:${GENERIC_SCAN_KEY}`).length;
+}

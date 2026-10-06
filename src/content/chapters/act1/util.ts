@@ -2,6 +2,7 @@ import { TILE } from '../../../engine/constants';
 import type { Dir, Rect } from '../../../engine/math';
 import type { FightOpts, FightResult, ScriptApi } from '../../../game/script';
 import { QUESTS } from '../../quests';
+import { namedScanCount } from '../../scans';
 import { SPOTS } from '../../world';
 
 /** Shared staging helpers for Act 1 scripts. */
@@ -217,7 +218,10 @@ export async function flyHop(s: ScriptApi, map: string, x: number, y: number, di
   s.pose('hero', null);
 }
 
-/** Number of distinct named characters scanned with the Scouter (excluding anonymous townsfolk). */
+/**
+ * Number of distinct named characters scanned with the Scouter (excluding anonymous townsfolk), counted like the
+ * database and the pause screen: an old save's variant id (`npc:vegetaCasual`) and its base are one character.
+ */
 export function scanCount(s: ScriptApi): number {
-  return s.state.data.scans.filter((id) => id.startsWith('npc:') && id !== 'npc:human').length;
+  return namedScanCount(s.state.data.scans);
 }

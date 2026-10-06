@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { portrait } from '../../src/art/registry';
 import { CAST } from '../../src/content/cast';
+import { EPISODES, EPISODES_NEEDED } from '../../src/content/chapters/act5/c12';
+import { BALLGAME, CATCH_RADIUS, MVP_BONUS, MVP_MAX, SLIDE_WINDOW, START_RUNS, SWEET_SPOT, SWING_WINDOW } from '../../src/content/chapters/act5/c12_baseball';
+import { EP, POD_OUT, WISH_BALLS } from '../../src/content/chapters/act5/c12_eps_maps';
+import { COOLANT_MAX } from '../../src/content/chapters/act5/c12_wish';
 import { handOff } from '../../src/content/chapters/act5/helpers';
 import { SATAN_RULE_GOKU_LEVEL } from '../../src/content/chapters/act5/post';
 import { CREATURES } from '../../src/content/creatures';
@@ -2377,4 +2381,1530 @@ describe('Chapter 14 review: staging, canon and fair play', () => {
       }
     }
   }, 120000);
+});
+
+// ================================================================================================ the Zeno Expo
+
+/** The party a story run brings to the Zeno Expo (Goku L37 in Blue, Gohan benched at L19), three Senzu. */
+function expoSim(flags: string[] = []): Sim {
+  const sim = freshSim(13, 37);
+  const st = sim.game.state;
+  const goku = st.char('goku');
+  goku.form = 'ssb';
+  goku.techs = ['kiBlast', 'kamehameha', 'godKamehameha'];
+  goku.charged = true;
+  st.join('vegeta', 29);
+  st.char('vegeta').form = 'ssb';
+  st.join('gohan', 19);
+  st.char('gohan').form = 'ssj';
+  st.learn('gohan', 'masenko');
+  st.join('piccolo', 24);
+  st.join('trunks', 35);
+  st.data.inv.senzu = 3;
+  for (const f of flags) st.set(f);
+  return sim;
+}
+
+/** Start the Expo from Capsule Corp (Beerus's way back in) and read dialogue until the bout against `uid` is on. */
+async function expoIntoFight(sim: Sim, uid: string): Promise<() => boolean> {
+  sim.start('cc_yard', 22, 18);
+  await settle(sim);
+  let finished = false;
+  void sim.game.runScript('c13_expo').then(() => { finished = true; });
+  await driveUntil(sim, `${uid} bout`, () => midFight(sim) && !!sim.game.field?.enemies.some((e) => e.uid === uid && !e.dead), 60000);
+  return () => finished;
+}
+
+/** Expo bookkeeping flags (a finished Expo leaves only `c13_expoSeen`). */
+const EXPO_FLAGS = ['c13_expoMet', 'c13_expoOpened', 'c13_expoBuu', 'c13_expoGohan', 'c13_expoBergamo', 'c13_expoToppo'];
+
+describe('Chapter 13: the Zeno Expo (eps 78-82)', () => {
+  it('plays from the end of Chapter 12 through every bout in the anime\'s order, then the team planning', async () => {
+    const sim = expoSim();
+    const st = sim.game.state;
+    st.data.chapter = 12;
+    const goku = st.char('goku');
+    const techs = [...goku.techs];
+    const log = record(sim);
+    sim.start('paozu_home', 31, 10);
+    await settle(sim);
+    await beat(sim, null, 'c13_start');
+    const order = [
+      /Grand Priest himself comes/, /Trio de Dangers/, /welcome to the Zeno Expo/, /first match! Majin Buu/, /winner is Majin Buu/,
+      /second match! Son Gohan/, /This match is a draw/, /Supreme Kai's Senzu Beans/, /erased\. Along with its gods/,
+      /final match! Son Goku/, /enemy of every universe/, /winner of the Zeno Expo: Universe 7/, /I am Toppo/, /Justice\.\.\. CRUSHER/,
+      /That is enough!/, /warrior named Jiren/, /shake hands with evil/, /rules of the Tournament of Power/, /ten warriors/,
+      /unless you were born with wings/, /forty Earth hours/, /Bulla/,
+    ];
+    let at = -1;
+    for (const re of order) {
+      const i = log.findIndex((l, k) => k > at && re.test(l.text));
+      expect(i, `${re} after line ${at}`).toBeGreaterThan(at);
+      at = i;
+    }
+    // Universe 9 is met at Zeno's palace, the bouts happen in the World of Void.
+    expect(log.find((l) => /Trio de Dangers!/.test(l.text))?.map).toBe('zeno_palace');
+    expect(log.find((l) => /first match/.test(l.text))?.map).toBe('c13_expo');
+    expect(st.data.chapter).toBe(13);
+    expect(st.data.journal.c13_expo).toBe('done');
+    expect(st.data.journal.c13_team).toBe('active');
+    expect(st.flag('c13_expoSeen')).toBe(true);
+    for (const f of EXPO_FLAGS) expect(st.flag(f), f).toBe(false);
+    for (const k of ['c13_expoBuuStash', 'c13_expoBuuRage', 'c13_expoBlind', 'c13_expoLavAir']) expect(st.get(k), k).toBeUndefined();
+    // Goku is himself again, free to switch, and Gohan was put on the field at the Chapter 13 forced floor.
+    expect(st.data.active).toBe('goku');
+    expect(st.flag('noSwitch')).toBe(false);
+    expect(goku.outfit).toBeUndefined();
+    expect(goku.techs).toEqual(techs);
+    expect(goku.form).toBe('ssb');
+    expect(st.char('gohan').level).toBeGreaterThanOrEqual(39);
+    // The Supreme Kai's bag tops the pouch up to three (LoG2's carry limit).
+    expect(st.count('senzu')).toBe(3);
+    expect(sim.game.field?.def.id).toBe('cc_yard');
+    expect(sim.game.field?.tintOverride).toBeUndefined();
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Buu vs. Basil (ep 79): Buu is played over Goku, his rubber body, the crossfire, Danger Doping, then Goku is back', async () => {
+    const { RUBBER } = await import('../../src/content/chapters/act5/c13_expo');
+    const sim = expoSim(['c13_expoMet', 'c13_expoOpened']);
+    const st = sim.game.state;
+    const goku = st.char('goku');
+    const before = { techs: [...goku.techs], form: goku.form };
+    const log = record(sim);
+    await expoIntoFight(sim, 'c13_basil1');
+    const stats = { str: goku.str, pow: goku.pow };
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    expect(f.def.id).toBe('c13_expo');
+    // Both Zenos, the gods and angels of Universes 6, 7 and 9, and the hooded figure of Universe 11 watch from the balcony.
+    for (const id of ['c13_zeno', 'c13_zenoF', 'c13_gp', 'c13_beerusX', 'c13_whisX', 'c13_champaX', 'c13_vadosX', 'c13_sidraX', 'c13_rohX', 'c13_mojitoX']) {
+      expect(f.npcs.some((n) => n.def.id === id), id).toBe(true);
+    }
+    expect(f.npcs.find((n) => n.def.id === 'c13_toppoX')?.silhouette).toBe(true);
+    // Majin Buu: his sprite and kit over a forced Goku, no Z form.
+    expect(st.data.active).toBe('goku');
+    expect(st.flag('noSwitch')).toBe(true);
+    expect(goku.outfit).toBe('majinBuu');
+    expect(f.player.spriteId).toBe('majinBuu');
+    expect(goku.techs).toEqual(['kiBlast', 'kamehameha']);
+    expect(goku.form).toBeNull();
+    expect(f.player.canTransform).toBe(false);
+    expect(goku.level).toBeGreaterThanOrEqual(39);
+    const basil = c14Foe(sim, 'c13_basil1');
+    // Rubber body: once per bout, a beating that leaves Buu low snaps him back together.
+    basil.frozen = 100000;
+    goku.hp = Math.floor(goku.hpMax * 0.3);
+    await stepUntil(sim, () => goku.hp > goku.hpMax * 0.5, 10);
+    expect(goku.hp).toBeGreaterThanOrEqual(Math.round(goku.hpMax * RUBBER.to));
+    goku.hp = Math.floor(goku.hpMax * 0.3);
+    await stepUntil(sim, () => false, 10);
+    expect(goku.hp).toBe(Math.floor(goku.hpMax * 0.3));
+    // Phase two: the blast through Buu and the crossfire that floors Mr. Satan make him furious.
+    basil.frozen = 0;
+    const str0 = goku.str;
+    basil.hp = Math.floor(basil.maxHp * 0.69);
+    await driveUntil(sim, 'Buu\'s anger', () => st.get('c13_expoBuuRage') !== undefined && midFight(sim));
+    expect(goku.str).toBe(str0 + 8);
+    expect(f.npcs.find((n) => n.def.id === 'c13_satanX')?.scriptPose).toBe('ko');
+    for (const re of [/hole clean through Buu's belly/, /Win the match/, /Mind where you send those/, /BUU\.\.\. MAD/]) {
+      expect(log.some((l) => re.test(l.text)), String(re)).toBe(true);
+    }
+    // The hooded figure speaks without a face or a name: Toppo is not revealed until he jumps into the ring.
+    expect(f.npcs.find((n) => n.def.id === 'c13_toppoX')?.silhouette).toBe(true);
+    // Phase three (canon): Buu knocks Basil out of the ring, but Universe 7's ring-out rule does not count at the Expo;
+    // Basil crawls back in, asks Roh for "that", and the "tonic" pumps him into Danger Doping.
+    basil.hp = Math.floor(basil.maxHp * 0.39);
+    await driveUntil(sim, 'Danger Doping', () => basil.def.id === 'c13_basilDoped' && midFight(sim));
+    expect(basil.spriteId).toBe('c13_basilDoped');
+    expect(f.boss?.def.name).toBe('Basil (Danger Doping)');
+    expect(basil.def.str).toBeGreaterThan(ENEMIES.c13_basil.str);
+    for (const re of [/That's a ring-out!/, /Universe 7's rules do not apply here/, /We want to see more/, /Give me\.\.\. THAT/, /Purely medicinal/, /anything goes/, /Danger Doping!/]) {
+      expect(log.some((l) => re.test(l.text)), String(re)).toBe(true);
+    }
+    // He fights on from inside the ring.
+    expect(f.voidAt(basil.x, basil.y)).toBe(false);
+    // Wolfgang Pressure, then Buu's full-power Kamehameha ends it; the drug wears off; Goku gets his own body, kit and
+    // stats back before Gohan's bout.
+    c14Finish(sim, basil);
+    await driveUntil(sim, 'Gohan\'s bout', () => midFight(sim) && st.data.active === 'gohan', 60000);
+    for (const re of [/Wolfgang\.\.\. PRESSURE/, /Kaaa\.\.\. meee\.\.\. haaa/, /Danger Doping wears off/, /winner is Majin Buu/, /Buu make you all better/, /as good as new/]) {
+      expect(log.some((l) => re.test(l.text)), String(re)).toBe(true);
+    }
+    // Buu healed Mr. Satan in the stands.
+    expect(f.npcs.find((n) => n.def.id === 'c13_satanX')?.scriptPose ?? null).toBeNull();
+    expect(st.flag('c13_expoBuu')).toBe(true);
+    expect(goku.outfit).toBeUndefined();
+    expect(goku.techs).toEqual(before.techs);
+    expect(goku.form).toBe(before.form);
+    expect([goku.str, goku.pow]).toEqual([stats.str, stats.pow]);
+    expect(st.get('c13_expoBuuRage')).toBeUndefined();
+    expect(st.get('c13_expoBuuStash')).toBeUndefined();
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Gohan vs. Lavender (ep 80): the mist blinds Gohan, the cues and the Super Saiyan radar, then a double knock-out draw', async () => {
+    const { TOXIN, lavenderCloak } = await import('../../src/content/chapters/act5/c13_expo');
+    // The cue rules: unseen by default, a Super Saiyan reads him like a radar, and he cannot be heard in the air.
+    const quiet = { radar: false, windup: false, listening: false, airborne: false, reveal: 0, flicker: 0 };
+    expect(lavenderCloak(quiet)).toBe(1);
+    expect(lavenderCloak({ ...quiet, radar: true })).toBe(0);
+    expect(lavenderCloak({ ...quiet, windup: true })).toBeLessThan(0.5);
+    expect(lavenderCloak({ ...quiet, listening: true })).toBeLessThan(0.5);
+    expect(lavenderCloak({ ...quiet, listening: true, airborne: true })).toBe(1);
+    expect(lavenderCloak({ ...quiet, reveal: 1 })).toBeLessThanOrEqual(0.25);
+
+    const sim = expoSim(['c13_expoMet', 'c13_expoOpened', 'c13_expoBuu']);
+    const st = sim.game.state;
+    const gohan = st.char('gohan');
+    const log = record(sim);
+    await expoIntoFight(sim, 'c13_lavender1');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    expect(st.data.active).toBe('gohan');
+    expect(st.flag('noSwitch')).toBe(true);
+    expect(gohan.level).toBeGreaterThanOrEqual(39);
+    const lav = c14Foe(sim, 'c13_lavender1');
+    expect(lav.cloak).toBe(0);
+    expect(f.tintOverride).toBeUndefined();
+    // The mist: darkened view, Lavender out of sight.
+    lav.hp = Math.floor(lav.maxHp * 0.79);
+    await driveUntil(sim, 'the mist', () => st.flag('c13_expoBlind') && midFight(sim));
+    expect(log.some((l) => /my eyes/.test(l.text))).toBe(true);
+    const blindTint = f.tintOverride;
+    expect(blindTint).toBeTruthy();
+    lav.frozen = 100000;
+    await drive(sim, 12, ['right']);
+    expect(lav.cloak).toBeGreaterThanOrEqual(0.6);
+    // Standing still, Gohan hears him.
+    await drive(sim, TOXIN.listen + 4);
+    expect(lav.cloak).toBeLessThan(0.5);
+    // The toxin works on its own...
+    gohan.hp = gohan.hpMax;
+    await stepUntil(sim, () => false, 600);
+    const lost = gohan.hpMax - gohan.hp;
+    expect(lost).toBeGreaterThan(0);
+    // ...three times faster while Super Saiyan reads his ki, and then Lavender has nowhere to hide. The first time,
+    // Gohan says so and Whis warns about the poison (once per Expo).
+    f.player.formActive = 'ssj';
+    f.player.refreshSprite();
+    await driveUntil(sim, 'Whis\'s warning', () => log.some((l) => /pumps the poison through him faster/.test(l.text)) && midFight(sim));
+    expect(st.flag('c13_expoRadar')).toBe(true);
+    gohan.hp = gohan.hpMax;
+    await stepUntil(sim, () => false, 600);
+    expect(gohan.hpMax - gohan.hp).toBeGreaterThan(lost * 2);
+    expect(lav.cloak).toBe(0);
+    expect(f.tintOverride).not.toBe(blindTint);
+    f.player.formActive = null;
+    f.player.refreshSprite();
+    // It never knocks him out by itself.
+    gohan.hp = 2;
+    await stepUntil(sim, () => false, 300);
+    expect(gohan.hp).toBe(1);
+    gohan.hp = gohan.hpMax;
+    // Phase three: Lavender takes to the air, and there are no footsteps left to hear.
+    lav.frozen = 0;
+    lav.hp = Math.floor(lav.maxHp * 0.49);
+    await driveUntil(sim, 'Lavender airborne', () => st.flag('c13_expoLavAir') && midFight(sim));
+    lav.frozen = 100000;
+    await drive(sim, TOXIN.listen + 4);
+    expect(lav.z).toBeGreaterThan(0);
+    expect(lav.cloak).toBeGreaterThanOrEqual(0.6);
+    // Canon's ending: the full-nelson slam, both down, a draw; Goku's Senzu Bean; the stakes told to every god.
+    st.data.inv.senzu = 0;
+    lav.frozen = 0;
+    c14Finish(sim, lav);
+    await driveUntil(sim, 'Bergamo\'s bout', () => midFight(sim) && !!f.enemies.some((e) => e.uid === 'c13_bergamo1'), 60000);
+    for (const re of [/Let the poison take you/, /this close, I can't miss/, /This match is a draw/, /Supreme Kai's Senzu Beans/, /erased\. Along with its gods/]) {
+      expect(log.some((l) => re.test(l.text)), String(re)).toBe(true);
+    }
+    expect(st.flag('c13_expoGohan')).toBe(true);
+    expect(st.flag('c13_expoBlind')).toBe(false);
+    expect(f.tintOverride).toBeUndefined();
+    expect(st.data.active).toBe('goku');
+    expect(st.count('senzu')).toBe(2);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Goku vs. Bergamo (ep 81): he grows in two visible steps as he absorbs blows; Kaio-ken ends it; Toppo\'s bout is a draw', async () => {
+    const sim = expoSim(['c13_expoMet', 'c13_expoOpened', 'c13_expoBuu', 'c13_expoGohan']);
+    const st = sim.game.state;
+    const log = record(sim);
+    const done = await expoIntoFight(sim, 'c13_bergamo1');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    const berg = c14Foe(sim, 'c13_bergamo1');
+    expect(berg.def.id).toBe('c13_bergamo');
+    const w0 = berg.frame().width;
+    const h0 = berg.body().h;
+    // First step at 80%: half again his size, harder hits.
+    berg.hp = Math.floor(berg.maxHp * 0.79);
+    await driveUntil(sim, 'Bergamo grows', () => berg.def.id === 'c13_bergamoL' && midFight(sim));
+    expect(berg.frame().width).toBe(Math.round(w0 * 1.5));
+    expect(berg.body().h).toBeGreaterThan(h0);
+    expect(berg.def.str).toBeGreaterThan(ENEMIES.c13_bergamo.str);
+    expect(f.boss?.def.name).toBe('Bergamo (Grown)');
+    expect(f.col.blocked(berg.box())).toBe(false);
+    // Second step at 55%: a giant, the strongest and the slowest.
+    berg.hp = Math.floor(berg.maxHp * 0.54);
+    await driveUntil(sim, 'Bergamo is a giant', () => berg.def.id === 'c13_bergamoXL' && midFight(sim));
+    expect(berg.frame().width).toBe(w0 * 2);
+    expect(berg.def.str).toBeGreaterThan(ENEMIES.c13_bergamoL.str);
+    expect(berg.def.speed).toBeLessThan(ENEMIES.c13_bergamo.speed);
+    expect(f.col.blocked(berg.box())).toBe(false);
+    for (const re of [/limitless/, /blind spots/]) expect(log.some((l) => re.test(l.text)), String(re)).toBe(true);
+    // The finish: Blue Kaio-ken Kamehameha against the Wolfgang Penetrator, a knock-out, then Toppo jumps down uninvited.
+    c14Finish(sim, berg);
+    await driveUntil(sim, 'Toppo\'s bout', () => midFight(sim) && !!f.enemies.some((e) => e.uid === 'c13_toppo1' && !e.dead), 60000);
+    for (const re of [/Kaio-ken/, /Wolfgang\.\.\. PENETRATOR/, /winner of the Zeno Expo/, /Justice\.\.\. TORNADO/, /lasts in my grip/]) {
+      expect(log.some((l) => re.test(l.text)), String(re)).toBe(true);
+    }
+    expect(st.flag('c13_expoBergamo')).toBe(true);
+    expect(f.npcs.find((n) => n.def.id === 'c13_bergamoX')?.frame().width).toBe(w0);
+    // Toppo: Goku in Blue (he broke the bear hug with it), a short bout on the Grand Priest's clock.
+    expect(f.player.formActive).toBe('ssb');
+    expect(f.timer?.label).toBe('MATCH');
+    c14Foe(sim, 'c13_toppo1').frozen = 1000000;
+    await driveUntil(sim, 'the Expo ends', done, 60 * 60 * 2);
+    // The Grand Priest stops it as Goku charges a Kamehameha; then the tournament's rules (ep 82).
+    for (const re of [/proud uniform of the Pride Troopers/, /go all out too! Kaio-ken/, /Haaa\.\.\. meee/, /That is enough!/, /warrior named Jiren/, /shake hands with evil/, /No killing\. No weapons/, /ten warriors/, /Bulla/]) {
+      expect(log.some((l) => re.test(l.text)), String(re)).toBe(true);
+    }
+    expect(st.flag('c13_expoSeen')).toBe(true);
+    expect(st.data.journal.c13_expo).toBe('done');
+    expect(st.data.journal.c13_team).toBe('active');
+    for (const fl of EXPO_FLAGS) expect(st.flag(fl), fl).toBe(false);
+    expect(st.flag('noSwitch')).toBe(false);
+    expect(sim.game.field?.def.id).toBe('cc_yard');
+    expect(sim.game.field?.player.formActive).toBeNull();
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('a knock-out at the Expo is never a Game Over: Zeno wants an encore, and the Grand Priest stops Toppo\'s bout', async () => {
+    const sim = expoSim(['c13_expoMet', 'c13_expoOpened']);
+    const st = sim.game.state;
+    const goku = st.char('goku');
+    const log = record(sim);
+    await expoIntoFight(sim, 'c13_basil1');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    const first = c14Foe(sim, 'c13_basil1');
+    first.hp = Math.floor(first.maxHp * 0.8);
+    f.player.inv = 0;
+    goku.hp = 1;
+    f.damagePlayer(500, 1, f.player.x + 8, f.player.y);
+    await driveUntil(sim, 'the encore', () => log.some((l) => /Again! Again!/.test(l.text)) && midFight(sim));
+    const second = c14Foe(sim, 'c13_basil1');
+    expect(second).not.toBe(first);
+    expect(second.hp).toBe(second.maxHp);
+    expect(second.def.id).toBe('c13_basil');
+    expect(goku.hp).toBe(goku.hpMax);
+    expect(goku.outfit).toBe('majinBuu');
+    expect(sim.game.scenes.top?.constructor.name).not.toMatch(/GameOver/);
+
+    // Toppo knocks Goku down: the Grand Priest calls it a draw and the Expo carries on.
+    const sim2 = expoSim(['c13_expoMet', 'c13_expoOpened', 'c13_expoBuu', 'c13_expoGohan', 'c13_expoBergamo']);
+    const st2 = sim2.game.state;
+    const log2 = record(sim2);
+    const done = await expoIntoFight(sim2, 'c13_toppo1');
+    const f2 = sim2.game.field;
+    if (!f2) throw new Error('no field');
+    // A resumed Expo seats Goku on the balcony first: he must be down in the ring, within reach of Toppo.
+    const toppo = c14Foe(sim2, 'c13_toppo1');
+    expect(Math.floor((f2.player.y - 14) / 16), 'Goku in the ring').toBeGreaterThanOrEqual(8);
+    expect(f2.voidAt(f2.player.x, f2.player.y)).toBe(false);
+    expect(Math.hypot(toppo.x - f2.player.x, toppo.y - f2.player.y)).toBeLessThan(16 * 8);
+    f2.player.inv = 0;
+    st2.char('goku').hp = 1;
+    f2.damagePlayer(500, 1, f2.player.x + 8, f2.player.y);
+    await driveUntil(sim2, 'the Expo ends', done, 60000);
+    expect(log2.some((l) => /That is enough!/.test(l.text))).toBe(true);
+    expect(st2.flag('c13_expoSeen')).toBe(true);
+    expect(st2.char('goku').hp).toBe(st2.char('goku').hpMax);
+    expect(sim.errors).toEqual([]);
+    expect(sim2.errors).toEqual([]);
+  });
+
+  it('the Expo\'s new faces have scouter readings, Bergamo\'s growth steps up in size and power, and Buu earns Goku no EXP', async () => {
+    const { scanNpc, GENERIC_SCAN_KEY } = await import('../../src/content/scans');
+    const { scaledSprite } = await import('../../src/content/chapters/act5/c13_expo');
+    for (const id of ['c13_roh', 'c13_sidra', 'c13_basilDoped', 'basil', 'lavender', 'bergamo']) {
+      expect(scanNpc(id).id, id).not.toBe(`npc:${GENERIC_SCAN_KEY}`);
+      expect(portrait(id), id).toBeTruthy();
+    }
+    expect(scanNpc('c13_basilDoped').id).toBe('npc:basil');
+    // Growth: one fight (shared phases and end), each step stronger and slower than the last.
+    const steps = ['c13_bergamo', 'c13_bergamoL', 'c13_bergamoXL'].map((id) => ENEMIES[id]);
+    for (const e of steps) expect(e.boss).toBe(steps[0].boss);
+    for (let i = 1; i < steps.length; i++) {
+      expect(steps[i].str, steps[i].id).toBeGreaterThan(steps[i - 1].str);
+      expect(steps[i].speed, steps[i].id).toBeLessThan(steps[i - 1].speed);
+      expect(steps[i].hp).toBe(steps[0].hp);
+    }
+    expect(ENEMIES.c13_basilDoped.boss).toBe(ENEMIES.c13_basil.boss);
+    const base = scaledSprite('bergamo', 1).idle.down;
+    expect(scaledSprite('bergamo', 2).idle.down.width).toBe(base.width * 2);
+    expect(scaledSprite('bergamo', 2).idle.down.height).toBe(base.height * 2);
+    // Buu's bout pays nothing: Goku only lent him his stats. The others pay like Chapter 13's bosses.
+    expect(ENEMIES.c13_basil.exp).toBe(0);
+    expect(ENEMIES.c13_basilDoped.exp).toBe(0);
+    for (const id of ['c13_lavender', 'c13_bergamo']) expect(ENEMIES[id].exp, id).toBeGreaterThanOrEqual(80000);
+    expect(QUESTS.c13_expo?.star).toBe('gold');
+    expect(SPOTS[QUESTS.c13_expo?.region ?? '']).toBeTruthy();
+  });
+});
+
+// ============================================================================================ Chapter 14, eps 103-107
+
+/** One dialogue line with the look the hero had on the field when it was shown (a guest costume shows here). */
+interface Seen {
+  text: string;
+  hero: string;
+  look: string;
+}
+
+/** Record every dialogue line with the active character and the player's sprite at that moment. */
+function recordLooks(sim: Sim): Seen[] {
+  const log: Seen[] = [];
+  const g = sim.game;
+  const orig = g.say.bind(g);
+  g.say = (lines) => {
+    for (const l of lines) log.push({ text: l.text, hero: g.state.data.active, look: g.field?.player.spriteId ?? '' });
+    return orig(lines);
+  };
+  return log;
+}
+
+/** A mid-tournament save for the veterans' episodes: Goku at the level cap (no level-up muddles a stat check), in Blue. */
+function c14Veteran(): Sim {
+  const sim = c14Sim('goku');
+  const goku = sim.game.state.char('goku');
+  sim.game.state.join('goku', 50);
+  goku.form = 'ssb';
+  goku.techs = ['kiBlast', 'kamehameha', 'godKamehameha', 'spiritBomb'];
+  goku.selected = 2;
+  return sim;
+}
+
+/** Leave Goku hurt and low on ki right before a guest episode (the test sim refills HP while the player has control). */
+function c14Worn(sim: Sim): void {
+  const goku = sim.game.state.char('goku');
+  goku.hp = Math.floor(goku.hpMax * 0.6);
+  goku.ep = Math.floor(goku.epMax * 0.5);
+}
+
+/** A set piece started by `c14Run`: whether it has finished, and Goku's state the moment it did. */
+interface C14Episode {
+  done: () => boolean;
+  /** Goku when the script ended (before the test's own driving refills HP). */
+  after: () => ReturnType<typeof gokuSelf> | null;
+}
+
+/**
+ * Start a set piece on the stage the sim stands on (no map restart, so a test can set the hero up right before it),
+ * then read dialogue until its fight is on.
+ */
+async function c14Run(sim: Sim, script: string): Promise<C14Episode> {
+  const { GUEST_STASH } = await import('../../src/content/chapters/act5/c14_guests');
+  let finished = false;
+  let after: ReturnType<typeof gokuSelf> | null = null;
+  // Until the guest costume is on, nothing may refill the hero (the sim and drive() top HP up in their own turns).
+  sim.fair = true;
+  void sim.game.runScript(script).then(() => { finished = true; after = gokuSelf(sim); });
+  for (let i = 0; i < 3000 && sim.game.state.get(GUEST_STASH) === undefined; i++) await sim.tick(1);
+  sim.fair = false;
+  await driveUntil(sim, `${script} fight`, () => midFight(sim));
+  return { done: () => finished, after: () => after };
+}
+
+/** What Goku must get back when a guest costume comes off. */
+function gokuSelf(sim: Sim): { hp: number; ep: number; form: string | null; techs: string[]; selected: number; outfit: string | undefined } {
+  const c = sim.game.state.char('goku');
+  return { hp: c.hp, ep: c.ep, form: c.form, techs: [...c.techs], selected: c.selected, outfit: c.outfit };
+}
+
+describe('Chapter 14, the middle of the west ring (eps 103-107)', () => {
+  it('stage A plays Obni, Roshi, the snipers and Frost\'s trap in anime order, each with the fighter canon gives it', async () => {
+    const { GUEST_STASH } = await import('../../src/content/chapters/act5/c14_guests');
+    const sim = freshSim(13, 45);
+    const st = sim.game.state;
+    const log = recordLooks(sim);
+    const at = (re: RegExp) => log.findIndex((l) => re.test(l.text));
+    sim.start('cc_yard', 22, 20);
+    await settle(sim);
+    await beat(sim, null, 'c14_start');
+    const before = gokuSelf(sim);
+    await beat(sim, null, 'act5_beerus_talk');
+    expect(st.flag('c14_stageA')).toBe(true);
+    const order = [
+      /Kakunsa has been eliminated/, /Only the real Obni casts a shadow/, /A cross-counter!/, /throws Obni out of the ring/, /a locket/,
+      /Zeno erases Universe 10/, /A team-up with Hit/,
+      /Universe 4 has been waiting for exactly that/, /Caway leaps off the stage/, /Evil Containment Wave\.\.\. MAFUBA!/, /That was neat!/,
+      /Caway and Dercori have been eliminated/, /Master Roshi swells to Max Power/,
+      /Ganos is blasted off the stage/, /His heart has stopped/, /still in the tournament\. Barely/, /always the good student, Tien/,
+      /Reflection!/, /MULTI-FORM!/, /follow his shots back to the nest/, /fires straight down at the stage/, /Tien drags Harmira off the stage/,
+      /Galick Gun blasts Prum/, /Not twice, old man/, /sucks Vegeta into Master Roshi's jar/,
+      /Master Roshi frees Vegeta from Frost's trap/, /Master Roshi steps off the stage/, /Frost has been eliminated by Frieza/,
+    ];
+    const idx = order.map(at);
+    for (const [i, re] of order.entries()) expect(idx[i], String(re)).toBeGreaterThan(-1);
+    for (let i = 1; i < idx.length; i++) expect(idx[i], `${order[i]} after ${order[i - 1]}`).toBeGreaterThan(idx[i - 1]);
+    // The fighters: Gohan for Obni; Master Roshi and Tien as guests worn over Goku.
+    expect(log[at(/Only the real Obni casts a shadow/)].hero).toBe('gohan');
+    expect(log[at(/Two lovely young ladies/)]).toMatchObject({ hero: 'goku', look: 'roshi' });
+    expect(log[at(/Big muscles won't save you/)]).toMatchObject({ hero: 'goku', look: 'c14_roshiMax' });
+    expect(log[at(/Rest - I'll keep watch/)]).toMatchObject({ hero: 'goku', look: 'tien' });
+    expect(log[at(/Give that back!/)]).toMatchObject({ hero: 'goku', look: 'roshi' });
+    expect(log[at(/Frieza\. You and I are the same/)].hero).toBe('frieza');
+    // Magetta goes out either way: thrown out by the freed Vegeta, or already knocked out in the fight.
+    expect(at(/Vegeta blasts Magetta|Magetta already out of the ring/)).toBeGreaterThan(at(/Master Roshi frees Vegeta/));
+    // Universe 7's count goes down with each of its own.
+    expect(at(/nine fighters remain/)).toBeLessThan(at(/eight fighters remain/));
+    expect(at(/eight fighters remain/)).toBeLessThan(at(/seven fighters remain/));
+    for (const f of ['c14_obniDone', 'c14_roshiDone', 'c14_snipersDone', 'c14_frostTrapDone']) expect(st.flag(f), f).toBe(true);
+    for (const q of ['c14_epObni', 'c14_epRoshi', 'c14_epSnipers', 'c14_epFrostTrap']) expect(st.data.journal[q], q).toBe('done');
+    // Goku is himself again: no costume, his own Z form, every technique he had (plus the Spirit Bomb from Jiren).
+    const goku = st.char('goku');
+    expect(goku.outfit).toBeUndefined();
+    expect(st.get(GUEST_STASH)).toBeUndefined();
+    expect(goku.form).toBe(before.form);
+    expect(goku.techs).toEqual(expect.arrayContaining(before.techs));
+    expect(goku.techs).toContain('spiritBomb');
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(st.flag('act5_busy') || st.flag('noSwitch')).toBe(false);
+    expect(sim.game.field?.player.hidden).toBe(false);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Obni (ep 103): only the real Obni casts a shadow; afterimages vanish at a touch or fade by themselves; a cross-counter and a Kamehameha throw him out', async () => {
+    const { MIRAGE } = await import('../../src/content/chapters/act5/c14_obni');
+    const { OBNI_IMAGE } = await import('../../src/content/chapters/act5/c14_enemies');
+    const sim = c14Sim('android17');
+    const st = sim.game.state;
+    const log = record(sim);
+    const done = await c14IntoFight(sim, 'top_arena_a', 'c14_obni');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    expect(st.data.active).toBe('gohan');
+    const obni = c14Foe(sim, 'c14_obni1');
+    // The void cannot take him mid-fight: canon's finish is the scripted end.
+    expect(f.canRingOut(obni)).toBe(false);
+    const images = () => f.enemies.filter((e) => e.def.id === OBNI_IMAGE && !e.dead && e.state !== 'dying');
+    await driveUntil(sim, 'afterimages', () => images().length >= 2, 20000);
+    await drive(sim, 2);
+    const [first, ...rest] = images();
+    // Faint, and too faint to cast a shadow (Enemy.drawShadow); the real Obni is solid.
+    expect(first.cloak).toBe(MIRAGE.cloak);
+    expect(MIRAGE.cloak).toBeGreaterThan(0.5);
+    expect(obni.cloak).toBe(0);
+    // They run a circle around the hero.
+    const p = f.player;
+    await drive(sim, 60);
+    for (const e of rest) if (!e.dead) expect(Math.hypot(e.x - p.x, e.y - p.y)).toBeLessThan(MIRAGE.radius + 24);
+    // One touch and an afterimage is gone, for no EXP and no drop; the others fade on their own.
+    const exp0 = st.char('gohan').exp;
+    f.applyDamage(first, 30, 1, { x: 0, y: 0 }, 0, false);
+    expect(first.dead || first.state === 'dying').toBe(true);
+    expect(st.char('gohan').exp).toBe(exp0);
+    await drive(sim, MIRAGE.life);
+    for (const e of rest) expect(e.dead || e.state === 'dying', 'faded').toBe(true);
+    c14Finish(sim, obni);
+    await driveUntil(sim, 'the cross-counter', done, 60000);
+    const i = (re: RegExp) => log.findIndex((l) => re.test(l.text));
+    const end = [/lets the punch come/, /A cross-counter!/, /Ka\.\.\. me\.\.\. ha\.\.\. me/, /throws Obni out of the ring/, /a locket/, /Zeno erases Universe 10\.\.\. and the locket fades/];
+    for (let k = 0; k < end.length; k++) expect(i(end[k]), String(end[k])).toBeGreaterThan(k ? i(end[k - 1]) : -1);
+    expect(st.flag('c14_obniDone')).toBe(true);
+    expect(st.data.journal.c14_epObni).toBe('done');
+    expect(images()).toEqual([]);
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Master Roshi (ep 105) is worn over Goku with his own look and moves; Caway and Dercori go canon\'s way; Max Power comes and goes exactly; Ganos turns into a bird', async () => {
+    const { GUEST_STASH, ROSHI, takeOffGuest } = await import('../../src/content/chapters/act5/c14_guests');
+    const { ScriptApi } = await import('../../src/game/script');
+    const sim = c14Veteran();
+    const st = sim.game.state;
+    const goku = st.char('goku');
+    const base = [goku.str, goku.pow, goku.end];
+    const log = record(sim);
+    sim.start('top_arena_a', 22, 16);
+    await settle(sim);
+    c14Worn(sim);
+    const self = gokuSelf(sim);
+    const { done } = await c14Run(sim, 'c14_roshi');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    expect(st.data.active).toBe('goku');
+    expect(goku.outfit).toBe('roshi');
+    expect(f.player.spriteId).toBe('roshi');
+    expect(goku.techs).toEqual(ROSHI.techs);
+    expect(goku.form).toBeNull();
+    expect(f.player.canTransform).toBe(false);
+    // A fresh fighter steps into the relay.
+    expect(goku.hp).toBe(goku.hpMax);
+    expect(typeof st.get(GUEST_STASH)).toBe('string');
+    // Caway and Dercori first. Worn down, a fighter stops dazed on the stage (no knockout, no ring-out) and drops out
+    // of the fight, which goes on until both are.
+    const caway = c14Foe(sim, 'c14_caway1');
+    c14Finish(sim, caway);
+    await drive(sim, 2);
+    expect([caway.dead, caway.def.invulnerable, caway.puppet, f.canRingOut(caway)]).toEqual([false, true, true, false]);
+    expect(ENEMIES.c14_caway.invulnerable).toBeUndefined();
+    expect(midFight(sim) && f.enemies.some((e) => e.uid === 'c14_dercori1' && !e.ended)).toBe(true);
+    c14Finish(sim, c14Foe(sim, 'c14_dercori1'));
+    await driveUntil(sim, 'Ganos', () => midFight(sim) && f.enemies.some((e) => e.uid === 'c14_ganos1'));
+    // Canon's finishes: Caway jumps off the stage herself, Dercori is sealed in a jar (Zeno allows it).
+    const said = (re: RegExp) => log.findIndex((l) => re.test(l.text));
+    const pair = [/bats Caway's blast apart/, /Caway leaps off the stage/, /Evil Containment Wave\.\.\. MAFUBA!/, /into the little jar/, /That was neat!/, /Caway and Dercori have been eliminated/];
+    for (let k = 0; k < pair.length; k++) expect(said(pair[k]), String(pair[k])).toBeGreaterThan(k ? said(pair[k - 1]) : -1);
+    expect(f.enemies.some((e) => /^c14_(caway|dercori)1$/.test(e.uid ?? ''))).toBe(false);
+    // Max Power: his costume and a form-sized bonus.
+    const bonus = ROSHI.power?.bonus ?? 0;
+    expect(bonus).toBeGreaterThan(0);
+    expect(goku.outfit).toBe('c14_roshiMax');
+    expect([goku.str, goku.pow, goku.end]).toEqual(base.map((v) => v + bonus));
+    const ganos = c14Foe(sim, 'c14_ganos1');
+    expect(ganos.spriteId).toBe('c14_ganos');
+    ganos.hp = Math.floor(ganos.maxHp * 0.6);
+    await driveUntil(sim, 'the bird of prey', () => ganos.spriteId === 'c14_ganosBird');
+    await driveUntil(sim, 'fight resumes', () => midFight(sim));
+    c14Finish(sim, ganos);
+    await driveUntil(sim, 'Roshi pulls through', done, 60000);
+    const i = (re: RegExp) => log.findIndex((l) => re.test(l.text));
+    expect(i(/Ka\.\.\. me\.\.\. ha\.\.\. me/)).toBeGreaterThan(-1);
+    expect(i(/Ganos is blasted off the stage/)).toBeGreaterThan(i(/Ka\.\.\. me\.\.\. ha\.\.\. me/));
+    expect(i(/His heart has stopped/)).toBeGreaterThan(i(/Ganos is blasted off the stage/));
+    expect(i(/still in the tournament\. Barely/)).toBeGreaterThan(i(/His heart has stopped/));
+    expect(st.flag('c14_roshiDone')).toBe(true);
+    expect(st.data.journal.c14_epRoshi).toBe('done');
+    // Max Power is spent; the costume stays on until the relay hands over (Tien is next).
+    expect(goku.outfit).toBe('roshi');
+    expect([goku.str, goku.pow, goku.end]).toEqual(base);
+    // Taking the costume off gives Goku back exactly what he had.
+    takeOffGuest(new ScriptApi(sim.game, {}));
+    expect(gokuSelf(sim)).toEqual(self);
+    expect(st.get(GUEST_STASH)).toBeUndefined();
+    expect(f.player.spriteId).not.toBe('roshi');
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Master Roshi (ep 105): a Universe 4 fighter rung out before she is worn down is simply gone; the scene finishes the other', async () => {
+    const sim = c14Veteran();
+    const log = record(sim);
+    sim.start('top_arena_a', 22, 16);
+    await settle(sim);
+    const { done } = await c14Run(sim, 'c14_roshi');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    const caway = c14Foe(sim, 'c14_caway1');
+    expect(f.canRingOut(caway)).toBe(true);
+    f.ringOut(caway);
+    expect(caway.dead || caway.state === 'dying').toBe(true);
+    c14Finish(sim, c14Foe(sim, 'c14_dercori1'));
+    await driveUntil(sim, 'Ganos', () => midFight(sim) && f.enemies.some((e) => e.uid === 'c14_ganos1'));
+    expect(log.some((l) => /Caway leaps off the stage/.test(l.text))).toBe(false);
+    expect(log.some((l) => /That was neat!/.test(l.text))).toBe(true);
+    expect(log.some((l) => /Caway and Dercori have been eliminated/.test(l.text))).toBe(true);
+    c14Finish(sim, c14Foe(sim, 'c14_ganos1'));
+    await driveUntil(sim, 'Roshi pulls through', done, 60000);
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Tien and the snipers (ep 106): Harmira snipes from a hidden nest through Prum\'s mirror; Tien finds him, his copies drag him down, Vegeta throws Prum out', async () => {
+    const { SNIPE, SNIPER_FOUND } = await import('../../src/content/chapters/act5/c14_veterans');
+    const { SNIPER_NEST } = await import('../../src/content/chapters/act5/c14_enemies');
+    const { TIEN } = await import('../../src/content/chapters/act5/c14_guests');
+    const { Shot } = await import('../../src/game/projectiles');
+    const sim = c14Veteran();
+    const st = sim.game.state;
+    const log = record(sim);
+    const done = await c14IntoFight(sim, 'top_arena_a', 'c14_snipers');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    expect(st.char('goku').outfit).toBe('tien');
+    expect(st.char('goku').techs).toEqual(TIEN.techs);
+    expect(f.npcs.some((n) => n.def.id === 'c14_roshiS')).toBe(true);
+    const har = c14Foe(sim, 'c14_harmira1');
+    const prum = c14Foe(sim, 'c14_prum1');
+    expect(f.boss).toBe(har);
+    // Prum is a mirror: fists and ki pass him by, and the void cannot take him (Vegeta throws him out later).
+    expect(prum.def.invulnerable).toBe(true);
+    expect(f.canRingOut(prum)).toBe(false);
+    // Harmira lies hidden in his nest across the ring, too faint to cast a shadow, on ground the hero can walk to.
+    const p = f.player;
+    const nest = { x: har.x, y: har.y };
+    expect(Math.hypot(har.x - p.x, har.y - p.y)).toBeGreaterThan(SNIPE.near * 1.5);
+    expect(har.cloak).toBeGreaterThan(0.5);
+    const seen = reachable(sim, Math.floor(p.x / 16), Math.floor((p.y - 14) / 16));
+    expect(near(seen, Math.floor(har.x / 16), Math.floor((har.y - 14) / 16))).toBe(true);
+    expect(st.flag(SNIPER_FOUND)).toBe(false);
+    // His scope glints (he shows for a moment), he fires at Prum, and Prum's mirror sends the shot on at the hero.
+    const fired: Array<{ x: number; y: number; vx: number; vy: number; color: string }> = [];
+    const spawn = f.spawnShot.bind(f);
+    f.spawnShot = (sh) => { if (sh.owner === 'enemy') fired.push({ x: sh.x, y: sh.y, vx: sh.vx, vy: sh.vy, color: sh.color }); spawn(sh); };
+    let glimpsed = false;
+    for (let t = 0; t < SNIPE.every * 2 + 40; t++) {
+      await drive(sim, 1);
+      if (har.cloak < 0.5) glimpsed = true;
+    }
+    expect(glimpsed).toBe(true);
+    const fromNest = fired.find((sh) => Math.hypot(sh.x - har.x, sh.y - har.y) < 16);
+    expect(fromNest, 'a shot from the nest').toBeTruthy();
+    // Aimed at Prum, not at the hero.
+    if (fromNest) expect(Math.sign(fromNest.vx || 0)).toBe(Math.sign(prum.x - har.x) || 0);
+    const bounced = fired.filter((sh) => Math.hypot(sh.x - prum.x, sh.y - prum.y) < 16 && sh.color === SNIPE.silver);
+    expect(bounced.length, 'a shot bounced off Prum').toBeGreaterThan(0);
+    // The hero's own ki blast comes straight back off the mirror.
+    const before = fired.length;
+    f.spawnShot(new Shot('player', 'shot', prum.x - 4, prum.y, { x: 1, y: 0 }, 2, 1, '#f8f0a0', 60, 40));
+    await drive(sim, 2);
+    expect(fired.slice(before).some((sh) => sh.color === SNIPE.silver && Math.hypot(sh.x - prum.x, sh.y - prum.y) < 16)).toBe(true);
+    f.spawnShot = spawn;
+    // He has not left his nest; coming close finds him and the cloak drops for good.
+    expect(Math.hypot(har.x - nest.x, har.y - nest.y)).toBeLessThan(4);
+    const [nx, ny] = [Math.floor(har.x / 16), Math.floor((har.y - 14) / 16)];
+    put(sim, nx, ny + 2, 'up');
+    await drive(sim, 3);
+    expect(st.flag(SNIPER_FOUND)).toBe(true);
+    expect(har.cloak).toBe(0);
+    // The first blows knock him out of his nest: he fights head-on.
+    for (let k = 0; k < 40 && har.hp > har.maxHp * SNIPER_NEST; k++) f.applyDamage(har, 60, 1, { x: 0, y: 0 }, 0, false);
+    await driveUntil(sim, 'Harmira leaves his nest', () => log.some((l) => /up close, I don't need a mirror/.test(l.text)));
+    c14Finish(sim, har);
+    await driveUntil(sim, 'Tien takes Harmira with him', done, 60000);
+    const i = (re: RegExp) => log.findIndex((l) => re.test(l.text));
+    const end = [/You found my nest/, /fires straight down at the stage/, /seize Harmira/, /Tien drags Harmira off the stage.*eight fighters remain/, /Galick Gun blasts Prum/, /Well done, my boy/];
+    for (let k = 0; k < end.length; k++) expect(i(end[k]), String(end[k])).toBeGreaterThan(k ? i(end[k - 1]) : -1);
+    expect(st.flag('c14_snipersDone')).toBe(true);
+    expect(st.data.journal.c14_epSnipers).toBe('done');
+    // Master Roshi rests where he was: the next episode picks him up.
+    expect(c14Leftovers(sim)).toEqual(['c14_roshiS']);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Frost\'s trap (ep 107): Roshi makes Frost drop the jar, Vegeta gets out and throws Magetta out, Roshi retires; Frost stays in for Frieza', async () => {
+    const { GUEST_STASH } = await import('../../src/content/chapters/act5/c14_guests');
+    const sim = c14Veteran();
+    const st = sim.game.state;
+    const log = record(sim);
+    sim.start('top_arena_a', 22, 16);
+    await settle(sim);
+    c14Worn(sim);
+    const self = gokuSelf(sim);
+    const { done, after } = await c14Run(sim, 'c14_frostTrap');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    expect(st.char('goku').outfit).toBe('roshi');
+    const frost = c14Foe(sim, 'c14_frostJar1');
+    // Frieza eliminates Frost in ep 108: no ring-out here.
+    expect(f.canRingOut(frost)).toBe(false);
+    // Magetta: fists do half; worn down, he stops dazed for Vegeta to throw out, and the fight with Frost goes on.
+    const mag = c14Foe(sim, 'c14_magetta1');
+    expect(mag.def.resMelee).toBeLessThan(1);
+    c14Finish(sim, mag);
+    await drive(sim, 2);
+    expect([mag.dead, mag.def.invulnerable, mag.puppet]).toEqual([false, true, true]);
+    expect(midFight(sim)).toBe(true);
+    c14Finish(sim, frost);
+    await driveUntil(sim, 'Roshi retires', done, 60000);
+    const i = (re: RegExp) => log.findIndex((l) => re.test(l.text));
+    const order = [
+      /Evil Containment Wave! MAFUBA!/, /Not twice, old man/, /once more! MAFUBA!/, /sucks Vegeta into Master Roshi's jar/, /smashes it open/,
+      /Master Roshi frees Vegeta from Frost's trap/, /prince of all Saiyans into a JAR/, /Vegeta blasts Magetta/, /Another time, Saiyan/,
+      /Master Roshi steps off the stage/,
+    ];
+    for (let k = 0; k < order.length; k++) expect(i(order[k]), String(order[k])).toBeGreaterThan(k ? i(order[k - 1]) : -1);
+    expect(st.flag('c14_frostTrapDone')).toBe(true);
+    expect(st.data.journal.c14_epFrostTrap).toBe('done');
+    // Out of costume for whoever plays next: Goku exactly as he was.
+    expect(after()).toEqual(self);
+    expect(st.get(GUEST_STASH)).toBeUndefined();
+    expect(f.player.hidden).toBe(false);
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('a west-ring relay restarted in the middle of a guest episode gives Goku his own look, moves and Z form back first', async () => {
+    const { GUEST_STASH } = await import('../../src/content/chapters/act5/c14_guests');
+    const sim = c14Veteran();
+    const st = sim.game.state;
+    const self = gokuSelf(sim);
+    await c14IntoFight(sim, 'top_arena_a', 'c14_roshi');
+    expect(st.char('goku').outfit).toBe('roshi');
+    // Leave mid-fight (a reload stands in for every way out): the relay restarts from the top on the way back in.
+    st.set('c14_opened');
+    st.clear('fc_topQuiet');
+    reload(sim);
+    await driveUntil(sim, 'stage A restarted', () => midFight(sim) && st.data.active === 'gohan', 60000);
+    const goku = gokuSelf(sim);
+    expect(goku.outfit).toBeUndefined();
+    expect(goku.form).toBe(self.form);
+    expect(goku.techs).toEqual(self.techs);
+    expect(goku.selected).toBe(self.selected);
+    expect(st.get(GUEST_STASH)).toBeUndefined();
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('Kakunsa (ep 102) fights as Sanka Ku until she transforms, and her partners carry their everyday names too', async () => {
+    const sim = c14Sim('goku');
+    const st = sim.game.state;
+    const done = await c14IntoFight(sim, 'top_arena_a', 'c14_fireballs');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    const kak = c14Foe(sim, 'c14_kakunsa1');
+    const names = () => [c14Foe(sim, 'c14_brianneE').def.name, c14Foe(sim, 'c14_sankaE').def.name];
+    // The boss bar (hud.ts) shows the fighting enemy's name.
+    expect(f.boss).toBe(kak);
+    expect(f.boss?.def.name).toBe('Sanka Ku');
+    expect(kak.spriteId).toBe('c14_suroas');
+    expect(names()).toEqual(['Brianne', 'Su Roas']);
+    // Only the name is her everyday one: HP, stats and moves are Kakunsa's.
+    const real = ENEMIES.c14_kakunsa;
+    expect(real.name).toBe('Kakunsa');
+    expect([kak.def.hp, kak.def.str, kak.def.pow, kak.def.end, kak.def.boss]).toEqual([real.hp, real.str, real.pow, real.end, real.boss]);
+    kak.hp = Math.floor(kak.maxHp * 0.8);
+    await driveUntil(sim, 'the transformation', () => st.flag('c14_fireballsUp'));
+    expect(f.boss?.def.name).toBe('Kakunsa');
+    expect(kak.def).toBe(real);
+    expect(kak.spriteId).toBe('c14_kakunsa');
+    expect(names()).toEqual(['Ribrianne', 'Rozie']);
+    await driveUntil(sim, 'fight resumes', () => midFight(sim));
+    c14Finish(sim, kak);
+    await driveUntil(sim, 'Kakunsa thrown out', done, 60000);
+    expect(c14Leftovers(sim)).toEqual([]);
+    expect(sim.errors).toEqual([]);
+  });
+
+  it('every new sprite has a Scouter entry, and each fighter reads like its bestiary entry', async () => {
+    const { SCANS, scanKey } = await import('../../src/content/scans');
+    const { enemyMaxHp } = await import('../../src/game/enemy');
+    for (const id of ['c14_obni', 'c14_caway', 'c14_dercori', 'c14_ganos', 'c14_ganosBird', 'c14_prum', 'c14_harmira', 'c14_roshiMax']) {
+      expect(CAST[id], id).toBeTruthy();
+      const key = scanKey(id);
+      expect(key, id).toBeTruthy();
+      expect(SCANS[key ?? '']?.desc.length, id).toBeGreaterThan(20);
+    }
+    // Max Power Roshi files under Master Roshi; Obni's afterimages read as Obni.
+    expect(scanKey('c14_roshiMax')).toBe('roshi');
+    expect(ENEMIES.c14_obniImage.name).toBe(ENEMIES.c14_obni.name);
+    const looks: Array<[string, string]> = [
+      ['c14_obni', 'c14_obni'], ['c14_caway', 'c14_caway'], ['c14_dercori', 'c14_dercori'], ['c14_ganos', 'c14_ganos'], ['c14_ganos', 'c14_ganosBird'],
+      ['c14_prum', 'c14_prum'], ['c14_harmira', 'c14_harmira'],
+    ];
+    for (const [id, sprite] of looks) {
+      const e = ENEMIES[id];
+      const sc = SCANS[sprite];
+      expect([sc?.name, sc?.hp, sc?.str, sc?.pow, sc?.end], `${id} as ${sprite}`).toEqual([e.name, enemyMaxHp(e), e.str, e.pow, e.end]);
+    }
+  });
+
+  it('the new bosses are fair for the fighter canon puts in (LoG2 boss hit ratios), and none outranks Kefla', async () => {
+    const { CHARACTERS, FORMS } = await import('../../src/content/characters');
+    const { CHAPTER_MIN_LEVEL, FORCED_LEVEL_GAP } = await import('../../src/content/chapters/common');
+    const { damage, ENEMY_POWER, MELEE_POWER, enemyPowerScale } = await import('../../src/game/leveling');
+    const { ROSHI } = await import('../../src/content/chapters/act5/c14_guests');
+    const avg = (power: number, mult: number, stat: number, end: number): number => {
+      let sum = 0;
+      for (let r = 0; r < 26; r++) sum += damage({ power, mult, stat, end, res: 1, crit: false, r26: r });
+      return sum / 26;
+    };
+    const statsAt = (id: 'goku' | 'gohan', lv: number) => {
+      const d = CHARACTERS[id];
+      let hp = d.base.hp;
+      for (let l = 1; l < lv; l++) hp += Math.floor((hp * (3604 + 655)) / 65536);
+      const g = (k: 'str' | 'end') => d.base[k] + Math.floor(((lv - 1) * (d.growth[k][0] + d.growth[k][1])) / 2 / 256);
+      return { hp, str: g('str'), end: g('end') };
+    };
+    // The story's floor for a forced fighter: Gohan for Obni, Goku under the guests' costumes (no Z form).
+    const forced = CHAPTER_MIN_LEVEL[14] - FORCED_LEVEL_GAP;
+    const ultimate = Number(FORMS.ultimate.bonus);
+    const maxPower = ROSHI.power?.bonus ?? 0;
+    const cases: Array<[string, 'goku' | 'gohan', number]> = [
+      ['c14_obni', 'gohan', ultimate], ['c14_ganos', 'goku', maxPower], ['c14_harmira', 'goku', 0], ['c14_frostJar', 'goku', 0],
+    ];
+    const kefla = ENEMIES.c14_kefla;
+    for (const [id, who, bonus] of cases) {
+      const b = ENEMIES[id];
+      const h = statsAt(who, forced);
+      const hitsToEnd = (b.hp * (1 - (b.boss?.endAt ?? 0))) / avg(MELEE_POWER, 1, h.str + bonus, b.end);
+      const hitsToKo = h.hp / avg(ENEMY_POWER, enemyPowerScale(b.str), b.str, h.end + bonus);
+      const ratio = hitsToEnd / hitsToKo;
+      expect(ratio, `${id} vs ${who} L${forced}`).toBeLessThanOrEqual(4);
+      expect(ratio, `${id} vs ${who} L${forced}`).toBeGreaterThan(1);
+      expect(b.str + b.pow + b.end, id).toBeLessThan(kefla.str + kefla.pow + kefla.end);
+    }
+    // The regular fighters stay under the stage's free-roaming T7 rivals.
+    for (const id of ['c14_caway', 'c14_dercori', 'c14_prum', 'c14_magetta']) expect(ENEMIES[id].hp, id).toBeLessThan(ENEMIES.c14_u4Fighter.hp);
+  });
+
+  it('a bot that fights with the real damage rules wins each of them, and none of them is a walkover', async () => {
+    const cases: Array<[string, 'goku' | 'android17']> = [['c14_obni', 'android17'], ['c14_roshi', 'goku'], ['c14_snipers', 'goku'], ['c14_frostTrap', 'goku']];
+    for (const [script, active] of cases) {
+      for (const seed of [11, 4242]) {
+        const sim = await c14Seeded(active, seed);
+        sim.start('top_arena_a', 22, 16);
+        await settle(sim);
+        const r = await c14FairPlay(sim, script);
+        const what = `${script} seed ${seed}: ${JSON.stringify(r)}`;
+        expect(r.finished && !r.died, what).toBe(true);
+        expect(r.senzu, what).toBeLessThanOrEqual(2);
+        expect(r.lost, what).toBeGreaterThanOrEqual(r.hpMax * 0.15);
+        expect(sim.errors, what).toEqual([]);
+      }
+    }
+  }, 120000);
+});
+
+// ------------------------------------------------------------------------------------------------ Chapter 12, eps 68 and 70
+
+/**
+ * Pick up every Dragon Ball of "Whose Wish?" the way a player following the radar does: walk onto the ones lying in
+ * the open, stand beside the hidden ones and press A.
+ */
+async function gatherWishBalls(sim: Sim): Promise<void> {
+  const st = sim.game.state;
+  for (const [id, item, map, x, y, hidden] of WISH_BALLS) {
+    sim.start(map, x, y);
+    const f = sim.game.field;
+    if (!f) throw new Error(map);
+    expect(f.pickups.some((pk) => pk.id === id), `${id} lies on ${map}`).toBe(true);
+    await settle(sim);
+    pacify(sim);
+    if (hidden) {
+      // Stand on the open neighbouring tile whose facing points the examine box most squarely at the ball, press A.
+      const pk = f.pickups.find((k) => k.id === id);
+      const sides: Array<[number, number, 'up' | 'down' | 'left' | 'right']> = [[x, y - 1, 'down'], [x - 1, y, 'right'], [x + 1, y, 'left'], [x, y + 1, 'up']];
+      const aim = (sx: number, sy: number, dir: 'up' | 'down' | 'left' | 'right'): number => {
+        put(sim, sx, sy, dir);
+        const fr = f.player.front(14, 16);
+        return pk ? Math.hypot(pk.x - (fr.x + fr.w / 2), pk.y - (fr.y + fr.h / 2)) : Infinity;
+      };
+      const side = sides.filter(([sx, sy]) => !f.col.blocked({ x: sx * 16 + 3, y: sy * 16 + 8, w: 10, h: 6 }))
+        .sort((a, b) => aim(...a) - aim(...b))[0];
+      if (!side) throw new Error(`${id}: nowhere to stand`);
+      for (let tries = 0; tries < 3 && !st.flag(`pickup:${id}`); tries++) {
+        put(sim, side[0], side[1], side[2]);
+        let press = true;
+        sim.driver = () => { if (press) sim.input.inject('A', true); press = false; };
+        await sim.tick(3);
+        sim.driver = null;
+        await settle(sim);
+      }
+    } else {
+      put(sim, x, y);
+      await sim.tick(30);
+    }
+    await settle(sim);
+    expect(st.flag(`pickup:${id}`), `${id} picked up`).toBe(true);
+    expect(st.count(item), item).toBe(1);
+  }
+}
+
+/** How the ballplayer fields: every fly ball, none, or the ones a rule picks (by order, 0 = Cabba's). */
+type Fielding = boolean | ((fly: number) => boolean);
+
+/** How the ballplayer plays: fielding, the pitch progress to swing at, the distance from home to slide at. */
+interface BallOpts { field: Fielding; swingAt: number | null; slideAt: number | null }
+
+/**
+ * A player at the ballpark on the real controls: runs under the fly balls `field` picks (double-tap to run, LoG2
+ * style), swings when Champa's pitch is `swingAt` of the way to the plate, and slides `slideAt` px before home. `null`
+ * leaves that part to nobody (the batter never swings, the runner never slides).
+ */
+function ballplayer(sim: Sim, opts: BallOpts): void {
+  const dirs: Button[] = ['left', 'right', 'up', 'down'];
+  let taps = 0;
+  let swung = false;
+  let slid = false;
+  let flies = -1;
+  let wasFly = false;
+  sim.driver = () => {
+    const play = BALLGAME.play;
+    for (const b of dirs) sim.input.inject(b, false);
+    if (play?.kind !== 'fly') taps = 0;
+    if (play?.kind === 'fly' && !wasFly) flies++;
+    wasFly = play?.kind === 'fly';
+    if (!play) { swung = false; slid = false; return; }
+    const f = sim.game.field;
+    if (!f) return;
+    const chase = typeof opts.field === 'function' ? opts.field(flies) : opts.field;
+    if (play.kind === 'fly' && chase) {
+      const dx = play.x - f.player.x;
+      const dy = play.y - f.player.y;
+      if (Math.hypot(dx, dy) < 3) return;
+      const h: Button | null = Math.abs(dx) > 2 ? (dx < 0 ? 'left' : 'right') : null;
+      const v: Button | null = Math.abs(dy) > 2 ? (dy < 0 ? 'up' : 'down') : null;
+      const lead = Math.abs(dx) >= Math.abs(dy) ? h : v;
+      taps++;
+      if (taps === 1 && lead) { sim.input.inject(lead, true); return; }
+      if (taps === 2) return;
+      for (const b of [h, v]) if (b) sim.input.inject(b, true);
+    }
+    if (play.kind === 'pitch' && opts.swingAt !== null && !swung && play.p >= opts.swingAt) { sim.input.inject('A', true); swung = true; }
+    if (play.kind === 'slide' && opts.slideAt !== null && !slid && play.dist <= opts.slideAt) { sim.input.inject('A', true); slid = true; }
+  };
+}
+
+/** What the ballpark looked like when Whis called the game. */
+interface FinalOut { board: string; sprite: string; outfit: string | undefined; hud: boolean }
+
+/** Play Champa's challenge from the Capsule Corp garden table with `hero` at the controls; returns the final out. */
+async function playBallgame(sim: Sim, opts: BallOpts): Promise<{ log: Said[]; final: FinalOut | null }> {
+  const st = sim.game.state;
+  sim.start('cc_yard', 27, 18);
+  await settle(sim);
+  const log = record(sim);
+  let final: FinalOut | null = null;
+  const g = sim.game;
+  const say = g.say.bind(g);
+  g.say = (lines) => {
+    const f = g.field;
+    if (f && !final && lines.some((l) => /And that is the game/.test(l.text))) {
+      final = { board: f.map.props.find((p) => p.id === 'c12_board')?.kind ?? '', sprite: f.player.spriteId, outfit: st.char(st.data.active).outfit, hud: g.hideHud };
+    }
+    return say(lines);
+  };
+  ballplayer(sim, opts);
+  await beat(sim, null, 'c12_champa_talk');
+  sim.driver = null;
+  return { log, final };
+}
+
+describe('Chapter 12: "Whose Wish?" and the baseball game (eps 68 and 70)', () => {
+  it('the hub offers six episodes; the two late ones find the player at Capsule Corp, and any two finish Days of Peace', async () => {
+    expect([...EPISODES]).toEqual(['c12_hit', 'c12_pan', 'c12_saiyaman', 'c12_krillin', 'c12_wish', 'c12_ball']);
+    expect(EPISODES_NEEDED).toBe(2);
+    for (const id of ['c12_wish', 'c12_ball']) {
+      expect(QUESTS[id]?.star, id).toBe('silver');
+      expect(QUESTS[id]?.region, id).toBe('spot_westcity');
+    }
+    expect(QUESTS.c12_days.desc).toMatch(/King Kai/);
+    expect(QUESTS.c12_days.desc).toMatch(/Champa/);
+
+    const sim = freshSim(11, 40);
+    const st = sim.game.state;
+    const q = (id: string) => st.data.journal[id];
+    const log = record(sim);
+    const said = (re: RegExp) => log.findIndex((l) => re.test(l.text));
+    sim.start('paozu_home', 31, 10);
+    await settle(sim);
+    await beat(sim, null, 'c12_start');
+    // Four episodes phone in; King Kai's wish and Champa's challenge are taken up at Capsule Corp.
+    for (const id of ['c12_hit', 'c12_pan', 'c12_saiyaman', 'c12_krillin']) expect(q(id)).toBe('active');
+    expect(q('c12_wish')).toBeUndefined();
+    expect(q('c12_ball')).toBeUndefined();
+    expect(said(/Still dead, by the way/)).toBeGreaterThan(-1);
+    expect(said(/purple cat/)).toBeGreaterThan(-1);
+    sim.start('cc_yard', 22, 20);
+    await settle(sim);
+    expect(sim.game.field?.map.props.some((p) => p.id === 'c12_project')).toBe(true);
+    expect(sim.game.field?.npcs.some((n) => n.def.id === 'c12_champaY')).toBe(true);
+    expect(sim.game.field?.npcs.some((n) => n.def.id === 'c12_vadosY')).toBe(true);
+
+    // First episode: the ball game, with nobody at the controls (Yamcha still scores the winning run).
+    await beat(sim, null, 'c12_champa_talk');
+    expect(q('c12_ball')).toBe('done');
+    expect(st.flag('c12_ballDone')).toBe(true);
+    expect(said(/1 of 2 episodes complete/)).toBeGreaterThan(-1);
+    expect(st.data.chapter).toBe(12);
+    expect(sim.game.field?.def.id).toBe('cc_yard');
+    expect(sim.game.field?.npcs.some((n) => n.spriteId === 'champa')).toBe(false);
+
+    // Second episode: "Whose Wish?", start to finish, the way the player reaches each beat.
+    await beat(sim, 'cc_yard', 'c12_project_look', 33, 7);
+    expect(q('c12_wish')).toBe('active');
+    expect(st.count('dragonRadar')).toBe(1);
+    expect(sim.game.field?.map.props.some((p) => p.id === 'c12_pod')).toBe(true);
+    expect(st.flag('noSwitch')).toBe(false);
+    await beat(sim, null, 'c12_project_look');
+    expect(log[log.length - 2]?.text).toMatch(/0 of 7 Dragon Balls so far\. The radar still shows one at Paozu Peaks/);
+    expect(log[log.length - 1]?.text).toMatch(/No metal, no wish/);
+    await gatherWishBalls(sim);
+    await beat(sim, 'cc_yard', 'c12_project_look', 33, 7);
+    // All seven: Bulma only asks for her metal now (no second reminder).
+    expect(log[log.length - 1]?.text).toMatch(/All seven Dragon Balls! Now my metal/);
+    // The drill pod down to the Earth's core (whoever is playing, Goku goes: here Vegeta was switched in).
+    sim.start('cc_yard', 35, 9);
+    await settle(sim);
+    st.data.active = 'vegeta';
+    sim.choice = 0;
+    await beat(sim, null, 'c12_pod_down');
+    expect(sim.game.field?.def.id).toBe('c12_core_mantle');
+    expect(said(/coolant lasts about a minute and a half/)).toBeGreaterThan(-1);
+    sim.start('c12_core_heart', EP.heart.arrive[0], 9);
+    await settle(sim);
+    await beat(sim, null, 'c12_wyrm_fight');
+    expect(st.flag('c12_wyrmDown')).toBe(true);
+    // Cut the alloy: the pod reels Goku in, Bulma takes the metal, and with all seven balls in hand Shenron is called.
+    sim.choice = 2;
+    await beat(sim, 'c12_core_heart', 'c12_cut_alloy', 16, 18);
+    expect(st.flag('c12_alloyDelivered')).toBe(true);
+    expect(st.count('c12_coreAlloy')).toBe(0);
+    // Goku hands the alloy over himself, and calls Shenron himself.
+    expect(log.find((l) => /So it IS a time mach-/.test(l.text))?.hero).toBe('goku');
+    expect(log.find((l) => /Come on out, Shenron/.test(l.text))?.hero).toBe('goku');
+    expect(q('c12_wish')).toBe('done');
+    expect(st.flag('c12_wishDone')).toBe(true);
+    for (const d of ['db1', 'db2', 'db3', 'db4', 'db5', 'db6', 'db7']) expect(st.count(d), d).toBe(0);
+    // The episode in anime order: the argument over the wishes, Pan's fever, Beerus and the "hobby", Shenron leaves.
+    const order = [/Something nice for Krillin/, /This one's yours/, /make my daughter Pan's fever go away/, /What is under the sheet/, /MY WORKSHOP/, /THAT IS PLENTY FOR ONE DAY/,
+      /He forgot\. He forgot AGAIN/, /You picked my wish first/];
+    const at = order.map((re) => said(re));
+    for (let i = 0; i < at.length; i++) expect(at[i], String(order[i])).toBeGreaterThan(i ? at[i - 1] : -1);
+    expect(st.flag('c12_labGone')).toBe(true);
+    // Days of Peace is over: two episodes, the late ones counting like the rest.
+    expect(q('c12_days')).toBe('done');
+    expect(st.data.chapter).toBe(13);
+    expect(st.flag('noSwitch')).toBe(false);
+  });
+
+  it('"Whose Wish?" is a dialogue choice: whoever the player backs first answers for it at the end', async () => {
+    const CASES: Array<[number, RegExp, string | null, number]> = [
+      [0, /He picked me FIRST/, null, 0],
+      [1, /A future emperor rewards loyalty/, 'cookie', 3],
+      [2, /You picked my wish first/, 'end1', 1],
+      [3, /You stood up for your old master/, 'str1', 1],
+      [4, /you backed us/, 'cookie', 5],
+    ];
+    for (const [choice, line, gift, n] of CASES) {
+      const sim = freshSim(12, 37);
+      const st = sim.game.state;
+      st.join('vegeta', 30);
+      // Mid-episode, as the tarp scene leaves it (journal entry, the pod out on the pad), with everything gathered.
+      st.addQuest('c12_wish');
+      st.set(POD_OUT);
+      st.set('c12_alloyDelivered');
+      for (const d of ['db1', 'db2', 'db3', 'db4', 'db5', 'db6', 'db7']) st.give(d, 1, 1);
+      sim.choice = choice;
+      const log = record(sim);
+      // Who stands on the lawn when Shenron rises (each guest once; Champa and Vados are not at this party).
+      let crowd: string[] = [];
+      const g = sim.game;
+      const say = g.say.bind(g);
+      g.say = (lines) => {
+        if (lines.some((l) => /STATE YOUR WISH/.test(l.text))) crowd = g.field?.npcs.filter((x) => !x.hidden).map((x) => x.spriteId) ?? [];
+        return say(lines);
+      };
+      // Back at Capsule Corp with everything: the summoning starts by itself.
+      sim.start('cc_yard', 22, 22);
+      await settle(sim);
+      expect(sim.errors).toEqual([]);
+      expect(st.data.journal.c12_wish, `choice ${choice}`).toBe('done');
+      expect(log.some((l) => line.test(l.text)), `choice ${choice}: ${line}`).toBe(true);
+      if (gift) expect(st.count(gift), `choice ${choice}: ${gift}`).toBe(n);
+      expect(st.count('pow3'), 'Gohan\'s thank-you capsule').toBe(1);
+      for (const sprite of ['bulma', 'beerus', 'whis', 'pilaf', 'mai', 'shu', 'android18', 'roshi', 'c02_oolong', 'goten', 'trunksKid']) {
+        expect(crowd.filter((x) => x === sprite).length, `${sprite} on the lawn`).toBe(1);
+      }
+      expect(crowd.includes('champa') || crowd.includes('vados')).toBe(false);
+      // Afterwards: the workshop is a crater (the drill pod beside it survived), and King Kai waits at home for a wish that
+      // never came.
+      expect(sim.game.field?.def.id).toBe('cc_yard');
+      expect(sim.game.field?.map.props.some((p) => p.id === 'c12_project')).toBe(false);
+      sim.start('cc_yard', 22, 20);
+      await settle(sim);
+      const props = sim.game.field?.map.props.map((p) => p.id) ?? [];
+      expect(props).toContain('c12_crater');
+      expect(props).not.toContain('c12_project');
+      expect(props).toContain('c12_pod');
+      sim.start('kingkai_planet', 16, 16);
+      await settle(sim);
+      expect(sim.game.field?.npcs.filter((x) => x.spriteId === 'kingKai').map((x) => x.def.id)).toEqual(['c12_kingKaiK']);
+      await beat(sim, null, 'c12_kingkai_talk');
+      // The crater is cleared away once the story moves on.
+      st.data.chapter = 13;
+      sim.start('cc_yard', 22, 20);
+      await settle(sim);
+      expect(sim.game.field?.map.props.some((p) => p.id === 'c12_crater')).toBe(false);
+    }
+  });
+
+  it('the Earth\'s core: a tank of coolant, blue vents, a burn that never knocks Goku out, a save in the suit, and the pod home', async () => {
+    const sim = freshSim(12, 37);
+    const st = sim.game.state;
+    st.join('vegeta', 30);
+    st.data.active = 'vegeta';
+    st.addQuest('c12_wish');
+    st.set(POD_OUT);
+    sim.start('cc_yard', 35, 9);
+    await settle(sim);
+    sim.choice = 0;
+    await beat(sim, null, 'c12_pod_down');
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    expect(f.def.id).toBe('c12_core_mantle');
+    // Underground: Whis's Charm cannot reach the core (the pod is the way out).
+    expect(f.def.indoor).toBe(true);
+    // Goku goes down in Bulma's heat suit, forced, whoever was playing.
+    expect(st.data.active).toBe('goku');
+    expect(st.flag('noSwitch')).toBe(true);
+    expect(st.char('goku').outfit).toBe('c12_heatSuit');
+    expect(f.player.spriteId).toBe('c12_heatSuit');
+    expect(f.timer?.label).toBe('COOLANT');
+    pacify(sim);
+    sim.fair = true;
+    // The tank empties a frame at a time while Goku has the controls.
+    const full = st.get('c12_coolant') as number;
+    expect(full).toBeGreaterThan(COOLANT_MAX - 120);
+    await sim.tick(60);
+    expect(full - (st.get('c12_coolant') as number)).toBe(60);
+    // Run dry, the suit overheats: the heat burns 2% of max HP a second...
+    st.set('c12_coolant', 1);
+    await sim.tick(5);
+    expect(f.timer?.label).toBe('OVERHEAT!');
+    const hp0 = f.player.cs.hp;
+    await sim.tick(121);
+    const burn = Math.round(f.player.cs.hpMax * 0.02);
+    expect(hp0 - f.player.cs.hp).toBeGreaterThanOrEqual(2 * burn);
+    expect(hp0 - f.player.cs.hp).toBeLessThanOrEqual(3 * burn);
+    // ...but never below 1 HP: the danger is meeting an enemy like that.
+    f.player.cs.hp = 3;
+    await sim.tick(600);
+    expect(f.player.cs.hp).toBe(1);
+    // A blue vent tops the tank up.
+    put(sim, 12, 6);
+    await sim.tick(3);
+    expect(st.get('c12_coolant') as number).toBeGreaterThan(COOLANT_MAX - 10);
+    expect(f.timer?.label).toBe('COOLANT');
+    // The guardian's fight runs on the pod's own coolant: the tank holds while it lasts.
+    st.set('c12_coolPause');
+    const held = st.get('c12_coolant');
+    await sim.tick(120);
+    expect(st.get('c12_coolant')).toBe(held);
+    st.clear('c12_coolPause');
+    // A save in the core loads back into the suit and the heat.
+    f.player.cs.hp = f.player.cs.hpMax;
+    sim.fair = false;
+    reload(sim);
+    await settle(sim);
+    expect(sim.game.field?.def.id).toBe('c12_core_mantle');
+    expect(sim.game.field?.player.spriteId).toBe('c12_heatSuit');
+    expect(sim.game.field?.timer?.label).toBe('COOLANT');
+    // The pod takes Goku home: suit off, heat gone, and whoever was playing gets the controls back.
+    await beat(sim, null, 'c12_pod_up');
+    expect(sim.game.field?.def.id).toBe('cc_yard');
+    expect(sim.game.field?.timer).toBeNull();
+    expect(st.char('goku').outfit).toBeUndefined();
+    expect(st.flag('noSwitch')).toBe(false);
+    expect(st.data.active).toBe('vegeta');
+    expect(st.get('c12_coolant')).toBeUndefined();
+    // The episode stays open: the pod waits on the pad for another try.
+    expect(st.data.journal.c12_wish).toBe('active');
+    expect(sim.game.field?.map.props.some((p) => p.id === 'c12_pod')).toBe(true);
+  });
+
+  it('the core is a LoG2 hostile zone the guardian blocks; the Dragon Balls lie on open ground in seven regions', async () => {
+    const open = (sim: Sim) => {
+      const f = sim.game.field;
+      if (!f) throw new Error('no field');
+      return (x: number, y: number) => !f.col.blocked({ x: x * 16 + 3, y: y * 16 + 8, w: 10, h: 6 });
+    };
+    // The mantle tunnels: every enemy, vent, the save and the shaft down are reachable from the pod.
+    const sim = freshSim(12, 37);
+    sim.game.state.addQuest('c12_wish');
+    sim.start('c12_core_mantle', EP.mantle.arrive[0], EP.mantle.arrive[1]);
+    let ok = open(sim);
+    const mantle = resolveMap('c12_core_mantle');
+    if (!mantle) throw new Error('mantle');
+    expect(mantle.hostile && mantle.indoor).toBe(true);
+    let seen = reachable(sim, EP.mantle.arrive[0], EP.mantle.arrive[1]);
+    expect(mantle.enemies?.length).toBeGreaterThanOrEqual(8);
+    for (const e of mantle.enemies ?? []) {
+      expect(ok(e.x, e.y), `mantle enemy ${e.type} ${e.x},${e.y}`).toBe(true);
+      expect(near(seen, e.x, e.y), `mantle enemy ${e.type} reachable`).toBe(true);
+    }
+    for (const t of mantle.triggers ?? []) if (t.script === 'c12_core_vent') expect(near(seen, t.x, t.y), t.id).toBe(true);
+    for (const o of mantle.objects ?? []) if (o.type === 'save' || o.type === 'sign') expect(near(seen, o.x, o.y), `${o.type} ${o.x},${o.y}`).toBe(true);
+    expect([19, 20, 21, 22, 23, 24].some((x) => seen.has(`${x},35`)), 'the shaft down to the heart').toBe(true);
+    // The north-east ledge and its cache: only the flight circle over the lava reaches them.
+    const hop = mantle.objects?.find((o) => o.type === 'flight' && o.x === 34);
+    expect(hop && near(seen, hop.x, hop.y)).toBe(true);
+    expect(seen.has('41,3') || seen.has('41,4')).toBe(false);
+    if (hop?.type === 'flight') expect(near(reachable(sim, hop.tx, hop.ty), 41, 3)).toBe(true);
+    // The heart: the guardian's trigger band spans the arena, so nobody reaches the crystal without the fight.
+    sim.start('c12_core_heart', EP.heart.arrive[0], EP.heart.arrive[1]);
+    ok = open(sim);
+    const heart = resolveMap('c12_core_heart');
+    const band = heart?.triggers?.find((t) => t.id === 'c12_wyrmT');
+    if (!heart || !band) throw new Error('heart');
+    seen = reachable(sim, EP.heart.arrive[0], EP.heart.arrive[1]);
+    const crystal = heart.triggers?.find((t) => t.id === 'c12_crystalT');
+    if (!crystal) throw new Error('crystal trigger');
+    expect([...Array(crystal.w * crystal.h).keys()].some((i) => seen.has(`${crystal.x + (i % crystal.w)},${crystal.y + Math.floor(i / crystal.w)}`))).toBe(true);
+    for (let x = 0; x < 32; x++) if (ok(x, band.y) || ok(x, band.y + 1)) expect(x >= band.x && x < band.x + band.w, `band gap at ${x}`).toBe(true);
+    for (const t of heart.triggers ?? []) if (t.script === 'c12_core_vent') expect(near(seen, t.x, t.y), t.id).toBe(true);
+
+    // The seven Dragon Balls: one per region, on open ground the player can walk to from where they come in.
+    const regions = new Set<string>();
+    for (const [id, item, map, x, y, hidden] of WISH_BALLS) {
+      const def = resolveMap(map);
+      if (!def) throw new Error(map);
+      regions.add(def.region ?? map);
+      expect(def.pickups?.find((p) => p.id === id), id).toMatchObject({ item, x, y, hidden, showIf: 'quest:c12_wish' });
+      const s2 = freshSim(12, 37);
+      s2.start(map, x, y);
+      // Shown only while the episode is open (the Dragon Radar marks the visible ones on the R map).
+      expect(s2.game.field?.pickups.some((pk) => pk.id === id), `${id} hidden before the episode`).toBe(false);
+      s2.game.state.addQuest('c12_wish');
+      s2.start(map, x, y);
+      const ok2 = open(s2);
+      expect(ok2(x, y), `${id} on open ground`).toBe(true);
+      const f2 = s2.game.field;
+      if (!f2) throw new Error(map);
+      // Walk in from every edge the map has an exit on, and from its save disc or world sign.
+      const starts: Array<[number, number]> = [];
+      const W = f2.map.cols;
+      const H = f2.map.rows;
+      for (const side of Object.keys(def.exits ?? {})) {
+        for (let i = 0; i < Math.max(W, H); i++) {
+          const [sx, sy] = side === 'north' ? [i, 0] : side === 'south' ? [i, H - 1] : side === 'west' ? [0, i] : [W - 1, i];
+          if (sx < W && sy < H && ok2(sx, sy)) starts.push([sx, sy]);
+        }
+      }
+      for (const o of def.objects ?? []) if (o.type === 'save' || o.type === 'worldSign') starts.push([o.x, o.y + 1]);
+      const reach = new Set<string>();
+      for (const [sx, sy] of starts) if (!reach.has(`${sx},${sy}`) && ok2(sx, sy)) for (const k of reachable(s2, sx, sy)) reach.add(k);
+      expect(reach.has(`${x},${y}`), `${id} on ${map} reachable on foot`).toBe(true);
+    }
+    expect(regions.size).toBe(7);
+    expect(WISH_BALLS.map((b) => b[1]).sort()).toEqual(['db1', 'db2', 'db3', 'db4', 'db5', 'db6', 'db7']);
+
+    // Capsule Corp: the tarp and the drill pod can be walked up to from the yard, and lifting the tarp from the tile
+    // the pod rolls onto never leaves the hero stuck inside it.
+    const cc = freshSim(12, 37);
+    cc.start('cc_yard', 34, 6);
+    await settle(cc);
+    await beat(cc, null, 'c12_project_look');
+    const fc = cc.game.field;
+    if (!fc) throw new Error('cc_yard');
+    expect(fc.col.blocked(fc.player.box()), 'hero clear of the pod').toBe(false);
+    const yard = reachable(cc, 22, 20);
+    for (const id of ['c12_projectT', 'c12_podT']) {
+      const t = resolveMap('cc_yard')?.triggers?.find((x) => x.id === id);
+      if (!t) throw new Error(id);
+      expect([...Array(t.w * t.h).keys()].some((i) => yard.has(`${t.x + (i % t.w)},${t.y + Math.floor(i / t.w)}`)), id).toBe(true);
+    }
+    expect(WISH_BALLS.filter((b) => b[5]).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('the ball game on the real controls: two catches and a home run make a perfect MVP, and Beerus pays a bonus', async () => {
+    const sim = freshSim(12, 37);
+    const st = sim.game.state;
+    st.join('vegeta', 30);
+    const { log, final } = await playBallgame(sim, { field: true, swingAt: (SWEET_SPOT[0] + SWEET_SPOT[1]) / 2 - 0.02, slideAt: null });
+    expect(sim.errors).toEqual([]);
+    const fo = final as FinalOut | null;
+    expect(fo?.board).toBe('c12_board_3_4_2');
+    expect(fo?.sprite).toBe('c12_yamchaBall');
+    expect(fo?.hud).toBe(true);
+    expect(st.get('c12_ballMvp')).toBe(MVP_MAX);
+    expect(log.some((l) => /over the centre-field wall/.test(l.text))).toBe(true);
+    expect(log.filter((l) => /flies out to centre/.test(l.text)).length).toBe(2);
+    expect(st.count('c12_gameBall')).toBe(1);
+    expect(st.count('str3')).toBe(1);
+    expect(st.count('end1')).toBe(1);
+    // Umpired by Whis and Vados: no ki, no flying, no destruction.
+    expect(log.some((l) => /no destruction/i.test(l.text))).toBe(true);
+    // Everything is put back: the hero's own look, the HUD, the seal.
+    expect(st.char('goku').outfit).toBeUndefined();
+    expect(sim.game.hideHud).toBe(false);
+    expect(sim.game.fightDepth).toBe(0);
+    expect(st.flag('act5_busy')).toBe(false);
+    expect(sim.game.field?.def.id).toBe('cc_yard');
+    expect(st.data.journal.c12_ball).toBe('done');
+  });
+
+  it('a single and a slide under the tag also win it; a player who never moves still sees Yamcha score the winning run', async () => {
+    // A swing early in the window is a single; a slide in time beats Botamo's tag. Played as Gohan, who wears the costume.
+    const sim = freshSim(12, 37);
+    const st = sim.game.state;
+    st.join('gohan', 33);
+    st.data.active = 'gohan';
+    const single = await playBallgame(sim, { field: true, swingAt: SWING_WINDOW[0] + 0.01, slideAt: (SLIDE_WINDOW[0] + SLIDE_WINDOW[1]) / 2 });
+    expect(sim.errors).toEqual([]);
+    expect(single.final?.board).toBe('c12_board_3_4_2');
+    expect(single.final?.outfit).toBe('c12_yamchaBall');
+    expect(single.log.some((l) => /A bat-and-ball sport/.test(l.text) && l.hero === 'gohan')).toBe(true);
+    expect(single.log.some((l) => /clean single/.test(l.text))).toBe(true);
+    expect(single.log.some((l) => /Under the tag by a whisker/.test(l.text))).toBe(true);
+    expect(st.get('c12_ballMvp')).toBe(MVP_BONUS);
+    expect(st.count('end1')).toBe(1);
+    expect(st.char('gohan').outfit).toBeUndefined();
+    expect(st.data.active).toBe('gohan');
+
+    // Nobody at the controls: every fly ball drops (Universe 6 scores three), three strikes, no slide. The umpires
+    // rule Champa's stopped-in-mid-air pitch illegal and his glowing tag void, and Yamcha still scores.
+    const idle = freshSim(12, 37);
+    const ist = idle.game.state;
+    const lazy = await playBallgame(idle, { field: false, swingAt: null, slideAt: null });
+    expect(idle.errors).toEqual([]);
+    expect(lazy.final?.board).toBe('c12_board_6_7_2');
+    expect(lazy.log.some((l) => /thrown with ki/.test(l.text))).toBe(true);
+    expect(lazy.log.some((l) => /tagged him with destruction/.test(l.text))).toBe(true);
+    expect(lazy.log.some((l) => /not the one lying in a crater/.test(l.text))).toBe(true);
+    expect(ist.get('c12_ballMvp')).toBe(0);
+    expect(ist.count('end1')).toBe(0);
+    expect(ist.count('c12_gameBall')).toBe(1);
+    expect(ist.data.journal.c12_ball).toBe('done');
+    // The fly balls land where Yamcha can get to in time from centre field (one only at a run).
+    const sim3 = new Sim();
+    sim3.start('c12_ballpark', EP.park.field[0], EP.park.field[1]);
+    const seen = reachable(sim3, EP.park.field[0], EP.park.field[1]);
+    for (const [x, y] of [[17, 8], [27, 6], [14, 14]]) expect(seen.has(`${x},${y}`), `${x},${y}`).toBe(true);
+    expect(CATCH_RADIUS).toBeLessThan(16);
+  });
+
+  it('after the credits Champa still waits with his challenge and the tarp can still be lifted; Beerus remembers both', async () => {
+    const sim = freshSim(15, 48);
+    const st = sim.game.state;
+    st.set('post_game');
+    sim.start('cc_yard', 27, 18);
+    await settle(sim);
+    const ids = sim.game.field?.npcs.map((n) => n.def.id) ?? [];
+    expect(ids).toContain('c12_champaP');
+    expect(ids).not.toContain('c12_champaY');
+    await beat(sim, 'cc_yard', 'c12_project_look', 33, 7);
+    expect(st.data.journal.c12_wish).toBe('active');
+    // During the tournament chapters nobody has time: the tarp is only a tarp, and Champa stays home.
+    const busy = freshSim(13, 42);
+    const log = record(busy);
+    busy.start('cc_yard', 27, 18);
+    await settle(busy);
+    expect(busy.game.field?.npcs.some((n) => n.spriteId === 'champa' && /^c12_/.test(n.def.id))).toBe(false);
+    await beat(busy, 'cc_yard', 'c12_project_look', 33, 7);
+    expect(busy.game.state.data.journal.c12_wish).toBeUndefined();
+    expect(log.some((l) => /KEEP OUT/.test(l.text))).toBe(true);
+    // Beerus's hub chatter picks up both episodes.
+    const chat = freshSim(12, 37);
+    chat.game.state.set('c12_labGone');
+    chat.game.state.set('c12_ballDone');
+    const heard = record(chat);
+    chat.start('cc_yard', 25, 17);
+    await settle(chat);
+    for (let i = 0; i < 9; i++) await beat(chat, null, 'act5_beerus_talk');
+    expect(heard.some((l) => /A time machine\. On MY favourite restaurant/.test(l.text))).toBe(true);
+    expect(heard.some((l) => /That Yamcha has a good arm/.test(l.text))).toBe(true);
+  });
+
+  it('the new faces read on the Scouter, and the core\'s wildlife sits in the round-2 grind band', async () => {
+    const { scanKey } = await import('../../src/content/scans');
+    const { hitsRatio } = await import('../fairbot');
+    const { FORMS } = await import('../../src/content/characters');
+    expect(scanKey('c12_heatSuit')).toBe('goku');
+    expect(scanKey('c12_yamchaBall')).toBe('yamcha');
+    for (const id of ['champa', 'vados', 'pilaf', 'mai', 'shu', 'android18', 'roshi', 'pan', 'videl', 'kingKai', 'botamo', 'cabba', 'c07_magetta']) {
+      expect(scanKey(id), id).toBeTruthy();
+    }
+    for (const id of ['c12_heatSuit', 'c12_yamchaBall']) expect(portrait(id), id).toBeTruthy();
+    // Chapter 12 Goku as the full-game run has him (L37) in Super Saiyan Blue: LoG2's per-enemy band, about 5-9 hits
+    // to kill and at least 15 to knock him out (critic round 2, gap 1); the guardian sits with Hit (ratio at most 4).
+    const ssb = FORMS.ssb.bonus;
+    const bonus = typeof ssb === 'number' ? ssb : 0;
+    const goku = { str: 56 + bonus, end: 46 + bonus, hpMax: 906 };
+    const mantle = resolveMap('c12_core_mantle');
+    for (const id of ['c12_magmaSlime', 'c12_cinderBat', 'c12_crustCrab', 'c12_lavaSerpent']) {
+      const r = hitsRatio(goku, ENEMIES[id]);
+      expect(r.hitsToEnd, `${id} hits to kill`).toBeGreaterThanOrEqual(5);
+      expect(r.hitsToEnd, `${id} hits to kill`).toBeLessThanOrEqual(9);
+      expect(r.hitsToKO, `${id} hits to knock Goku out`).toBeGreaterThanOrEqual(15);
+      expect(mantle?.enemies?.some((e) => e.type === id), `${id} lives in the mantle`).toBe(true);
+      expect(CREATURES[ENEMIES[id].sprite], id).toBeTruthy();
+    }
+    const wyrm = hitsRatio(goku, ENEMIES.c12_mantleWyrm);
+    expect(wyrm.ratio).toBeGreaterThanOrEqual(1);
+    expect(wyrm.ratio).toBeLessThanOrEqual(4);
+  });
+
+  it('the drill pod stays on the pad: the core can be revisited after the episode, so its cache and its EXP are never lost', async () => {
+    const sim = freshSim(12, 37);
+    const st = sim.game.state;
+    st.join('vegeta', 30);
+    st.data.active = 'vegeta';
+    // "Whose Wish?" is over: the alloy cut, the guardian down, the workshop a crater.
+    st.addQuest('c12_wish');
+    st.completeQuest('c12_wish');
+    st.set(POD_OUT);
+    for (const flag of ['c12_wyrmDown', 'c12_alloyCut', 'c12_alloyDelivered', 'c12_summoned', 'c12_labGone', 'c12_wishDone']) st.set(flag);
+    st.set('c12_labGoneCh', 12);
+    const asked: string[] = [];
+    const g = sim.game;
+    const ask = g.ask.bind(g);
+    g.ask = (prompt, options) => { asked.push(prompt.text); return ask(prompt, options); };
+    sim.start('cc_yard', 35, 9);
+    await settle(sim);
+    expect(sim.game.field?.map.props.some((p) => p.id === 'c12_pod')).toBe(true);
+    const podT = resolveMap('cc_yard')?.triggers?.find((t) => t.id === 'c12_podT');
+    expect(podT && st.check(podT.showIf) && !(podT.hideIf && st.check(podT.hideIf))).toBe(true);
+    sim.choice = 0;
+    await beat(sim, null, 'c12_pod_down');
+    expect(asked.some((t) => /Dive to the Earth's core again/.test(t))).toBe(true);
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    expect(f.def.id).toBe('c12_core_mantle');
+    expect(st.data.active).toBe('goku');
+    expect(st.char('goku').outfit).toBe('c12_heatSuit');
+    expect(f.timer?.label).toBe('COOLANT');
+    // The tunnels are stocked again (a place to level), and a cache missed the first time is still there.
+    expect(f.enemies.filter((e) => !e.dead).length).toBe(resolveMap('c12_core_mantle')?.enemies?.length);
+    expect(st.flag('chest:c12_mantleCache')).toBe(false);
+    // The heart: no guardian, no crystal left to cut.
+    const heart = resolveMap('c12_core_heart');
+    for (const id of ['c12_wyrmT', 'c12_crystalT']) {
+      const t = heart?.triggers?.find((x) => x.id === id);
+      expect(t && st.check(t.showIf) && !(t.hideIf && st.check(t.hideIf)), id).toBe(false);
+    }
+    // The pod takes Goku home and hands the controls back.
+    await beat(sim, null, 'c12_pod_up');
+    expect(sim.game.field?.def.id).toBe('cc_yard');
+    expect(st.data.active).toBe('vegeta');
+    expect(st.flag('noSwitch')).toBe(false);
+    expect(st.char('goku').outfit).toBeUndefined();
+    expect(st.data.journal.c12_wish).toBe('done');
+  });
+
+  it('the people at home know all six episodes: Goten points to the two at Capsule Corp, Chi-Chi reacts to both', async () => {
+    const sim = freshSim(12, 37);
+    const st = sim.game.state;
+    const heard = record(sim);
+    sim.start('paozu_home', 31, 10);
+    await settle(sim);
+    for (let i = 0; i < 6; i++) await beat(sim, null, 'act5_goten_talk');
+    expect(new Set(heard.map((l) => l.text)).size, 'one hint per open episode').toBe(6);
+    expect(heard.some((l) => /under a sheet on the old time machine pad/.test(l.text))).toBe(true);
+    expect(heard.some((l) => /big purple cat/.test(l.text))).toBe(true);
+    st.addQuest('c12_wish');
+    st.completeQuest('c12_wish');
+    st.addQuest('c12_ball');
+    st.completeQuest('c12_ball');
+    heard.length = 0;
+    for (let i = 0; i < 2; i++) await beat(sim, null, 'act5_chichi_talk');
+    expect(heard.some((l) => /You gave the wish to Pan, for her fever/.test(l.text))).toBe(true);
+    expect(heard.some((l) => /BASEBALL\? Against a god of destruction/.test(l.text))).toBe(true);
+  });
+
+  it('however many runs Universe 6 scores, Universe 7 ties it with the bases empty, and Yamcha bats with Goku on deck', async () => {
+    // Universe 7's order is Goku, Krillin, Gohan, Piccolo, Trunks, Yamcha: the rally never leaves a runner ahead of
+    // Yamcha (he scores the winning run) and nobody bats twice before the order comes round.
+    const CASES: Array<[string, Fielding, number, RegExp[]]> = [
+      ['every fly caught', true, 0, [/Without ki I can barely follow it/, /Trunks pops up to Cabba for the second out/]],
+      ['Cabba\'s fly dropped', (n) => n > 0, 1, [/Gohan leads off with a drive over the left-field fence/, /TIED/, /Without ki I can barely follow it/, /Trunks pops up/]],
+      ['only Cabba\'s fly caught', (n) => n === 0, 2, [/didn't even SEE it/, /Gohan doubles into the gap and Piccolo triples him home/, /TIED/]],
+      ['every fly dropped', false, 3, [/Goku leads off with a bunt/, /didn't even SEE it/, /Gohan doubles Goku home and Piccolo triples Gohan in/, /TIED/]],
+    ];
+    for (const [label, field, runs, beats] of CASES) {
+      const sim = freshSim(12, 37);
+      const { log, final } = await playBallgame(sim, { field, swingAt: SWING_WINDOW[0] + 0.01, slideAt: null });
+      expect(sim.errors, label).toEqual([]);
+      expect(final?.board, label).toBe(`c12_board_${START_RUNS + runs}_${START_RUNS + runs + 1}_2`);
+      const at = beats.map((re) => log.findIndex((l) => re.test(l.text)));
+      for (let i = 0; i < at.length; i++) expect(at[i], `${label}: ${beats[i]}`).toBeGreaterThan(i ? at[i - 1] : -1);
+      expect(log.some((l) => /stranded/.test(l.text)), label).toBe(false);
+      const up = log.findIndex((l) => /Now batting for Universe 7\.\.\. Yamcha/.test(l.text));
+      expect(up, label).toBeGreaterThan(at[at.length - 1]);
+      expect(log.findIndex((l) => /I'll hit it and you run/.test(l.text)), label).toBeGreaterThan(up);
+    }
+  });
 });

@@ -1,10 +1,11 @@
 import { registerCast } from '../../cast';
-import { registerScans } from '../../scans';
+import { registerScanAliases, registerScans } from '../../scans';
 
 /**
  * Chapter 14 set-piece cast: the Pride Trooper squad, Universe 2's Kamikaze Fireballs (everyday and transformed
- * looks), Universe 6's Namekian pair and Universe 4's tricksters. Every new sprite has a Scouter entry; fighters
- * read the same as their bestiary entry (regular troopers at the engine's trimmed late-tier HP).
+ * looks), Universe 6's Namekian pair, Universe 4's tricksters, and the middle of the west-ring relay (Obni, Roshi's
+ * Universe 4 trio, Universe 2's snipers, Max Power Roshi). Every new sprite has a Scouter entry; fighters read the
+ * same as their bestiary entry (regular fighters at the engine's trimmed late-tier HP).
  */
 
 const SKIN = '#f8c890';
@@ -42,10 +43,30 @@ registerCast({
 
   // ---------------------------------------------------------------- Universe 4: the tiny trickster (ep 119)
   c14_damom: { body: 'child', skin: '#b0a080', hair: 'mohawk', hairColor: '#605030', top: '#806040', topStyle: 'vest', under: '#806040', sleeves: 'none', pants: '#504030', boots: '#302010', face: 'stern' },
+
+  // ---------------------------------------------------------------- Universe 10's last fighter (ep 103)
+  c14_obni: { body: 'male', skin: '#9aa0b4', hair: 'spiky', hairColor: '#e8e8f4', accent: '#c0a040', top: '#382838', topStyle: 'suit', under: '#382838', sleeves: 'none', belt: '#c0a040', pants: '#281c28', boots: '#c0a040', wrist: '#c0a040', face: 'stern' },
+
+  // ---------------------------------------------------------------- Universe 4 against Master Roshi (eps 105-106)
+  // Universe 4's colours follow the stage's U4 fighters (slate armour, sand trim).
+  c14_caway: { body: 'female', skin: '#e8b4cc', hair: 'ponytail', hairColor: '#f4ecf4', accent: '#d0c080', top: '#405880', topStyle: 'suit', under: '#283850', sleeves: 'none', pants: '#283850', boots: '#d0c080', face: 'gentle' },
+  c14_dercori: { body: 'female', skin: '#806878', hair: 'hat', hairColor: '#283850', accent: '#d0c080', top: '#283850', topStyle: 'robe', under: '#405880', sleeves: 'long', pants: '#283850', boots: '#201828', eye: '#d0c080', face: 'stern' },
+  c14_ganos: { body: 'male', skin: '#e0c070', hair: 'mohawk', hairColor: '#f08030', accent: '#d0c080', top: '#405880', topStyle: 'armor', under: '#283850', sleeves: 'none', pants: '#283850', boots: '#d0c080', eye: '#f0a020', face: 'stern' },
+  // Pushed into a corner he turns into a bird of prey: bigger, crested, wings spread behind him.
+  c14_ganosBird: { body: 'big', skin: '#f0b040', hair: 'spikyTail', hairColor: '#f06020', accent: '#f8e070', top: '#f0b040', topStyle: 'vest', under: '#405880', sleeves: 'none', pants: '#283850', boots: '#e09030', cape: '#e07028', tail: '#f06020', eye: '#f8e070', face: 'stern' },
+  // Master Roshi at Max Power in the tournament: the dojo's brainwashed look without Yurin's glowing eyes.
+  c14_roshiMax: { body: 'big', skin: '#e8b078', hair: 'bald', hairColor: '#f0f0f0', top: '#e8b080', topStyle: 'vest', under: '#e8b080', sleeves: 'none', belt: '#e88838', pants: '#f0e8c0', boots: '#806040', face: 'beard' },
+
+  // ---------------------------------------------------------------- Universe 2's snipers (ep 106)
+  // Prum, the lookout, sees through a scouter lens; Harmira, the sniper, is the heavy of the pair.
+  c14_prum: { body: 'child', skin: '#c8b0e0', hair: 'helmet', hairColor: '#f878b8', accent: '#f8f0a0', top: '#f0e8f8', topStyle: 'suit', under: '#f878b8', sleeves: 'long', pants: '#f878b8', boots: '#f0f0f0', scouter: '#f05080', face: 'stern' },
+  c14_harmira: { body: 'big', skin: '#ecdcc4', hair: 'bald', hairColor: '#ecdcc4', top: '#f0e8f8', topStyle: 'suit', under: '#f878b8', sleeves: 'none', belt: '#f878b8', pants: '#f878b8', boots: '#f0f0f0', wrist: '#f878b8', face: 'stern' },
 }, {
   c14_kahseral: 'Kahseral', c14_tupper: 'Tupper', c14_zoiray: 'Zoiray', c14_kettle: 'Kettle', c14_cocotte: 'Cocotte', c14_knsi: 'K\'nsi',
   c14_brianne: 'Brianne', c14_sanka: 'Su Roas', c14_suroas: 'Sanka Ku', c14_rozie: 'Rozie', c14_kakunsa: 'Kakunsa', c14_superRibrianne: 'Ribrianne',
   c14_saonel: 'Saonel', c14_pirina: 'Pirina', c14_damom: 'Damom',
+  c14_obni: 'Obni', c14_caway: 'Caway', c14_dercori: 'Dercori', c14_ganos: 'Ganos', c14_ganosBird: 'Ganos', c14_roshiMax: 'Master Roshi',
+  c14_prum: 'Prum', c14_harmira: 'Harmira',
 });
 
 registerScans({
@@ -66,4 +87,14 @@ registerScans({
   c14_pirina: { name: 'Pirina', kind: 'U6 Namekian / Team U6', hp: 8200, str: 52, pow: 50, end: 56, desc: 'Saonel\'s partner. Every Namekian of their world fused into the two of them.' },
   gamisalas: { name: 'Gamisalas', kind: 'U4 / Team U4', hp: 8200, str: 52, pow: 50, end: 40, desc: 'A Universe 4 fighter who bends light around himself. The scouter can read him even when your eyes cannot.' },
   c14_damom: { name: 'Damom', kind: 'U4 / Team U4', hp: 2000, str: 40, pow: 30, end: 30, desc: 'A Universe 4 fighter so small he is almost invisible. Hits far above his size.' },
+  c14_obni: { name: 'Obni', kind: 'U10 / Team U10', hp: 8200, str: 54, pow: 52, end: 60, desc: 'Universe 10\'s last fighter. A husband and a father, and his fists know it.' },
+  c14_caway: { name: 'Caway', kind: 'U4 / Team U4', hp: 2143, str: 50, pow: 46, end: 46, desc: 'A Universe 4 fighter who counts on a pretty smile to make her opponents drop their guard.' },
+  c14_dercori: { name: 'Dercori', kind: 'U4 / Team U4', hp: 1886, str: 40, pow: 52, end: 44, desc: 'A hooded Universe 4 fighter who throws dark ki from a safe distance.' },
+  c14_ganos: { name: 'Ganos', kind: 'U4 / Team U4', hp: 8200, str: 48, pow: 46, end: 56, desc: 'A Universe 4 fighter with a bird\'s crest. The more he is pushed, the stronger he gets.' },
+  c14_ganosBird: { name: 'Ganos', kind: 'U4 / Team U4', hp: 8200, str: 48, pow: 46, end: 56, desc: 'Ganos transformed into a bird of prey. His readings climb with every blow he takes.' },
+  c14_prum: { name: 'Prum', kind: 'U2 / Team U2', hp: 1800, str: 1, pow: 56, end: 42, desc: 'Universe 2\'s lookout and decoy. His body turns to a mirror that bounces Harmira\'s shots at targets from angles nobody expects.' },
+  c14_harmira: { name: 'Harmira', kind: 'U2 / Team U2', hp: 8200, str: 52, pow: 52, end: 52, desc: 'Universe 2\'s real sniper. He tracks targets by their body heat and fires from a hiding place, through Prum\'s mirror.' },
 });
+
+// Master Roshi at Max Power files under Master Roshi, like the dojo's brainwashed Max Power look.
+registerScanAliases({ c14_roshiMax: 'roshi' });

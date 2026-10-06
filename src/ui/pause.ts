@@ -3,6 +3,7 @@ import { portrait } from '../art/registry';
 import { CHARACTERS, FORMS, type CharId } from '../content/characters';
 import { ITEMS, type ItemDef } from '../content/items';
 import { QUESTS, type Star } from '../content/quests';
+import { scanEntryCount } from '../content/scans';
 import { CHARGED_MELEE, TECHNIQUES } from '../content/techniques';
 import { audio } from '../engine/audio';
 import { SCREEN_H, SCREEN_W } from '../engine/constants';
@@ -353,6 +354,6 @@ export class PauseMenu implements Scene {
     });
     const secs = Math.floor(d.playFrames / 60);
     font.draw(ctx, `Play time ${Math.floor(secs / 3600)}:${String(Math.floor(secs / 60) % 60).padStart(2, '0')}`, 30, 118, '#9098c0', '#000');
-    font.draw(ctx, `Delicacies ${this.game.state.count('delicacy')}/25   Scouter scans ${d.scans.length}`, 30, 130, '#9098c0', '#000');
+    font.draw(ctx, `Delicacies ${this.game.state.count('delicacy')}/25   Scouter scans ${scanEntryCount(d.scans)}`, 30, 130, '#9098c0', '#000');
   }
 }
