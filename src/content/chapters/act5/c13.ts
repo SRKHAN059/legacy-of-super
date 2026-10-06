@@ -1,6 +1,6 @@
 import { registerScripts, type ScriptApi } from '../../../game/script';
 import { ensureChapterState, force, unforce } from '../common';
-import { battle, bossFight, forceFade, freeNear, heroTile, rememberHero, removeAll, restoreHero, stage, stageOrReuse, warpTo } from './helpers';
+import { battle, bossFight, forceFade, freeNear, heroTile, refresh, rememberHero, removeAll, restoreHero, stage, stageOrReuse, warpTo } from './helpers';
 import { HUB } from './hubs';
 
 /**
@@ -323,7 +323,7 @@ registerScripts({
     s.music('battle');
     s.spawnEnemy('c13_student', 11, 11);
     s.spawnEnemy('c13_student', 24, 11);
-    s.spawnEnemy('c13_studentB', 13, 16);
+    s.spawnEnemy('c13_student', 13, 16);
     s.spawnEnemy('c13_studentB', 23, 16);
     await battle(s);
     s.letterbox(true);
@@ -561,13 +561,17 @@ registerScripts({
       await s.talk([
         ['c13_poacherBoss', 'The ranger. And he brought a friend. You two are bad for business.', 'smirk'],
         ['android17', 'You\'re standing on a protected reserve. Leave the animals and leave the planet.', 'neutral'],
-        ['c13_poacherBoss', 'Every one of those beasts sells for a fortune across the galaxy. Boys! Snare them both!', 'angry'],
+        ['c13_poacherBoss', 'Every one of those beasts sells for a fortune across the galaxy. Boys! Get the cages on the ship. NOW!', 'angry'],
+        ['c13_poacherBoss', 'I\'ll deal with these two myself.', 'smirk'],
       ]);
+      // The camp's riflemen and brutes run for the ship: the fight is the boss and the deckhands he whistles up in
+      // his second phase (snipers left all over the camp made it a wall a fair player lost half the time).
+      for (const e of s.field.enemies) if (!e.uid && !e.dead && e.def.id.startsWith('c13_poacher')) e.dead = true;
       s.letterbox(false);
       s.music('boss');
       const [bx, by] = freeNear(s, 20, 8);
       s.remove('c13_bossC');
-      // He breaks off at a quarter of his health (scripted end) and runs for his ship.
+      // He breaks off below a third of his health (scripted end) and runs for his ship.
       await bossFight(s, 'c13_poacherBoss', { x: bx, y: by, uid: 'c13_poacherBoss1' });
       s.letterbox(true);
       if (!s.exists('c13_poacherBoss1')) stage(s, 'c13_poacherBoss1', 'c13_poacherBoss', bx, by, 'down', 'Poacher Boss');
@@ -751,7 +755,10 @@ registerScripts({
     if (s.exists('c13_friezaB')) s.pose('c13_friezaB', null);
     await s.talk([
       ['frieza', 'Now then. A little warm-up before the tournament, Goku? I trained in Hell, you know. Lots of free time.', 'smirk'],
+      ['frieza', 'Oh, do catch your breath first. Beating a winded monkey would prove nothing at all.', 'smirk'],
     ]);
+    // Frieza's pride is the breather: the spar starts at full strength, not on whatever the assassins left.
+    refresh(s, 'goku');
     if (s.exists('c13_friezaB')) {
       await s.powerUp('c13_friezaB', '#f8d040', 50);
       s.sprite('c13_friezaB', 'goldenFrieza');

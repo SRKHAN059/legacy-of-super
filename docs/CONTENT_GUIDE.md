@@ -390,6 +390,30 @@ Frieza attack). World builders own ambient NPCs; chapter agents own story NPCs v
    trigger/talk script directly with `sim.start(map)` + `sim.run(id)`), asserting the flags/quests/joins at each step,
    ending with the next chapter's start. This proves the chapter is completable.
 3. Browser check (optional): `npm run dev`, then `http://127.0.0.1:5173/?map=<id>&x=<tile>&y=<tile>&char=goku&lv=12&chapter=3`.
+4. Fair-play balance (`tests/balance.test.ts`, `npm run test:balance`, part of the default suite, about 45 s). A
+   fair bot (`tests/fairbot.ts`) plays fights with real input only: it takes real damage, eats Senzu through the
+   pause menu, transforms and fires techniques, and hunts down free-roam waves by walking distance. The file checks:
+   - the harness itself (LoG2 reference bosses, the Senzu menu, record and replay, per-fight caps);
+   - per-act `tuned fights` blocks: each tuned beat replayed on its real map from a save holding the recorded party;
+   - `every story fight`: every script in the committed recording `tests/fixtures/story_fights.json`, replayed on
+     seeds 1-3 (1-8 for a fight that needs a second look). The bands and exemptions are listed in the block's header
+     comment: at least 2 of 3 wins (6 of 8), at most 2 Senzu, boss hits ratio at most 6 (9 in the Chapter 14
+     finale) and at least 1 for major bosses. Scripted losses, `survive` fights and the post-game superbosses are
+     exempt or judged against LoG2's Cooler.
+
+   When you change a fight, its band can move: run the file. When you add, move or remove a story fight, re-record
+   the fixture (command in the block's header comment); a fight the replay no longer reaches fails as "not reached".
+   Every replay is deterministic (fixed seeds, no wall clock), and a fight still unresolved 7 minutes of play after it
+   began is closed as a timeout loss (`capped`), so a stuck fight fails fast and never hangs the suite.
+
+   The full report (5 seeds per fight, level sensitivity for too-hard fights, JSON with a verdict per fight) runs on
+   request from a fresh recording:
+   ```
+   LOS_RECORD_FIGHTS=/tmp/fights.json npx vitest run tests/full_game.test.ts
+   LOS_FIGHTS=/tmp/fights.json LOS_BALANCE_OUT=/tmp/balance_report.json npx vitest run tests/balance.test.ts
+   ```
+   `LOS_ONLY=<enemy type or script id>` narrows it to one fight, `LOS_SEEDS=<n>` changes the seed count, and
+   `LOS_REPLAY_TRACE=<file>` writes one JSON line per replay (compare two runs to check determinism).
 
 ## 10. Final report
 

@@ -390,7 +390,12 @@ registerScripts({
       ['c08_potageV', 'Catch the core and crush it with your bare hands! Ki blasts only feed it!', 'shout'],
       ['c08_potageV', 'And the glyph pillars by the walls - my people built them to hold the core. Light both, and it cannot flee!', 'shout'],
       ['goku', 'Got it. Light the pillars, punch the little purple thing, then punch the big purple Vegeta!', 'smirk'],
+      ['c08_potageV', 'Wait! Drink this first. Water from our spring. It is not superhuman... but it is cold, and you need it.', 'neutral'],
+      ['goku', '*gulp gulp* Ahh, that hits the spot! Okay, NOW I\'m ready!', 'happy'],
     ]);
+    // The copies' wave and Copy Vegeta are one beat with no save point between them: Goku starts the core hunt fresh.
+    s.heal();
+    s.toast('HP and EP fully restored!');
     await s.narrate('Copy Vegeta is invulnerable while the core lives. Press A at both glyph pillars to pin the core, then destroy it with melee attacks.');
     s.transformNow('ssb');
     await s.powerUp('hero', '#40c0f8', 30);

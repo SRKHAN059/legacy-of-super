@@ -817,6 +817,8 @@ registerScripts({
       ['hero', 'I just need one fruit! For Gowasu! ...You don\'t know who that is. Okay. Let\'s do this the Babarian way.', 'smirk'],
     ]);
     clearActors(s, ['c10_chief']);
+    // Square off at the top of the cliff path, a few steps below the spot where the chief takes his stand.
+    s.place('hero', 30, 10, 'up');
     s.letterbox(false);
     s.music('boss');
     await bout(s, 'c10_babarianChief', { x: 30, y: 7, uid: 'c10_chief1' });

@@ -103,7 +103,7 @@ registerScans({
   c01_bubbles: { name: 'Bubbles', kind: 'Monkey / King Kai', hp: 1200, str: 15, pow: 1, end: 12, desc: 'King Kai\'s monkey. Running in ten times Earth\'s gravity made him annoyingly fast.' },
   c01_gregory: { name: 'Gregory', kind: 'Cricket / King Kai', hp: 24, str: 1, pow: 1, end: 2, desc: 'King Kai\'s cricket. Hard to hit, harder to shut up.' },
   c01_goat: { name: 'Goat', kind: 'Goat / Mt. Paozu', hp: 9, str: 2, pow: 1, end: 2, desc: 'A goat with no respect for fences.' },
-  c01_scarface: { name: 'Scarface', kind: 'T-rex / Mt. Paozu', hp: 450, str: 13, pow: 1, end: 7, desc: 'The oldest T-rex on Mt. Paozu. The scar is from a fight with a boy with a monkey tail, about thirty years ago.' },
+  c01_scarface: { name: 'Scarface', kind: 'T-rex / Mt. Paozu', hp: 400, str: 11, pow: 1, end: 7, desc: 'The oldest T-rex on Mt. Paozu. The scar is from a fight with a boy with a monkey tail, about thirty years ago.' },
 });
 
 // ------------------------------------------------------------------ enemies & bosses
@@ -143,14 +143,16 @@ registerEnemies([
       ],
     },
   },
+  // Fang and Scarface meet Goku at L2 and L4 with no Senzu Beans and no form (tests/balance.test.ts): their charges
+  // land for an eighth of his HP and they pause longer between them, so a careful player wins on the first try.
   {
-    id: 'c01_fang', name: 'Fang', sprite: 'c01_fang', hp: 400, str: 11, pow: 1, end: 5, exp: 0, ai: 'boss', speed: 1.0, box: { w: 22, h: 10 }, drops: 'none',
+    id: 'c01_fang', name: 'Fang', sprite: 'c01_fang', hp: 340, str: 10, pow: 1, end: 5, exp: 0, ai: 'boss', speed: 1.0, box: { w: 22, h: 10 }, drops: 'none',
     desc: 'An old sabertooth the size of a truck. Has developed a taste for radishes.',
     boss: {
       endAt: 0.05,
       phases: [
-        { until: 0.6, moves: ['chase', 'charge'], rest: 60 },
-        { until: 0, moves: ['chase', 'charge', 'dash'], rest: 45, speed: 1.15, onStart: 'c01_fang_roar' },
+        { until: 0.6, moves: ['chase', 'charge'], rest: 70 },
+        { until: 0, moves: ['chase', 'charge', 'dash'], rest: 55, speed: 1.15, onStart: 'c01_fang_roar' },
       ],
     },
   },
@@ -166,13 +168,16 @@ registerEnemies([
     },
   },
   {
-    id: 'c01_scarface', name: 'Scarface', sprite: 'c01_scarface', hp: 450, str: 13, pow: 1, end: 7, exp: 0, ai: 'boss', speed: 0.95, box: { w: 22, h: 10 }, drops: 'none',
+    id: 'c01_scarface', name: 'Scarface', sprite: 'c01_scarface', hp: 400, str: 11, pow: 1, end: 7, exp: 0, ai: 'boss', speed: 0.9, box: { w: 22, h: 10 }, drops: 'none',
     desc: 'The oldest T-rex on Mt. Paozu. Bullies raptors, eats boulders, hates small boys.',
+    // Balance: the oldest rex is a step slower than Fang (0.9 vs 1.0), so an L4 Goku can sidestep his charge; the fair
+    // bot wins 19 of 20 (17 of 20 at 0.95).
     boss: {
-      endAt: 0.05,
+      // Worn down to a quarter, he is open for the karate chop that takes his tail.
+      endAt: 0.25,
       phases: [
-        { until: 0.55, moves: ['chase', 'charge'], rest: 58 },
-        { until: 0, moves: ['charge', 'dash', 'chase'], rest: 42, speed: 1.15, onStart: 'c01_scarface_roar' },
+        { until: 0.55, moves: ['chase', 'charge'], rest: 66 },
+        { until: 0, moves: ['charge', 'dash', 'chase'], rest: 52, speed: 1.15, onStart: 'c01_scarface_roar' },
       ],
     },
   },
@@ -215,7 +220,9 @@ registerEnemies([
       ],
     },
   },
-  // Sparring arena (no EXP, they yield before getting hurt).
+  // Sparring arena (no EXP, LoG2's HP). Each partner yields once the bout is decided: Yamcha at the last gasp, Krillin
+  // at 30%, Tien at 40%. Tuned for Goku at L12-14 in Chapter 3 (tests/balance.test.ts); a Chapter 2 Vegeta can try
+  // early and come back stronger, as in LoG2.
   {
     id: 'c02_spYamcha', name: 'Yamcha', sprite: 'yamcha', hp: 800, str: 18, pow: 12, end: 14, exp: 0, ai: 'boss', speed: 1.1, drops: 'none',
     desc: 'Wolf Fang Fist at the ready. Mostly.',
@@ -224,12 +231,15 @@ registerEnemies([
   {
     id: 'c02_spKrillin', name: 'Krillin', sprite: 'krillinGi', hp: 1800, str: 23, pow: 24, end: 17, exp: 0, ai: 'boss', speed: 1.15, drops: 'none',
     desc: 'Earth\'s strongest human, out of practice and loving it.',
-    boss: { endAt: 0.02, kiColor: '#f8f080', phases: [{ until: 0.5, moves: ['chase', 'shot', 'teleport'], rest: 48 }, { until: 0, moves: ['volley', 'beam', 'teleport', 'chase'], rest: 38 }] },
+    boss: { endAt: 0.3, kiColor: '#f8f080', phases: [{ until: 0.65, moves: ['chase', 'shot', 'teleport'], rest: 48 }, { until: 0, moves: ['volley', 'beam', 'teleport', 'chase'], rest: 38 }] },
   },
+  // LoG2's Tien is 35/29/27. STR 35 falls in this engine's late-game damage curve (enemyPowerScale, x1.28), where
+  // four hits floored a Chapter 3 hero. At 23/26/22 with the most HP he is still the hardest of the three: he opens
+  // with strikes, the Tri-Beam and afterimages, and saves his lunging rushes and Tri-Beam barrage for the second half.
   {
-    id: 'c02_spTien', name: 'Tien', sprite: 'tien', hp: 2110, str: 35, pow: 29, end: 27, exp: 0, ai: 'boss', speed: 1.1, drops: 'none',
+    id: 'c02_spTien', name: 'Tien', sprite: 'tien', hp: 2110, str: 23, pow: 26, end: 22, exp: 0, ai: 'boss', speed: 1.1, drops: 'none',
     desc: 'Disciplined, tireless and fond of the Tri-Beam.',
-    boss: { endAt: 0.02, kiColor: '#f8d060', phases: [{ until: 0.5, moves: ['chase', 'dash', 'beam'], rest: 50 }, { until: 0, moves: ['beam', 'teleport', 'chase', 'rain'], rest: 36, speed: 1.15 }] },
+    boss: { endAt: 0.4, kiColor: '#f8d060', phases: [{ until: 0.7, moves: ['chase', 'beam', 'teleport'], rest: 50 }, { until: 0, moves: ['beam', 'dash', 'chase', 'rain'], rest: 48, speed: 1.15 }] },
   },
 ]);
 

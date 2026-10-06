@@ -128,7 +128,7 @@ registerEnemies([
     id: 'c09_dabura', name: 'Dabura', sprite: 'c09_dabura', hp: 4900, str: 44, pow: 46, end: 50, exp: 40000, ai: 'boss', speed: 1.0,
     desc: 'King of the Demon Realm, in the service of the wizard Babidi. His spit turns living things to stone.',
     boss: {
-      endAt: 0.2, kiColor: '#f05030',
+      endAt: 0.3, kiColor: '#f05030',
       phases: [
         { until: 0.6, moves: ['chase', 'shot', 'dash'], rest: 50 },
         { until: 0, moves: ['chase', 'volley', 'beam', 'rain'], rest: 38, speed: 1.2, onStart: 'c09_dabura_phase2' },
@@ -182,7 +182,7 @@ registerEnemies([
     },
   },
   {
-    id: 'c10_babarianChief', name: 'Babarian Chief', sprite: 'c10_babarianChief', hp: 5400, str: 49, pow: 40, end: 52, exp: 45000, ai: 'boss', speed: 1.0,
+    id: 'c10_babarianChief', name: 'Babarian Chief', sprite: 'c10_babarianChief', hp: 4900, str: 49, pow: 40, end: 52, exp: 45000, ai: 'boss', speed: 1.0,
     desc: 'The biggest, loudest Babarian on the planet. He guards the sacred fruit tree with his life and his very large club.',
     boss: {
       endAt: 0.3, kiColor: '#a08050', minion: 'c10_babarian',
@@ -236,10 +236,13 @@ registerEnemies([
     },
   },
   {
-    id: 'c11_blackRoseB', name: 'Goku Black (Rose)', sprite: 'blackRose', hp: 7800, str: 57, pow: 59, end: 63, exp: 120000, ai: 'boss', speed: 1.2,
+    id: 'c11_blackRoseB', name: 'Goku Black (Rose)', sprite: 'blackRose', hp: 7800, str: 55, pow: 59, end: 63, exp: 120000, ai: 'boss', speed: 1.2,
     desc: 'Black at the height of his power, wielding a scythe of pink ki that tears holes in the sky.',
+    // Rage Trunks (L34, ~820 HP) has no form above this: STR 57 floored him in six blows and put the hits ratio at
+    // 6.5, past the story band's limit of 6. STR 55 (still above the first Rose bout) with Zamasu cutting in at 30%
+    // brings it to 5.1.
     boss: {
-      endAt: 0.25, kiColor: '#f070b0', minion: 'c11_blackClone',
+      endAt: 0.3, kiColor: '#f070b0', minion: 'c11_blackClone',
       phases: [
         { until: 0.7, moves: ['chase', 'dash', 'shot', 'teleport'], rest: 40 },
         { until: 0.45, moves: ['volley', 'beam', 'rain', 'teleport'], rest: 32, speed: 1.15, onStart: 'c11_rose_scythe' },

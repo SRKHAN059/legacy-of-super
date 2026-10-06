@@ -9,10 +9,11 @@ import { registerSpots } from '../../world';
 
 const U6: EnemyDef[] = [
   // Caulifla's gang (the old quarter brawl, played as Cabba in base form): street toughs, a notch under the Defense
-  // Force ace they jump.
-  { id: 'c13_gangPunk', name: 'Gang Punk', sprite: 'c13_gangPunk', hp: 2700, str: 46, pow: 1, end: 40, exp: 27000, ai: 'rusher', speed: 1.25, desc: 'One of Caulifla\'s street toughs. A Saiyan with a lot of energy and nothing to spend it on.' },
-  { id: 'c13_gangBrute', name: 'Gang Bruiser', sprite: 'c13_gangBrute', hp: 3200, str: 50, pow: 1, end: 44, exp: 32000, ai: 'charger', speed: 1.1, box: { w: 16, h: 10 }, desc: 'The biggest member of Caulifla\'s gang. Charges first, thinks never.' },
-  { id: 'c13_gangSlinger', name: 'Gang Slinger', sprite: 'c13_gangSlinger', hp: 2600, str: 42, pow: 48, end: 40, exp: 26000, ai: 'shooter', speed: 1.05, shot: { color: '#f070a0', cooldown: 75, speed: 2.7, mult: 0.85 }, desc: 'Throws ki blasts from behind the rubble of the old quarter.' },
+  // Force ace they jump. Five of them roam a big map and Cabba hits at half a Blue fighter's strength, so each goes
+  // down in about fifteen hits and the slinger's blasts are light (fair-play balance: the brawl takes about a minute).
+  { id: 'c13_gangPunk', name: 'Gang Punk', sprite: 'c13_gangPunk', hp: 1800, str: 44, pow: 1, end: 40, exp: 27000, ai: 'rusher', speed: 1.25, desc: 'One of Caulifla\'s street toughs. A Saiyan with a lot of energy and nothing to spend it on.' },
+  { id: 'c13_gangBrute', name: 'Gang Bruiser', sprite: 'c13_gangBrute', hp: 2200, str: 48, pow: 1, end: 44, exp: 32000, ai: 'charger', speed: 1.1, box: { w: 16, h: 10 }, desc: 'The biggest member of Caulifla\'s gang. Charges first, thinks never.' },
+  { id: 'c13_gangSlinger', name: 'Gang Slinger', sprite: 'c13_gangSlinger', hp: 1600, str: 42, pow: 48, end: 40, exp: 26000, ai: 'shooter', speed: 1.05, shot: { color: '#f070a0', cooldown: 120, speed: 2.7, mult: 0.4 }, desc: 'Throws ki blasts from behind the rubble of the old quarter.' },
   {
     id: 'c13_cauliflaSSJ', name: 'Caulifla (Super Saiyan)', sprite: 'c13_cauliflaSSJ', hp: 6800, str: 56, pow: 58, end: 60, exp: 150000, ai: 'boss', speed: 1.35,
     desc: 'Minutes into her first Super Saiyan and already wants to test it on her teacher. A natural.',

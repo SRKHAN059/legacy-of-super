@@ -211,7 +211,7 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
   afterwards; the EXP stays with Vegeta; the hero who was playing gets the controls back, forced or free as before).
   - Part one (eps 88-89, gold `c13_u6`): plays from `c13_check` as soon as Gohan has trained or Tien has joined,
     then cuts back to where the player stood. Champa's planet (`c13_champa_terrace`, Champa and Vados give the
-    order) → Sadala old quarter (`c13_sadala_quarter`): Renso's bad leg, a free-roam brawl with eight of Caulifla's
+    order) → Sadala old quarter (`c13_sadala_quarter`): Renso's bad leg, a free-roam brawl with five of Caulifla's
     gang (base Cabba, a toast counts the rest down), the hideout, Cabba's Super Saiyan wins Caulifla over; Kale
     watches, jealous.
   - Part two (eps 92-93, gold `c13_u6kale`): runs inside `c13_whis_frieza`, between Goku's Frieza pitch and his visit
@@ -255,7 +255,7 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
     and she copies it on the spot) → berserk Kale (`survive`, Goku), Jiren stops her → **Pride Trooper squad** (ep 101,
     Goku: Kahseral is
     `vulnerableIf: c14_squadDown` until his four troopers, Tupper, Zoiray, Kettle and Cocotte, are down; no summons,
-    as Goku comes straight from surviving Kale; Kale takes control and blasts Kahseral out: five troopers lost) →
+    as Goku comes straight from surviving Kale, and Caulifla fights at his side as an AI partner; Kale takes control and blasts Kahseral out: five troopers lost) →
     **Kamikaze Fireballs** (ep 102, guest Android 17: Kakunsa plus Ribrianne and Rozie untouchable in the back; all
     three transform at Kakunsa's first phase change; 17 throws Kakunsa out) → U10 erased → **Goku & Hit vs Dyspo and
     K'nsi** (ep 104, Goku in SSG; Hit is an AI partner whose Time-Skip freezes his target; K'nsi out, Dyspo retreats) →

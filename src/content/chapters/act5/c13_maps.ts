@@ -17,8 +17,8 @@ export const SADALA = {
     throne: [38, 7] as [number, number],
     kale: [41, 7] as [number, number],
     henchman: [36, 8] as [number, number],
-    /** Where the gang lurks when Cabba walks in: alleys, the market, the collapsed block and the canal. */
-    gang: [[10, 6], [21, 3], [27, 11], [7, 21], [20, 25], [34, 19], [41, 27], [16, 12]] as Array<[number, number]>,
+    /** Where the gang lurks when Cabba walks in: the street, the back lane, the square, the market and the collapsed block. */
+    gang: [[16, 12], [21, 3], [27, 11], [7, 21], [20, 25]] as Array<[number, number]>,
   },
   crags: {
     arrive: [4, 14] as [number, number],
@@ -95,8 +95,9 @@ registerMaps([
       ['c13_sadalaHouse', 2, 9.4], ['barrel', 7, 12], ['flowers', 6.6, 9.6], ['lamp', 8.2, 11.4],
       // Rooftop towers of the northern blocks.
       ['c13_sadalaTower', 2, 2.4], ['c13_sadalaTower', 12.6, 3], ['c13_sadalaTower', 16.8, 4], ['c13_sadalaTower', 23.6, 2.4], ['c13_sadalaTower', 27.4, 2.6],
-      // Alleys and the back lane: rubble, crates, a burning drum.
-      ['rubble', 9.2, 6.6], ['crate', 20.2, 9.4], ['barrel', 21, 5.8], ['c13_oilDrum', 31.4, 10.2], ['smallRock', 15, 2.4], ['rubble', 26, 2.2],
+      // Alleys and the back lane: rubble, crates, a burning drum. Clutter in the two-tile alleys sits against one wall
+      // and leaves a full lane (set off-centre it left two gaps narrower than a fighter: a dead end that looks open).
+      ['rubble', 10.4, 6.2], ['crate', 20, 9.4], ['c13_oilDrum', 31, 10.2], ['smallRock', 15, 2.4], ['rubble', 26, 2.2], ['barrel', 29.6, 2.2],
       // The square with King Sadala's statue, and the sidewalk.
       ['statue', 25.6, 8.6], ['lamp', 22.4, 11.6], ['lamp', 29.6, 11.6], ['lamp', 12, 11], ['lamp', 18.4, 11],
       // Caulifla's hideout.

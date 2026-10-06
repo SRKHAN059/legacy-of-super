@@ -7,19 +7,24 @@ import { registerEnemies } from '../../enemies';
 registerEnemies([
   // ---------------------------------------------------------------- Chapter 3
   {
-    id: 'c03_pilafMk2', name: 'Pilaf Machine Mk-II', sprite: 'c03_pilafMk2', hp: 1400, str: 21, pow: 18, end: 18, exp: 3000,
+    id: 'c03_pilafMk2', name: 'Pilaf Machine Mk-II', sprite: 'c03_pilafMk2', hp: 900, str: 18, pow: 17, end: 18, exp: 3000,
+    // A mini-boss sprung on Goku (L11-12) at the end of the castle, often at half HP and before any Senzu exist: low in
+    // the L8-12 boss band, with a slower missile phase, so a fair player wins it at the first try about nine times in
+    // ten and it is no harder than Beerus at the chapter's end.
     ai: 'boss', speed: 0.8, box: { w: 24, h: 12 },
     desc: 'The Pilaf Gang\'s upgraded battle suit. Twice the armour, three times the missiles, still steered by Shu.',
     boss: {
       endAt: 0, kiColor: '#f86030', minion: 'pilafRobot',
       phases: [
         { until: 0.5, moves: ['chase', 'shot', 'charge', 'rain'], rest: 58 },
-        { until: 0, moves: ['chase', 'volley', 'charge', 'summon', 'rain'], rest: 42, speed: 1.2, onStart: 'c03_mk2_phase2' },
+        { until: 0, moves: ['chase', 'volley', 'charge', 'summon', 'rain'], rest: 50, speed: 1.15, onStart: 'c03_mk2_phase2' },
       ],
     },
   },
   {
-    id: 'c03_beerus', name: 'Beerus', sprite: 'beerus', hp: 3000, str: 27, pow: 32, end: 26, exp: 9000, ai: 'boss', speed: 1.2,
+    id: 'c03_beerus', name: 'Beerus', sprite: 'beerus', hp: 2500, str: 25, pow: 29, end: 26, exp: 9000, ai: 'boss', speed: 1.2,
+    // Fought by forced Goku (L14 SSG, no Senzu yet): the three escalating phases carry the god's menace, the numbers
+    // sit mid-to-high in the L15-20 boss band, so a fair player reaches the scripted end, often on a sliver of HP.
     desc: 'The God of Destruction of Universe 7, finally fighting a Super Saiyan God. He is still holding back.',
     boss: {
       endAt: 0.5, kiColor: '#c070f8',
@@ -60,8 +65,10 @@ registerEnemies([
   },
   // ---------------------------------------------------------------- Chapter 5
   {
-    id: 'c05_grunt', name: 'Frieza Force Grunt', sprite: 'frizaSoldier', hp: 360, str: 20, pow: 22, end: 15, exp: 900, ai: 'shooter', speed: 1.0,
-    shot: { color: '#f070f0', cooldown: 85, speed: 2.4, mult: 0.8 }, desc: 'One of Frieza\'s thousand. Fires from range and panics up close.',
+    id: 'c05_grunt', name: 'Frieza Force Grunt', sprite: 'frizaSoldier', hp: 300, str: 20, pow: 22, end: 15, exp: 900, ai: 'shooter', speed: 1.0,
+    // Fodder, as in the film: a few strings drop one, and with four or five firing at once in every wave their shots
+    // must stay light (a wave of them costs about one Senzu, not the chapter's whole supply).
+    shot: { color: '#f070f0', cooldown: 100, speed: 2.4, mult: 0.65 }, desc: 'One of Frieza\'s thousand. Fires from range and panics up close.',
   },
   {
     id: 'c05_raider', name: 'Frieza Force Raider', sprite: 'frizaSoldierB', hp: 460, str: 24, pow: 18, end: 18, exp: 1300, ai: 'rusher', speed: 1.25,
@@ -72,19 +79,23 @@ registerEnemies([
     box: { w: 18, h: 10 }, desc: 'A hulking soldier with a point-blank blaster and very big fists.',
   },
   {
-    id: 'c05_officer', name: 'Frieza Force Officer', sprite: 'frizaElite', hp: 560, str: 22, pow: 23, end: 20, exp: 2600, ai: 'shooter', speed: 1.0,
-    // Tuned against forced L16 Gohan (no form, 214 HP): a shot costs ~12% HP at the grunts' fire rate, so the canyon
-    // and mesa waves cost about what the first wave does instead of two to three Game Overs' worth of damage.
-    shot: { color: '#60d0f8', cooldown: 85, speed: 2.8, mult: 0.9 }, desc: 'A squad leader. Fast, accurate shots that sting more than a grunt\'s.',
+    id: 'c05_officer', name: 'Frieza Force Officer', sprite: 'frizaElite', hp: 460, str: 22, pow: 23, end: 20, exp: 2600, ai: 'shooter', speed: 1.0,
+    // Tuned against forced L16 Gohan (no form, ~210 HP) and L18 Piccolo: a shot costs ~10% HP, about a fifth more than a
+    // grunt's, on a slightly slower fire rate, so the mesa wave with two of them costs about one Senzu like the others.
+    shot: { color: '#60d0f8', cooldown: 110, speed: 2.8, mult: 0.75 }, desc: 'A squad leader. Fast, accurate shots that sting more than a grunt\'s.',
   },
   {
-    id: 'c05_shisami', name: 'Shisami', sprite: 'shisami', hp: 2200, str: 25, pow: 22, end: 19, exp: 5000, ai: 'boss', speed: 1.3,
+    id: 'c05_shisami', name: 'Shisami', sprite: 'shisami', hp: 1900, str: 23, pow: 22, end: 19, exp: 5000, ai: 'boss', speed: 1.3,
+    // Forced L18 Gohan (no form, ~240 HP, the mesa's two Senzu): still the fastest mover of the invasion, but a few
+    // frames slower to strike again, so his dashes can be read; at 2,200 HP / STR 25 he used up both beans every time.
     desc: 'A Frieza Force elite with lightning-fast strikes.',
     boss: {
-      endAt: 0.35, kiColor: '#80a0f0',
+      // Tagoma's blast cuts the duel short at half HP: Gohan has no form and only the mesa's two beans, and at 0.35 he
+      // used both nearly every time and lost 2 bouts in 20 (fair bot); at 0.5 he wins 20 of 20 on 1.65 beans.
+      endAt: 0.5, kiColor: '#80a0f0',
       phases: [
-        { until: 0.65, moves: ['chase', 'dash', 'shot'], rest: 46 },
-        { until: 0, moves: ['dash', 'chase', 'volley', 'teleport'], rest: 34, speed: 1.25, onStart: 'c05_shisami_p2' },
+        { until: 0.65, moves: ['chase', 'dash', 'shot'], rest: 56 },
+        { until: 0, moves: ['dash', 'chase', 'volley', 'teleport'], rest: 44, speed: 1.25, onStart: 'c05_shisami_p2' },
       ],
     },
   },

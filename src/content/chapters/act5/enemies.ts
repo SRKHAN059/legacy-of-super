@@ -22,14 +22,17 @@ const C12: EnemyDef[] = [
     },
   },
   {
-    id: 'c12_hit', name: 'Hit', sprite: 'hit', hp: 7600, str: 58, pow: 58, end: 62, exp: 150000, ai: 'boss', speed: 1.3,
+    id: 'c12_hit', name: 'Hit', sprite: 'hit', hp: 7600, str: 52, pow: 54, end: 62, exp: 150000, ai: 'boss', speed: 1.3,
     desc: 'The legendary assassin of Universe 6. Skips time for a fraction of a second to strike unseen.',
     boss: {
-      endAt: 0.4, kiColor: '#c070f0',
+      // A Time-Skip can't be dodged, so its share sets the fight's pace (fair-play balance: Goku L37 wins with about
+      // one Senzu): Hit waits with his hands in his pockets at first, skips the most once Goku adapts ("Then I will
+      // skip more time", ep 72), and less once Goku can feel the gap between the seconds. He calls it off at 45%.
+      endAt: 0.45, kiColor: '#c070f0',
       phases: [
-        { until: 0.75, moves: ['chase', 'timeSkip', 'shot'], rest: 46 },
-        { until: 0.55, moves: ['timeSkip', 'teleport', 'volley', 'chase'], rest: 36, speed: 1.2, onStart: 'c12_hit_p2' },
-        { until: 0, moves: ['timeSkip', 'timeSkip', 'teleport', 'beam', 'chase'], rest: 28, speed: 1.35, onStart: 'c12_hit_p3' },
+        { until: 0.75, moves: ['chase', 'shot', 'guard', 'shot', 'timeSkip'], rest: 46 },
+        { until: 0.6, moves: ['timeSkip', 'teleport', 'volley', 'timeSkip', 'chase', 'guard'], rest: 40, speed: 1.2, onStart: 'c12_hit_p2' },
+        { until: 0, moves: ['teleport', 'beam', 'chase', 'timeSkip', 'volley'], rest: 34, speed: 1.35, onStart: 'c12_hit_p3' },
       ],
     },
   },
@@ -78,10 +81,10 @@ const C13: EnemyDef[] = [
     desc: 'Earth\'s strongest human, rusty but full of tricks.',
     boss: { endAt: 0.5, kiColor: '#f8e070', phases: [{ until: 0.75, moves: ['chase', 'shot', 'dash'], rest: 42 }, { until: 0, moves: ['beam', 'volley', 'nova', 'dash'], rest: 32, speed: 1.2, onStart: 'c13_krillin_p2' }] },
   },
-  { id: 'c13_student', name: 'Brainwashed Student', sprite: 'c13_student', hp: 3000, str: 50, pow: 1, end: 44, exp: 30000, ai: 'rusher', speed: 1.2, desc: 'A Tien-Shin student under Yurin\'s spell. Glassy eyes, very real kicks.' },
-  { id: 'c13_studentB', name: 'Brainwashed Senior', sprite: 'c13_student', hp: 3300, str: 48, pow: 52, end: 44, exp: 33000, ai: 'shooter', speed: 1.0, shot: { color: '#f0d040', cooldown: 75, speed: 2.6, mult: 0.85 }, desc: 'A senior student throwing ki blasts on Yurin\'s orders.' },
+  { id: 'c13_student', name: 'Brainwashed Student', sprite: 'c13_student', hp: 2600, str: 50, pow: 1, end: 44, exp: 30000, ai: 'rusher', speed: 1.2, desc: 'A Tien-Shin student under Yurin\'s spell. Glassy eyes, very real kicks.' },
+  { id: 'c13_studentB', name: 'Brainwashed Senior', sprite: 'c13_student', hp: 2600, str: 48, pow: 48, end: 44, exp: 33000, ai: 'shooter', speed: 1.0, shot: { color: '#f0d040', cooldown: 90, speed: 2.6, mult: 0.6 }, desc: 'A senior student throwing ki blasts on Yurin\'s orders.' },
   {
-    id: 'c13_roshiMax', name: 'Max Power Roshi', sprite: 'c13_roshiMax', hp: 7400, str: 58, pow: 60, end: 62, exp: 140000, ai: 'boss', speed: 1.2,
+    id: 'c13_roshiMax', name: 'Max Power Roshi', sprite: 'c13_roshiMax', hp: 7400, str: 52, pow: 54, end: 62, exp: 140000, ai: 'boss', speed: 1.2,
     desc: 'Master Roshi at maximum power, brainwashed by Yurin. Still somehow thinking about magazines.',
     boss: {
       endAt: 0.4, kiColor: '#70c8f8',
@@ -104,23 +107,28 @@ const C13: EnemyDef[] = [
   },
   { id: 'c13_poacher', name: 'Poacher', sprite: 'poacher', hp: 3200, str: 48, pow: 52, end: 44, exp: 32000, ai: 'shooter', speed: 1.0, shot: { color: '#f0a030', cooldown: 80, speed: 2.6, mult: 0.85 }, desc: 'A Galactic Poacher with a tranquilizer rifle. Hunts rare animals for alien collectors.' },
   { id: 'c13_poacherBrute', name: 'Poacher Brute', sprite: 'babarian', hp: 3800, str: 56, pow: 1, end: 48, exp: 40000, ai: 'rusher', speed: 1.1, desc: 'Muscle hired by the Galactic Poachers. Carries the cages.' },
+  // The deckhands the Poacher Boss whistles up mid-fight: lighter than the rifle-armed poachers of the jungle, since
+  // up to three of them shoot at once while the boss himself attacks.
+  { id: 'c13_poacherGrunt', name: 'Poacher Deckhand', sprite: 'poacher', hp: 1400, str: 44, pow: 46, end: 42, exp: 20000, ai: 'shooter', speed: 1.0, shot: { color: '#f0a030', cooldown: 120, speed: 2.4, mult: 0.4 }, desc: 'A deckhand off the poachers\' ship with a stun pistol. Paid to hold the line while the boss works.' },
   { id: 'c13_poacherDrone', name: 'Snare Drone', sprite: 'c13_poacherDrone', hp: 2600, str: 1, pow: 52, end: 42, exp: 28000, ai: 'shooter', speed: 1.1, flying: true, shot: { color: '#e0a030', cooldown: 70, speed: 2.8, mult: 0.8 }, desc: 'A net-firing drone used to snare animals from the air.' },
   { id: 'c13_jungleRaptor', name: 'Jungle Raptor', sprite: 'c13_jungleRaptor', hp: 3400, str: 54, pow: 1, end: 46, exp: 36000, ai: 'rusher', speed: 1.5, desc: 'A Monster Island raptor. Territorial, but no friend of poachers either.' },
   { id: 'c13_mossBoar', name: 'Moss Boar', sprite: 'c13_mossBoar', hp: 3600, str: 55, pow: 1, end: 48, exp: 38000, ai: 'charger', speed: 1.1, desc: 'A boar so old moss grows on its back. Charges in straight lines.' },
   {
-    id: 'c13_poacherBoss', name: 'Poacher Boss', sprite: 'c13_poacherBoss', hp: 8000, str: 60, pow: 58, end: 64, exp: 190000, ai: 'boss', speed: 1.05,
+    id: 'c13_poacherBoss', name: 'Poacher Boss', sprite: 'c13_poacherBoss', hp: 7200, str: 52, pow: 50, end: 64, exp: 190000, ai: 'boss', speed: 1.05,
     desc: 'Captain of the Galactic Poachers. His ship\'s hold is full of stolen animals.',
     boss: {
-      endAt: 0.25, kiColor: '#f0a030', minion: 'c13_poacher',
+      // A thug with a big gun, not a fighter on Hit's level: Goku walks in hurt from the camp, and the deckhands only
+      // come out in the second phase ("Release the backup!").
+      endAt: 0.3, kiColor: '#f0a030', minion: 'c13_poacherGrunt',
       phases: [
         { until: 0.7, moves: ['shot', 'volley', 'charge'], rest: 46 },
-        { until: 0.35, moves: ['summon', 'beam', 'volley', 'charge'], rest: 38, speed: 1.1, onStart: 'c13_poacher_p2' },
-        { until: 0, moves: ['rain', 'beam', 'summon', 'nova', 'charge'], rest: 30, speed: 1.2 },
+        { until: 0.35, moves: ['summon', 'beam', 'volley', 'charge'], rest: 40, speed: 1.1, onStart: 'c13_poacher_p2' },
+        { until: 0, moves: ['rain', 'beam', 'nova', 'charge'], rest: 34, speed: 1.2 },
       ],
     },
   },
   {
-    id: 'c13_17spar', name: 'Android 17', sprite: 'android17', hp: 8200, str: 60, pow: 60, end: 65, exp: 200000, ai: 'boss', speed: 1.3,
+    id: 'c13_17spar', name: 'Android 17', sprite: 'android17', hp: 8200, str: 54, pow: 52, end: 65, exp: 200000, ai: 'boss', speed: 1.3,
     desc: 'The ranger of Monster Island. Infinite energy, zero patience for nonsense.',
     boss: {
       endAt: 0.5, kiColor: '#60e0a0',
@@ -130,16 +138,18 @@ const C13: EnemyDef[] = [
       ],
     },
   },
-  { id: 'c13_assassin', name: 'U9 Assassin', sprite: 'c13_assassin', hp: 3400, str: 50, pow: 54, end: 46, exp: 36000, ai: 'shooter', speed: 1.1, shot: { color: '#60a0f0', cooldown: 70, speed: 2.8, mult: 0.85 }, desc: 'A killer sent by Universe 9\'s gods to remove Frieza before the tournament.' },
-  { id: 'c13_assassinB', name: 'U9 Blade', sprite: 'c13_assassin', hp: 3800, str: 56, pow: 1, end: 48, exp: 40000, ai: 'rusher', speed: 1.35, desc: 'A Universe 9 assassin who prefers to get close.' },
+  // The assassins ambush Goku right before Frieza's spar: two snipers, two blades, and the lake's own snakes.
+  { id: 'c13_assassin', name: 'U9 Assassin', sprite: 'c13_assassin', hp: 2600, str: 50, pow: 46, end: 46, exp: 36000, ai: 'shooter', speed: 0.95, shot: { color: '#60a0f0', cooldown: 100, speed: 2.8, mult: 0.5 }, desc: 'A killer sent by Universe 9\'s gods to remove Frieza before the tournament.' },
+  { id: 'c13_assassinB', name: 'U9 Blade', sprite: 'c13_assassin', hp: 2800, str: 56, pow: 1, end: 48, exp: 40000, ai: 'rusher', speed: 1.35, desc: 'A Universe 9 assassin who prefers to get close.' },
   {
-    id: 'c13_goldenFrieza', name: 'Golden Frieza', sprite: 'goldenFrieza', hp: 8200, str: 60, pow: 60, end: 65, exp: 200000, ai: 'boss', speed: 1.3,
+    id: 'c13_goldenFrieza', name: 'Golden Frieza', sprite: 'goldenFrieza', hp: 8200, str: 56, pow: 56, end: 65, exp: 200000, ai: 'boss', speed: 1.3,
     desc: 'Frieza, fresh from Hell, now able to hold his golden form without tiring.',
     boss: {
-      endAt: 0.5, kiColor: '#f070f0',
+      // A warm-up spar ("Save some for the tournament!"): it stops a little past half, Frieza toying with Goku first.
+      endAt: 0.55, kiColor: '#f070f0',
       phases: [
-        { until: 0.75, moves: ['shot', 'teleport', 'chase'], rest: 38 },
-        { until: 0, moves: ['beam', 'volley', 'rain', 'teleport', 'nova'], rest: 28, speed: 1.25, onStart: 'c13_frieza_p2' },
+        { until: 0.8, moves: ['shot', 'teleport', 'chase'], rest: 42 },
+        { until: 0, moves: ['beam', 'volley', 'rain', 'teleport', 'nova'], rest: 32, speed: 1.25, onStart: 'c13_frieza_p2' },
       ],
     },
   },
@@ -147,30 +157,38 @@ const C13: EnemyDef[] = [
 
 const C14: EnemyDef[] = [
   { id: 'c14_u9Wolf', name: 'U9 Fighter', sprite: 'c14_u9Wolf', hp: 4600, str: 60, pow: 1, end: 52, exp: 52000, ai: 'rusher', speed: 1.35, desc: 'A Universe 9 brawler. Universe 9 is already in trouble and knows it.' },
-  { id: 'c14_u10Fighter', name: 'U10 Fighter', sprite: 'c14_u10Fighter', hp: 4800, str: 58, pow: 62, end: 52, exp: 55000, ai: 'shooter', speed: 1.05, shot: { color: '#60c0f0', cooldown: 70, speed: 2.8, mult: 0.85 }, desc: 'A Universe 10 warrior. Fires pressurised water-ki blasts.' },
+  { id: 'c14_u10Fighter', name: 'U10 Fighter', sprite: 'c14_u10Fighter', hp: 4800, str: 58, pow: 62, end: 52, exp: 55000, ai: 'shooter', speed: 1.05, shot: { color: '#60c0f0', cooldown: 95, speed: 2.8, mult: 0.55 }, desc: 'A Universe 10 warrior. Fires pressurised water-ki blasts.' },
   { id: 'c14_u4Fighter', name: 'U4 Fighter', sprite: 'c14_u4Fighter', hp: 5200, str: 64, pow: 1, end: 54, exp: 58000, ai: 'charger', speed: 1.2, desc: 'A Universe 4 trickster. Charges in straight, unhidden lines for once.' },
-  { id: 'c14_u2Fighter', name: 'U2 Warrior', sprite: 'c14_u2Fighter', hp: 4700, str: 50, pow: 64, end: 52, exp: 54000, ai: 'shooter', speed: 1.1, shot: { color: '#f8a0d0', cooldown: 65, speed: 2.8, mult: 0.9 }, desc: 'A Universe 2 warrior of love. Her heart-shaped blasts hurt surprisingly much.' },
+  { id: 'c14_u2Fighter', name: 'U2 Warrior', sprite: 'c14_u2Fighter', hp: 4700, str: 50, pow: 64, end: 52, exp: 54000, ai: 'shooter', speed: 1.1, shot: { color: '#f8a0d0', cooldown: 95, speed: 2.8, mult: 0.55 }, desc: 'A Universe 2 warrior of love. Her heart-shaped blasts hurt surprisingly much.' },
   { id: 'c14_u3Robot', name: 'U3 Robot', sprite: 'c14_u3Robot', hp: 5800, str: 64, pow: 62, end: 58, exp: 64000, ai: 'heavy', speed: 0.9, desc: 'A Universe 3 combat robot. Flamethrower arms, no sense of humour.' },
   { id: 'c14_pride', name: 'Pride Trooper', sprite: 'prideTrooper', hp: 5400, str: 66, pow: 60, end: 58, exp: 62000, ai: 'rusher', speed: 1.3, desc: 'A Universe 11 Pride Trooper. Disciplined, fast and very sure of justice.' },
-  { id: 'c14_basil', name: 'Basil', sprite: 'basil', hp: 5000, str: 66, pow: 1, end: 54, exp: 60000, ai: 'rusher', speed: 1.5, desc: 'The kicking brother of the Trio de Dangers.' },
-  { id: 'c14_lavender', name: 'Lavender', sprite: 'lavender', hp: 5000, str: 50, pow: 66, end: 54, exp: 60000, ai: 'shooter', speed: 1.1, shot: { color: '#a050e0', cooldown: 60, speed: 2.6, mult: 0.9 }, desc: 'The poison-breathing brother of the Trio de Dangers.' },
+  // Basil and Lavender back their big brother up in Bergamo's fight (U9 gangs up on the Saiyans, eps 97-98): Vegeta
+  // fights all three at once, so the younger two hit like the brothers who lost the Zeno Expo, not like Bergamo.
+  { id: 'c14_basil', name: 'Basil', sprite: 'basil', hp: 1800, str: 52, pow: 1, end: 54, exp: 60000, ai: 'rusher', speed: 1.5, desc: 'The kicking brother of the Trio de Dangers.' },
+  { id: 'c14_lavender', name: 'Lavender', sprite: 'lavender', hp: 1600, str: 50, pow: 52, end: 54, exp: 60000, ai: 'shooter', speed: 1.1, shot: { color: '#a050e0', cooldown: 120, speed: 2.6, mult: 0.4 }, desc: 'The poison-breathing brother of the Trio de Dangers.' },
   {
-    id: 'c14_bergamo', name: 'Bergamo', sprite: 'bergamo', hp: 9000, str: 64, pow: 62, end: 68, exp: 320000, ai: 'boss', speed: 1.0,
+    id: 'c14_bergamo', name: 'Bergamo', sprite: 'bergamo', hp: 8200, str: 56, pow: 54, end: 64, exp: 320000, ai: 'boss', speed: 1.0,
     desc: 'Eldest of the Trio de Dangers. Grows larger with every hit he absorbs.',
     boss: {
-      endAt: 0.3, ringOut: true, kiColor: '#f0e060', minion: 'c14_u9Wolf',
+      // Vegeta only has to wear him down: Goku arrives and their joint blast rings all three brothers out. His
+      // brothers are the gang-up (no summons), and his guard is the absorbing.
+      endAt: 0.5, ringOut: true, kiColor: '#f0e060',
       phases: [
-        { until: 0.7, moves: ['chase', 'guard', 'charge'], rest: 44 },
-        { until: 0, moves: ['charge', 'summon', 'beam', 'guard', 'chase'], rest: 32, speed: 1.15, onStart: 'c14_bergamo_grow' },
+        // Rests 52/42 (were 48/38): his charges come a beat apart, so a lone L42 Vegeta can answer each one; the fair
+        // bot wins 20 of 20 (18 of 20 before).
+        { until: 0.75, moves: ['chase', 'guard', 'charge'], rest: 52 },
+        { until: 0, moves: ['charge', 'beam', 'guard', 'chase'], rest: 42, speed: 1.15, onStart: 'c14_bergamo_grow' },
       ],
     },
   },
   {
-    id: 'c14_kaleBerserk', name: 'Kale (Berserk)', sprite: 'kaleLSSJ', hp: 11000, str: 72, pow: 64, end: 74, exp: 0, ai: 'boss', speed: 1.25,
+    id: 'c14_kaleBerserk', name: 'Kale (Berserk)', sprite: 'kaleLSSJ', hp: 11000, str: 52, pow: 46, end: 74, exp: 0, ai: 'boss', speed: 1.25,
     desc: 'A Legendary Super Saiyan out of control. Nothing you do seems to reach her. Survive!',
     boss: {
+      // Her menace is that nothing reaches her, not raw damage: Goku walks straight from this into the Pride Troopers'
+      // ambush with whatever HP he has left, and the stage A relay shares one bag of Senzu Beans.
       endAt: 0, kiColor: '#90f070', vulnerableIf: 'c14_kaleCalm',
-      phases: [{ until: 0, moves: ['charge', 'volley', 'rain', 'chase', 'dash'], rest: 30, speed: 1.2 }],
+      phases: [{ until: 0, moves: ['charge', 'volley', 'rain', 'chase', 'dash'], rest: 54, speed: 1.05 }],
     },
   },
   {
@@ -187,9 +205,11 @@ const C14: EnemyDef[] = [
     },
   },
   {
-    id: 'c14_kefla', name: 'Kefla', sprite: 'kefla', hp: 10000, str: 70, pow: 72, end: 72, exp: 0, ai: 'boss', speed: 1.35,
+    id: 'c14_kefla', name: 'Kefla', sprite: 'kefla', hp: 10000, str: 64, pow: 66, end: 72, exp: 0, ai: 'boss', speed: 1.35,
     desc: 'Caulifla and Kale fused with Potara earrings. Overwhelming in every way.',
-    boss: { endAt: 0.5, kiColor: '#a0f070', phases: [{ until: 0.75, moves: ['chase', 'volley', 'dash'], rest: 34 }, { until: 0, moves: ['beam', 'rain', 'nova', 'dash', 'teleport'], rest: 26, speed: 1.25 }] },
+    // Blue barely dents her ("None of it works on me!"): the fight stops once Goku has taken a third off her, and
+    // Ultra Instinct -Sign- finishes the job. Her speed and her dash are the overwhelming part.
+    boss: { endAt: 0.7, kiColor: '#a0f070', phases: [{ until: 0.85, moves: ['chase', 'volley', 'dash'], rest: 42 }, { until: 0, moves: ['beam', 'rain', 'nova', 'dash', 'teleport'], rest: 34, speed: 1.2 }] },
   },
   {
     id: 'c14_keflaUI', name: 'Super Saiyan 2 Kefla', sprite: 'kefla', hp: 10000, str: 74, pow: 76, end: 74, exp: 450000, ai: 'boss', speed: 1.45,
@@ -198,34 +218,40 @@ const C14: EnemyDef[] = [
   },
   { id: 'c14_reactor', name: 'Energy Reactor', sprite: 'c14_reactor', hp: 3000, str: 1, pow: 1, end: 50, exp: 0, ai: 'idle', speed: 0, drops: 'none', desc: 'The power core feeding Universe 3\'s fused robot. Smash it!' },
   {
-    id: 'c14_anilaza', name: 'Anilaza', sprite: 'c14_anilaza', hp: 11000, str: 74, pow: 70, end: 76, exp: 450000, ai: 'boss', speed: 0.9, box: { w: 28, h: 12 },
+    id: 'c14_anilaza', name: 'Anilaza', sprite: 'c14_anilaza', hp: 9600, str: 66, pow: 62, end: 68, exp: 450000, ai: 'boss', speed: 0.9, box: { w: 28, h: 12 },
     desc: 'Universe 3\'s four-way robot fusion. Shielded by an energy reactor somewhere on the stage.',
     boss: {
-      endAt: 0.3, kiColor: '#f05050', minion: 'c14_u3Robot', vulnerableIf: 'c14_reactorDown',
+      // All four robots are inside it (no summons). Android 17 is alone against it and must find the reactor first,
+      // so it is slow and heavy rather than a wall of armour; the fight stops when its fist throws 17 to the edge.
+      endAt: 0.45, kiColor: '#f05050', vulnerableIf: 'c14_reactorDown',
       phases: [
-        { until: 0.7, moves: ['beam', 'charge', 'summon', 'rain'], rest: 44 },
-        { until: 0, moves: ['beam', 'nova', 'charge', 'rain'], rest: 32, speed: 1.15, onStart: 'c14_anilaza_p2' },
+        { until: 0.7, moves: ['beam', 'charge', 'rain'], rest: 50 },
+        { until: 0, moves: ['beam', 'nova', 'charge', 'rain'], rest: 40, speed: 1.15, onStart: 'c14_anilaza_p2' },
       ],
     },
   },
   {
-    id: 'c14_toppoGoD', name: 'Toppo (Destroyer)', sprite: 'toppo', hp: 11500, str: 76, pow: 82, end: 82, exp: 500000, ai: 'boss', speed: 1.15,
+    id: 'c14_toppoGoD', name: 'Toppo (Destroyer)', sprite: 'toppo', hp: 10000, str: 68, pow: 72, end: 72, exp: 500000, ai: 'boss', speed: 1.15,
     desc: 'Toppo has cast aside justice for the Energy of Destruction. Hakai spheres erase what they touch.',
     boss: {
-      endAt: 0.2, ringOut: true, kiColor: '#b040f0',
+      // Far above the Toppo of the Zeno Expo and below Jiren, but Vegeta's Evolved Blue must be able to break him: the
+      // Hakai barrage (novas, beams, rain) carries the menace, and the fight stops for Vegeta's last stand at a third.
+      endAt: 0.35, ringOut: true, kiColor: '#b040f0',
       phases: [
-        { until: 0.7, moves: ['shot', 'guard', 'charge', 'chase'], rest: 38 },
-        { until: 0.4, moves: ['nova', 'beam', 'volley', 'guard'], rest: 30, speed: 1.15, onStart: 'c14_toppo_p2' },
-        { until: 0, moves: ['rain', 'nova', 'beam', 'charge', 'teleport'], rest: 24, speed: 1.25 },
+        { until: 0.7, moves: ['shot', 'guard', 'charge', 'chase'], rest: 42 },
+        { until: 0.45, moves: ['nova', 'beam', 'volley', 'guard'], rest: 34, speed: 1.15, onStart: 'c14_toppo_p2' },
+        { until: 0, moves: ['rain', 'nova', 'beam', 'charge', 'teleport'], rest: 28, speed: 1.25 },
       ],
     },
   },
   {
-    id: 'c14_dyspo', name: 'Dyspo', sprite: 'dyspo', hp: 9800, str: 72, pow: 68, end: 70, exp: 420000, ai: 'boss', speed: 1.9,
+    id: 'c14_dyspo', name: 'Dyspo', sprite: 'dyspo', hp: 9800, str: 60, pow: 58, end: 70, exp: 420000, ai: 'boss', speed: 1.9,
     desc: 'The Pride Troopers\' speedster. Moves at the speed of light and reads every intention.',
     boss: {
-      endAt: 0.4, kiColor: '#f0f0a0',
-      phases: [{ until: 0.7, moves: ['dash', 'teleport', 'chase'], rest: 28 }, { until: 0, moves: ['dash', 'dash', 'teleport', 'volley', 'chase'], rest: 20, speed: 1.15, onStart: 'c14_dyspo_p2' }],
+      // His speed is the threat (he outruns everything Gohan does), his blows are light; Gohan only has to slow him
+      // until Frieza's cage closes.
+      endAt: 0.55, kiColor: '#f0f0a0',
+      phases: [{ until: 0.75, moves: ['dash', 'teleport', 'chase'], rest: 44 }, { until: 0, moves: ['dash', 'teleport', 'volley', 'chase'], rest: 36, speed: 1.15, onStart: 'c14_dyspo_p2' }],
     },
   },
   {

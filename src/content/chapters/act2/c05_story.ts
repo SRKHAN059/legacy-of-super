@@ -283,9 +283,13 @@ async function waveThree(s: ScriptApi): Promise<void> {
   ]);
   s.follow();
   s.letterbox(false);
+  // The squad deploys in two ranks in front of the flagship, 10-13 tiles north of the trigger row (inside the enemy
+  // leash, so all eight engage): the raiders reach Piccolo first and the officers walk into range a few seconds later,
+  // instead of every gun opening fire the moment the wave starts. Three raiders, not the T4 Frieza Trooper of the
+  // Chapter 8 remnant camp, keep the wave in the L18 tier.
   await wave(s, 'c05w3', [
-    ['c05_grunt', 16, 22], ['c05_officer', 20, 20], ['c05_brute', 24, 19], ['c05_raider', 28, 21],
-    ['c05_officer', 32, 20], ['c05_grunt', 22, 23], ['c05_raider', 26, 23], ['soldierB', 18, 19],
+    ['c05_grunt', 17, 18], ['c05_officer', 20, 15], ['c05_brute', 23, 15], ['c05_raider', 25, 18],
+    ['c05_officer', 25, 15], ['c05_grunt', 28, 18], ['c05_raider', 20, 18], ['c05_raider', 22, 17],
   ]);
   s.set('c05_wave3');
   respawn(s, 'c05_tagomaNpc', 'tagoma', 24, 13, 'down');

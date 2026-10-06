@@ -13,22 +13,25 @@ export const SQUAD = ['c14_tupper1', 'c14_zoiray1', 'c14_kettle1', 'c14_cocotte1
 /** EXP for Saonel and Pirina together, paid once when both are down (each twin may regenerate). */
 export const TWIN_EXP = 420000;
 
-// The squad is lighter than free-roaming T7 troopers: four of them fight at once, and a hard knock near the edge
-// rings any of them out on the spot.
+// The squad is far lighter than free-roaming T7 troopers: four of them fight at once beside an untouchable captain,
+// and Goku walks in straight from holding off berserk Kale. The formation is the puzzle, not the damage race.
 const PRIDE_SQUAD: EnemyDef[] = [
-  { id: 'c14_tupper', name: 'Tupper', sprite: 'c14_tupper', hp: 4200, str: 64, pow: 54, end: 56, exp: 60000, ai: 'heavy', speed: 0.95, desc: 'A hulking Pride Trooper. Holds the front of Kahseral\'s formation with a wall of ki.' },
-  { id: 'c14_zoiray', name: 'Zoiray', sprite: 'c14_zoiray', hp: 3600, str: 52, pow: 64, end: 54, exp: 58000, ai: 'shooter', speed: 1.1, shot: { color: '#e04060', cooldown: 70, speed: 2.9, mult: 0.85 }, desc: 'The squad\'s marksman. Covers his captain from the back of the formation.' },
-  { id: 'c14_kettle', name: 'Kettle', sprite: 'c14_kettle', hp: 3400, str: 60, pow: 1, end: 52, exp: 56000, ai: 'rusher', speed: 1.55, desc: 'The smallest and quickest of the squad. First through any gap in your guard.' },
-  { id: 'c14_cocotte', name: 'Cocotte', sprite: 'c14_cocotte', hp: 3800, str: 62, pow: 58, end: 54, exp: 60000, ai: 'reach', speed: 1.2, desc: 'Seals the space around the squad\'s targets, then strikes from beyond arm\'s length through the folds she made.' },
+  { id: 'c14_tupper', name: 'Tupper', sprite: 'c14_tupper', hp: 1100, str: 52, pow: 48, end: 56, exp: 60000, ai: 'heavy', speed: 0.95, desc: 'A hulking Pride Trooper. Holds the front of Kahseral\'s formation with a wall of ki.' },
+  { id: 'c14_zoiray', name: 'Zoiray', sprite: 'c14_zoiray', hp: 1000, str: 52, pow: 54, end: 54, exp: 58000, ai: 'shooter', speed: 1.1, shot: { color: '#e04060', cooldown: 110, speed: 2.9, mult: 0.35 }, desc: 'The squad\'s marksman. Covers his captain from the back of the formation.' },
+  { id: 'c14_kettle', name: 'Kettle', sprite: 'c14_kettle', hp: 900, str: 50, pow: 1, end: 52, exp: 56000, ai: 'rusher', speed: 1.55, desc: 'The smallest and quickest of the squad. First through any gap in your guard.' },
+  { id: 'c14_cocotte', name: 'Cocotte', sprite: 'c14_cocotte', hp: 1000, str: 50, pow: 58, end: 54, exp: 60000, ai: 'reach', speed: 1.2, desc: 'Seals the space around the squad\'s targets, then strikes from beyond arm\'s length through the folds she made.' },
   {
-    id: 'c14_kahseral', name: 'Kahseral', sprite: 'c14_kahseral', hp: 8400, str: 62, pow: 64, end: 60, exp: 320000, ai: 'boss', speed: 1.2,
+    id: 'c14_kahseral', name: 'Kahseral', sprite: 'c14_kahseral', hp: 8400, str: 60, pow: 58, end: 60, exp: 320000, ai: 'boss', speed: 1.2,
     desc: 'Captain of the Pride Troopers\' strike squad. While his four troopers hold formation, no blow can reach him.',
     boss: {
-      endAt: 0.4, ringOut: true, kiColor: '#f04050', vulnerableIf: 'c14_squadDown',
+      // Kale finishes him (ep 101): Goku only has to break the formation and land a few blows.
+      endAt: 0.7, ringOut: true, kiColor: '#f04050', vulnerableIf: 'c14_squadDown',
       // No summons: his four troopers are the adds, and Goku comes into this fight straight from surviving Kale.
+      // While the formation holds he directs it from behind a guard.
       phases: [
-        { until: 0.7, moves: ['shot', 'guard', 'dash', 'chase'], rest: 54 },
-        { until: 0, moves: ['volley', 'dash', 'beam', 'chase'], rest: 34, speed: 1.15, onStart: 'c14_kahseral_p2' },
+        { until: 0.95, moves: ['guard'], rest: 90 },
+        { until: 0.85, moves: ['shot', 'guard', 'dash', 'chase'], rest: 60 },
+        { until: 0, moves: ['volley', 'dash', 'beam', 'chase'], rest: 44, speed: 1.15, onStart: 'c14_kahseral_p2' },
       ],
     },
   },
@@ -66,15 +69,17 @@ const FIREBALLS: EnemyDef[] = [
 ];
 
 const PRIDE_TAG: EnemyDef[] = [
-  { id: 'c14_knsi', name: 'K\'nsi', sprite: 'c14_knsi', hp: 5200, str: 62, pow: 56, end: 54, exp: 60000, ai: 'rusher', speed: 1.35, desc: 'Dyspo\'s partner for the hunt. Sure he can catch an assassin.' },
+  { id: 'c14_knsi', name: 'K\'nsi', sprite: 'c14_knsi', hp: 3200, str: 54, pow: 56, end: 54, exp: 60000, ai: 'rusher', speed: 1.35, desc: 'Dyspo\'s partner for the hunt. Sure he can catch an assassin.' },
   {
-    id: 'c14_dyspoA', name: 'Dyspo', sprite: 'dyspo', hp: 8400, str: 64, pow: 58, end: 60, exp: 320000, ai: 'boss', speed: 1.75,
+    id: 'c14_dyspoA', name: 'Dyspo', sprite: 'dyspo', hp: 8400, str: 52, pow: 50, end: 60, exp: 320000, ai: 'boss', speed: 1.75,
     desc: 'The Pride Troopers\' speedster, testing Goku and Hit. Even a Time-Skip barely keeps up with him.',
     boss: {
-      endAt: 0.5, ringOut: true, kiColor: '#f0f0a0',
+      // A probing first clash (ep 104): Goku is in Super Saiyan God to save himself for Jiren, and Dyspo backs off
+      // once K'nsi is in trouble. His speed is the threat; his blows are light.
+      endAt: 0.6, ringOut: true, kiColor: '#f0f0a0',
       phases: [
-        { until: 0.75, moves: ['dash', 'teleport', 'chase'], rest: 38 },
-        { until: 0, moves: ['dash', 'dash', 'teleport', 'volley', 'chase'], rest: 28, speed: 1.1, onStart: 'c14_dyspoA_p2' },
+        { until: 0.8, moves: ['dash', 'teleport', 'chase'], rest: 46 },
+        { until: 0, moves: ['dash', 'teleport', 'volley', 'chase'], rest: 36, speed: 1.1, onStart: 'c14_dyspoA_p2' },
       ],
     },
   },
@@ -82,24 +87,24 @@ const PRIDE_TAG: EnemyDef[] = [
 
 const NAMEKIANS: EnemyDef[] = [
   {
-    id: 'c14_saonel', name: 'Saonel', sprite: 'c14_saonel', hp: 8200, str: 54, pow: 56, end: 56, exp: 0, ai: 'boss', speed: 1.15,
+    id: 'c14_saonel', name: 'Saonel', sprite: 'c14_saonel', hp: 8200, str: 54, pow: 50, end: 56, exp: 0, ai: 'boss', speed: 1.15,
     desc: 'A Namekian of Universe 6. Regenerates from any wound unless Pirina falls with him.',
     boss: {
       endAt: 0.45, ringOut: true, kiColor: '#f0f070',
       phases: [
-        { until: 0.65, moves: ['chase', 'shot', 'guard'], rest: 48 },
-        { until: 0, moves: ['chase', 'beam', 'dash', 'rain'], rest: 36, speed: 1.15, onStart: 'c14_namek_twist' },
+        { until: 0.65, moves: ['chase', 'shot', 'guard'], rest: 52 },
+        { until: 0, moves: ['chase', 'beam', 'dash', 'rain'], rest: 42, speed: 1.15, onStart: 'c14_namek_twist' },
       ],
     },
   },
   {
-    id: 'c14_pirina', name: 'Pirina', sprite: 'c14_pirina', hp: 8200, str: 52, pow: 58, end: 56, exp: 0, ai: 'boss', speed: 1.1,
+    id: 'c14_pirina', name: 'Pirina', sprite: 'c14_pirina', hp: 8200, str: 52, pow: 50, end: 56, exp: 0, ai: 'boss', speed: 1.1,
     desc: 'Saonel\'s partner. Stretches his arms across half the ring and regenerates unless Saonel falls with him.',
     boss: {
       endAt: 0.45, ringOut: true, kiColor: '#c0f070',
       phases: [
-        { until: 0.65, moves: ['shot', 'volley', 'chase'], rest: 48 },
-        { until: 0, moves: ['volley', 'rain', 'beam', 'teleport'], rest: 36, speed: 1.1, onStart: 'c14_namek_twist' },
+        { until: 0.65, moves: ['shot', 'volley', 'chase'], rest: 52 },
+        { until: 0, moves: ['volley', 'rain', 'beam', 'teleport'], rest: 42, speed: 1.1, onStart: 'c14_namek_twist' },
       ],
     },
   },

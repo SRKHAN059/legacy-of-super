@@ -25,6 +25,10 @@ registerScripts({
   c14_pride: async (s) => {
     s.clear('c14_squadDown');
     s.music('tense');
+    // Goku falls back to the open middle of the ring before the squad closes in: holding off Kale can leave him at the
+    // crumbling edge, and a five-on-one there pins troopers against the void where no blow reaches them.
+    const [cx, cy] = onStage(s, 22, 16, FIGHT_MARGIN);
+    await s.walk('hero', cx, cy, 3);
     const [gx, gy] = heroTile(s);
     stageOn(s, 'c14_cauliflaP', 'caulifla', gx - 3, gy + 1, 'right', 'Caulifla');
     stageOn(s, 'c14_kaleP', 'kale', gx - 4, gy + 2, 'right', 'Kale');
@@ -44,9 +48,10 @@ registerScripts({
       ['goku', 'Whoa, whoa! Five of you at once?', 'shock'],
       ['caulifla', 'Back off, red suits! Kale can\'t even stand up yet!', 'angry'],
       ['c14_kahseralP', 'Then she falls first. Universe 11 leaves no threat standing on this stage.', 'neutral'],
-      ['goku', 'Caulifla, stay with Kale. I\'ll keep these guys busy!', 'shout'],
+      ['goku', 'Caulifla! Keep them off Kale - I\'ll take the front!', 'shout'],
+      ['caulifla', 'Tch. Fine! Anybody who lays a finger on Kale gets flattened!', 'angry'],
     ]);
-    await s.narrate('The Pride Troopers fight as one unit. While his squad holds formation, Kahseral cannot be touched: break the formation first!');
+    await s.narrate('The Pride Troopers fight as one unit. While his squad holds formation, Kahseral cannot be touched: break the formation first! Caulifla fights at your side.');
     s.letterbox(false);
     s.music('boss');
     removeAll(s, ...squad.map((q) => q[0]));
@@ -68,10 +73,14 @@ registerScripts({
       f.toast(['Kahseral: My formation... broken?!', 'The captain can be hurt now!'], '#f8e040');
     });
     const [kx, ky] = at.get('c14_kahseral') ?? onStage(s, gx + 4, gy - 3, FIGHT_MARGIN);
+    // Ep 101: Caulifla guards Kale by going after the troopers who come near (Goku arrives here straight from
+    // holding off berserk Kale, so the squad is never his alone).
+    const caulifla = ally(s, { id: 'c14_cauliflaP', sprite: 'caulifla', name: 'Caulifla', style: 'strike', atk: 60, mult: 0.6, every: 110, color: '#f8e048', prefer: [...SQUAD] });
     try {
       await bossFight(s, 'c14_kahseral', { x: kx, y: ky, uid: 'c14_kahseral1' });
     } finally {
       formation.stop();
+      caulifla.stop();
     }
     s.letterbox(true);
     const boss = standIn(s, 'c14_kahseral1', 'c14_kahseral', kx, ky, 'Kahseral');

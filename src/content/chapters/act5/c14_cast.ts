@@ -48,12 +48,12 @@ registerCast({
 });
 
 registerScans({
-  c14_kahseral: { name: 'Kahseral', kind: 'U11 / Pride Troopers', hp: 8400, str: 62, pow: 64, end: 60, desc: 'Captain of the Pride Troopers\' strike squad. Untouchable while his troopers hold formation.' },
-  c14_tupper: { name: 'Tupper', kind: 'U11 / Pride Troopers', hp: 3150, str: 64, pow: 54, end: 56, desc: 'A hulking Pride Trooper who fights from inside a wall of his own ki.' },
-  c14_zoiray: { name: 'Zoiray', kind: 'U11 / Pride Troopers', hp: 2700, str: 52, pow: 64, end: 54, desc: 'A Pride Trooper marksman. Fires from the back of the formation.' },
-  c14_kettle: { name: 'Kettle', kind: 'U11 / Pride Troopers', hp: 2550, str: 60, pow: 1, end: 52, desc: 'The smallest Pride Trooper and the first one through any gap.' },
-  c14_cocotte: { name: 'Cocotte', kind: 'U11 / Pride Troopers', hp: 2850, str: 62, pow: 58, end: 54, desc: 'A Pride Trooper who folds space itself. She seals her squad\'s targets into a pocket they cannot slip out of.' },
-  c14_knsi: { name: 'K\'nsi', kind: 'U11 / Pride Troopers', hp: 3900, str: 62, pow: 56, end: 54, desc: 'A Pride Trooper who partners with Dyspo. Sure he is fast enough to catch an assassin.' },
+  c14_kahseral: { name: 'Kahseral', kind: 'U11 / Pride Troopers', hp: 8400, str: 60, pow: 58, end: 60, desc: 'Captain of the Pride Troopers\' strike squad. Untouchable while his troopers hold formation.' },
+  c14_tupper: { name: 'Tupper', kind: 'U11 / Pride Troopers', hp: 943, str: 52, pow: 48, end: 56, desc: 'A hulking Pride Trooper who fights from inside a wall of his own ki.' },
+  c14_zoiray: { name: 'Zoiray', kind: 'U11 / Pride Troopers', hp: 821, str: 52, pow: 54, end: 54, desc: 'A Pride Trooper marksman. Fires from the back of the formation.' },
+  c14_kettle: { name: 'Kettle', kind: 'U11 / Pride Troopers', hp: 804, str: 50, pow: 1, end: 52, desc: 'The smallest Pride Trooper and the first one through any gap.' },
+  c14_cocotte: { name: 'Cocotte', kind: 'U11 / Pride Troopers', hp: 750, str: 50, pow: 58, end: 54, desc: 'A Pride Trooper who folds space itself. She seals her squad\'s targets into a pocket they cannot slip out of.' },
+  c14_knsi: { name: 'K\'nsi', kind: 'U11 / Pride Troopers', hp: 2514, str: 54, pow: 56, end: 54, desc: 'A Pride Trooper who partners with Dyspo. Sure he is fast enough to catch an assassin.' },
   c14_brianne: { name: 'Brianne', kind: 'U2 / Kamikaze Fireballs', hp: 900, str: 10, pow: 40, end: 20, desc: 'An idol of Universe 2 in her everyday clothes. The readings soar the moment she transforms.' },
   c14_sanka: { name: 'Sanka Ku', kind: 'U2 / Kamikaze Fireballs', hp: 800, str: 12, pow: 36, end: 18, desc: 'Brianne\'s loyal partner. Becomes Rozie when she transforms.' },
   c14_suroas: { name: 'Su Roas', kind: 'U2 / Kamikaze Fireballs', hp: 1100, str: 30, pow: 8, end: 22, desc: 'A wild girl from Universe 2 who would rather bite than pose. Becomes Kakunsa when she transforms.' },
@@ -61,8 +61,8 @@ registerScans({
   c14_superRibrianne: { name: 'Super Ribrianne', kind: 'U2 / Kamikaze Fireballs', hp: 9000, str: 56, pow: 62, end: 56, desc: 'Ribrianne grown giant on the love of all Universe 2. Her readings fill the screen.' },
   c14_rozie: { name: 'Rozie', kind: 'U2 / Kamikaze Fireballs', hp: 6400, str: 50, pow: 60, end: 52, desc: 'Ribrianne\'s second in command. Fires arrows of love that hurt like real ones.' },
   c14_kakunsa: { name: 'Kakunsa', kind: 'U2 / Kamikaze Fireballs', hp: 8400, str: 62, pow: 48, end: 54, desc: 'The beast-warrior of the Kamikaze Fireballs. Fights on instinct, claws first.' },
-  c14_saonel: { name: 'Saonel', kind: 'U6 Namekian / Team U6', hp: 8200, str: 54, pow: 56, end: 56, desc: 'A Namekian of Universe 6. His readings flicker as if many warriors were inside him.' },
-  c14_pirina: { name: 'Pirina', kind: 'U6 Namekian / Team U6', hp: 8200, str: 52, pow: 58, end: 56, desc: 'Saonel\'s partner. Every Namekian of their world fused into the two of them.' },
+  c14_saonel: { name: 'Saonel', kind: 'U6 Namekian / Team U6', hp: 8200, str: 54, pow: 50, end: 56, desc: 'A Namekian of Universe 6. His readings flicker as if many warriors were inside him.' },
+  c14_pirina: { name: 'Pirina', kind: 'U6 Namekian / Team U6', hp: 8200, str: 52, pow: 50, end: 56, desc: 'Saonel\'s partner. Every Namekian of their world fused into the two of them.' },
   gamisalas: { name: 'Gamisalas', kind: 'U4 / Team U4', hp: 8200, str: 52, pow: 50, end: 40, desc: 'A Universe 4 fighter who bends light around himself. The scouter can read him even when your eyes cannot.' },
   c14_damom: { name: 'Damom', kind: 'U4 / Team U4', hp: 2000, str: 40, pow: 30, end: 30, desc: 'A Universe 4 fighter so small he is almost invisible. Hits far above his size.' },
 });

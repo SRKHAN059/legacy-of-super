@@ -157,9 +157,11 @@ registerScripts({
     await s.narrate('Fighters from eight universes crash together! Knock them into the void to eliminate them - a hard blow near the edge sends them flying.');
     s.letterbox(false);
     s.music('battle');
-    wave(s, [['c14_u9Wolf', 17, 13], ['c14_u9Wolf', 27, 13], ['c14_u10Fighter', 17, 20], ['c14_u10Fighter', 27, 20]]);
+    // Two small waves: the stage A party shares one bag of Senzu Beans for the whole relay, so the opening melee must
+    // not eat it.
+    wave(s, [['c14_u9Wolf', 17, 13], ['c14_u9Wolf', 27, 13], ['c14_u10Fighter', 22, 20]]);
     await battle(s);
-    wave(s, [['c14_u4Fighter', 22, 11], ['c14_u2Fighter', 15, 16], ['c14_pride', 29, 16], ['c14_u3Robot', 22, 22]]);
+    wave(s, [['c14_u4Fighter', 22, 11], ['c14_u2Fighter', 15, 16]]);
     await battle(s);
     s.letterbox(true);
 
@@ -192,7 +194,7 @@ registerScripts({
     s.music('boss');
     await bossFight(s, 'c14_bergamo', { x: bx, y: by, uid: 'c14_bergamo1' });
     removeAll(s, 'c14_basil1', 'c14_lavender1');
-    // Any Universe 9 brawlers Bergamo called in are caught in the blast that follows.
+    // Any rival still standing nearby is caught in the blast that follows.
     sweepRivals(s);
     s.letterbox(true);
     const [vx, vy] = heroTile(s);
@@ -273,7 +275,7 @@ registerScripts({
     s.music('tense');
     const [kx, ky] = onStage(s, gx + 1, gy - 3, FIGHT_MARGIN);
     removeAll(s, 'c14_kaleA');
-    await bossFight(s, 'c14_kaleBerserk', { x: kx, y: ky, uid: 'c14_kale1', survive: 40, label: 'SURVIVE' });
+    await bossFight(s, 'c14_kaleBerserk', { x: kx, y: ky, uid: 'c14_kale1', survive: 25, label: 'SURVIVE' });
     s.letterbox(true);
     if (!s.exists('c14_kale1')) stageOn(s, 'c14_kale1', 'kaleLSSJ', kx, ky, 'down', 'Kale');
     stageOn(s, 'c14_jirenA', 'jiren', gx + 6, gy - 5, 'left', 'Jiren');
@@ -479,7 +481,7 @@ registerScripts({
     const [nx, ny] = onStage(s, ax, ay - 5, FIGHT_MARGIN);
     await bossFight(s, 'c14_anilaza', { x: nx, y: ny, uid: 'c14_anilaza1' });
     removeAll(s, 'c14_reactor1');
-    // Robots Anilaza called in go down with it.
+    // Any rival still standing nearby goes down with it.
     sweepRivals(s);
     s.letterbox(true);
     const [px, py] = heroTile(s);

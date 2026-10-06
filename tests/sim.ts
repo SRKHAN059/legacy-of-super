@@ -7,7 +7,10 @@ import { Input } from '../src/engine/input';
 import type { Enemy } from '../src/game/enemy';
 import { Game } from '../src/game/game';
 import { parseGrid } from '../src/game/world';
-import type { ScriptCtx } from '../src/game/script';
+import { ScriptApi, type FightOpts, type FightResult, type ScriptCtx } from '../src/game/script';
+import type { Dir } from '../src/engine/math';
+// @ts-expect-error -- Node built-in; the project ships no @types/node (only the opt-in fight recorder writes files).
+import { writeFileSync } from 'node:fs';
 
 declare const setImmediate: (cb: () => void) => void;
 const flush = () => new Promise<void>((r) => setImmediate(r));
@@ -36,6 +39,13 @@ export class Sim {
   choice = 0;
   /** The bot wins every fight on its own (off while `grind` fights enemy by enemy). */
   autoFight = true;
+  /**
+   * Fair play: the bot only reads dialogue and menus. It leaves fights, the hero's HP and survive timers alone, so a
+   * `driver` (tests/fairbot.ts) can play them with real input.
+   */
+  fair = false;
+  /** Called every tick after the dialogue bot and before input is polled: inject the buttons a player would hold. */
+  driver: ((sim: Sim) => void) | null = null;
 
   constructor() {
     const orig = console.error;
@@ -83,7 +93,7 @@ export class Sim {
       this.input.inject('start', false);
     }
     const f = g.field;
-    if (f && g.allowControl) {
+    if (f && g.allowControl && !this.fair) {
       for (const e of this.autoFight ? f.enemies : []) {
         if (e.dead || e.state === 'dying' || e.def.invulnerable || e.ended) continue;
         f.applyDamage(e, 255, 400, { x: 0, y: 0 }, 0, false);
@@ -97,6 +107,7 @@ export class Sim {
   async tick(n = 1): Promise<void> {
     for (let i = 0; i < n; i++) {
       this.bot();
+      this.driver?.(this);
       this.input.poll();
       this.game.scenes.update(this.input);
       await flush();
@@ -203,3 +214,140 @@ export class Sim {
     return done;
   }
 }
+
+// ------------------------------------------------------------------------------------------------ fight recorder
+
+/** A scripted fight (`ScriptApi.fight`) or field battle (`clearEnemies` / `waitDefeat`) seen by `recordFights`. */
+export interface RecordedFight {
+  /** Order of the fight in the whole recording (0-based). */
+  seq: number;
+  /** 'boss' = `fight`, 'wave' = `clearEnemies` / `waitDefeat`. */
+  kind: 'boss' | 'wave';
+  /** Boss enemy type ('' for a wave). */
+  type: string;
+  opts: FightOpts;
+  map: string;
+  chapter: number;
+  hero: CharId;
+  level: number;
+  /** Enemy types standing on the field when the fight began (a wave's roster). */
+  roster: string[];
+  /** Outcome; 'cleared' for a wave, null while the fight is still running. */
+  result: FightResult | 'cleared' | null;
+}
+
+/**
+ * The top-level script a fight ran inside (the one `Game.runScript` started from a trigger, a talk, a map entry or a
+ * test), with the save exactly as it stood when that script started: replaying it re-creates the fight in context
+ * (tests/fairbot.ts).
+ */
+export interface RecordedRoot {
+  /** Which Game instance ran it (0 = the first one the recording process created). */
+  game: number;
+  script: string;
+  map: string;
+  /** Hero position in world pixels, and facing, when the script started. */
+  x: number;
+  y: number;
+  dir: Dir;
+  /** Map NPC (definition id) the script was started by, if any. */
+  npc: string | null;
+  /** The script is one of its map's onEnter scripts (entering the map replays it). */
+  onEnter: boolean;
+  /** `JSON.stringify(state.data)` when the script started. */
+  save: string;
+  /** Fragile quest object the hero was carrying (field state, not part of the save). */
+  carrying: { label: string; onBreak?: string } | null;
+  fights: RecordedFight[];
+}
+
+/**
+ * Record every scripted fight to `file` (JSON array of RecordedRoot, rewritten after every fight). Patches
+ * Game.prototype.runScript and the ScriptApi fight calls until the returned `stop` is called; LOS_RECORD_FIGHTS=<file>
+ * records for the whole process (set it while running a test that plays the story, e.g. tests/full_game.test.ts).
+ * `stop` puts back every method the recorder still owns; one that something patched on top of it since (the fair
+ * bot's fight hooks) keeps its wrapper, which from then on passes straight through, so no later test records.
+ */
+export function recordFights(file: string): () => void {
+  /** Each top-level script gets its own copy of the context object; nested `s.call` scripts share it. */
+  const roots = new WeakMap<object, RecordedRoot>();
+  const games = new WeakMap<Game, number>();
+  const out: RecordedRoot[] = [];
+  let seq = 0;
+  let nextGame = 0;
+  let on = true;
+  const save = (): void => writeFileSync(file, JSON.stringify(out));
+
+  const runScript = Game.prototype.runScript;
+  const recRunScript = function (this: Game, id: string, ctx: ScriptCtx = {}): Promise<void> {
+    if (!on) return runScript.call(this, id, ctx);
+    const c: ScriptCtx = { ...ctx };
+    const f = this.field;
+    if (f) {
+      if (!games.has(this)) games.set(this, nextGame++);
+      const enter = f.def.onEnter;
+      roots.set(c, {
+        game: games.get(this) ?? 0, script: id, map: f.def.id, x: f.player.x, y: f.player.y, dir: f.player.dir,
+        npc: ctx.npc?.def.id ?? null, onEnter: (Array.isArray(enter) ? enter : enter ? [enter] : []).includes(id),
+        save: JSON.stringify(this.state.data), carrying: f.carrying ? { ...f.carrying } : null, fights: [],
+      });
+    }
+    return runScript.call(this, id, c);
+  };
+  Game.prototype.runScript = recRunScript;
+
+  const begin = (s: ScriptApi, kind: RecordedFight['kind'], type: string, opts: FightOpts): RecordedFight | null => {
+    if (!on) return null;
+    const root = roots.get(s.ctx);
+    const f = (s as unknown as { game: Game }).game.field;
+    if (!root || !f) return null;
+    const hero = s.state.hero;
+    const rec: RecordedFight = {
+      seq: seq++, kind, type, opts: { ...opts }, map: f.def.id, chapter: s.state.data.chapter, hero: hero.id, level: hero.level,
+      roster: f.enemies.filter((e) => !e.dead && e.state !== 'dying' && !e.puppet).map((e) => e.def.id), result: null,
+    };
+    root.fights.push(rec);
+    if (!out.includes(root)) out.push(root);
+    save();
+    return rec;
+  };
+  const finish = (rec: RecordedFight | null, result: RecordedFight['result']): void => {
+    if (!rec || !on) return;
+    rec.result = result;
+    save();
+  };
+
+  const fight = ScriptApi.prototype.fight;
+  const recFight = async function (this: ScriptApi, type: string, opts: FightOpts = {}): Promise<FightResult> {
+    const rec = begin(this, 'boss', type, opts);
+    const r = await fight.call(this, type, opts);
+    finish(rec, r);
+    return r;
+  };
+  ScriptApi.prototype.fight = recFight;
+  const clear = ScriptApi.prototype.clearEnemies;
+  const recClear = async function (this: ScriptApi): Promise<void> {
+    const rec = begin(this, 'wave', '', {});
+    await clear.call(this);
+    finish(rec, 'cleared');
+  };
+  ScriptApi.prototype.clearEnemies = recClear;
+  const waitDefeat = ScriptApi.prototype.waitDefeat;
+  const recWaitDefeat = async function (this: ScriptApi, uids: string[]): Promise<void> {
+    const rec = begin(this, 'wave', '', { uid: uids.join(',') });
+    await waitDefeat.call(this, uids);
+    finish(rec, 'cleared');
+  };
+  ScriptApi.prototype.waitDefeat = recWaitDefeat;
+
+  return () => {
+    on = false;
+    if (Game.prototype.runScript === recRunScript) Game.prototype.runScript = runScript;
+    if (ScriptApi.prototype.fight === recFight) ScriptApi.prototype.fight = fight;
+    if (ScriptApi.prototype.clearEnemies === recClear) ScriptApi.prototype.clearEnemies = clear;
+    if (ScriptApi.prototype.waitDefeat === recWaitDefeat) ScriptApi.prototype.waitDefeat = waitDefeat;
+  };
+}
+
+const recordTo = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.LOS_RECORD_FIGHTS;
+if (recordTo) recordFights(recordTo);

@@ -1,3 +1,4 @@
+import { TILE } from '../../../engine/constants';
 import { registerScripts, type ScriptApi } from '../../../game/script';
 import { addProp, ballCheck, giveBall, removeIf, removeProp, respawn } from './shared';
 
@@ -73,6 +74,19 @@ async function pullLever(s: ScriptApi, l: Lever): Promise<void> {
   if (s.check('quest:c03_vault')) await s.done('c03_vault', false);
 }
 
+/**
+ * The Mk-II's crash-landing wrecks the castle's own guard robots and drones still hovering around the vault and its
+ * corridor, so the vault is its arena, like a LoG2 boss room: its phase-2 summons are the only help it gets. Guards
+ * elsewhere in the castle carry on (map enemies respawn on the next visit).
+ */
+function crashSweep(s: ScriptApi, x: number, y: number, radius: number): void {
+  for (const e of s.field.enemies) {
+    if (e.uid || e.dead || Math.hypot(e.x - (x * TILE + 8), e.y - (y * TILE + 14)) >= radius * TILE) continue;
+    s.field.fx.explode(e.x, e.y - 8, 12, '#f8a040');
+    e.dead = true;
+  }
+}
+
 /** Mk-II mini-boss: the gang bursts in after the hero grabs the vault's Dragon Ball. */
 async function mk2Ambush(s: ScriptApi): Promise<void> {
   if (s.flag('defeated:c03_mk2')) return;
@@ -98,6 +112,7 @@ async function mk2Ambush(s: ScriptApi): Promise<void> {
   await s.lift('c03_mk2npc', 0, 16);
   s.boom(12, 4, 18, '#f8c040');
   s.flash('#ffffff', 8);
+  crashSweep(s, 12, 4, 9);
   removeIf(s, 'c03_pilaf', 'c03_mai', 'c03_shu');
   await s.say('pilaf', '(over a crackling speaker) Ha ha ha! Behold my genius! Hand over the ball, monkey boy!', 'smirk');
   removeIf(s, 'c03_mk2npc');

@@ -3,6 +3,7 @@ import { STAT_CAP } from '../../../game/leveling';
 import type { Dir } from '../../../engine/math';
 import { registerScripts, type ScriptApi } from '../../../game/script';
 import { force, unforce } from '../common';
+import { everyFrame } from './c14_assist';
 import { battle, bossFight, freeNear, heroTile, refresh, rememberHero, removeAll, restoreHero, stage, warpTo } from './helpers';
 import { SADALA } from './c13_maps';
 
@@ -188,13 +189,25 @@ registerScripts({
     removeAll(s, 'c13_punkQ', 'c13_rensoQ');
     s.letterbox(false);
     s.music('battle');
-    const types = ['c13_gangPunk', 'c13_gangBrute', 'c13_gangSlinger', 'c13_gangPunk', 'c13_gangSlinger', 'c13_gangBrute', 'c13_gangPunk', 'c13_gangPunk'];
+    const types = ['c13_gangPunk', 'c13_gangPunk', 'c13_gangBrute', 'c13_gangSlinger', 'c13_gangPunk'];
     Q.gang.forEach(([x, y], i) => {
       const [gx, gy] = freeNear(s, x, y);
-      s.spawnEnemy(types[i % types.length], gx, gy).onDefeat = 'c13_u6_gangDown';
+      s.spawnEnemy(types[i % types.length], gx, gy);
     });
     s.banner('Caulifla\'s gang is all over the old quarter. Knock every one of them down!');
-    await battle(s);
+    // Count the gang down with one watcher, not an onDefeat per member: two members falling in the same frame would
+    // start overlapping scripts, and the second one's end would hand control back as "locked" mid-brawl.
+    let standing = Q.gang.length;
+    const tally = everyFrame(s, (f) => {
+      const left = f.enemies.filter((e) => e.def.id.startsWith('c13_gang') && !e.dead && e.state !== 'dying').length;
+      if (left < standing && left > 0) f.toast([left === 1 ? 'One of Caulifla\'s gang is still out there!' : `${left} of Caulifla's gang are still out there.`]);
+      standing = left;
+    });
+    try {
+      await battle(s);
+    } finally {
+      tally.stop();
+    }
     s.letterbox(true);
     s.music('tense');
     await s.narrate('The street goes quiet. A whistle comes from the walled yard at the east end of it.');
@@ -430,12 +443,6 @@ registerScripts({
     s.set('c13_u6KaleCalmed');
     removeAll(s, 'c13_kaleC2', 'c13_cauliflaC2');
     s.letterbox(false);
-  },
-
-  /** One of Caulifla's gang goes down during the brawl: say how many are still hiding in the quarter. */
-  c13_u6_gangDown: async (s) => {
-    const left = s.field.enemies.filter((e) => e.def.id.startsWith('c13_gang') && !e.dead && e.state !== 'dying').length;
-    if (left > 0) s.toast(left === 1 ? 'One of Caulifla\'s gang is still out there!' : `${left} of Caulifla's gang are still out there.`);
   },
 
   /** A-trigger beside Caulifla while Kale rampages: Cabba gets through to her, and she steps in. */

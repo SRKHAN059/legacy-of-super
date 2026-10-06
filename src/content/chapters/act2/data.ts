@@ -98,6 +98,6 @@ registerScans({
   jaco: { name: 'Jaco', kind: 'U7 / Galactic Patrol', hp: 900, str: 16, pow: 19, end: 12, desc: 'A Galactic Patrolman. Elite, according to Jaco.' },
   sorbet: { name: 'Sorbet', kind: 'Frieza Force / command', hp: 380, str: 9, pow: 14, end: 8, desc: 'Leader of what is left of the Frieza Force. Cowardly, clever, and wearing a dangerous ring.' },
   tagoma: { name: 'Tagoma', kind: 'Frieza Force / elite', hp: 3000, str: 28, pow: 26, end: 40, desc: 'Sorbet\'s enforcer. His "steel body" shrugs off blows that would fell a mountain.' },
-  shisami: { name: 'Shisami', kind: 'Frieza Force / elite', hp: 2200, str: 25, pow: 22, end: 19, desc: 'A Frieza Force elite. Fast, proud, and very sure of himself.' },
+  shisami: { name: 'Shisami', kind: 'Frieza Force / elite', hp: 1900, str: 23, pow: 22, end: 19, desc: 'A Frieza Force elite. Fast, proud, and very sure of himself.' },
   frieza: { name: 'Frieza', kind: 'Frost Demon / emperor', hp: '???', str: '???', pow: '???', end: '???', desc: 'The former emperor of the universe. Four months of training - his first ever - and the readings break the scale.' },
 });

@@ -98,7 +98,7 @@ export const SCANS: Record<string, ScanEntry> = {
 
   // ---------------------------------------------------------------- Universe 10 (Babari)
   babarian: { name: 'Babarian', kind: 'U10 Babarian', hp: 2000, str: 44, pow: 1, end: 38, desc: 'A native of planet Babari. Fights anything that is not a Babarian, and most things that are.' },
-  c10_babarianChief: { name: 'Babarian Chief', kind: 'U10 Babarian / chief', hp: 5400, str: 49, pow: 40, end: 52, desc: 'The biggest, loudest Babarian on the planet. Guards the sacred fruit tree with his very large club.' },
+  c10_babarianChief: { name: 'Babarian Chief', kind: 'U10 Babarian / chief', hp: 4900, str: 49, pow: 40, end: 52, desc: 'The biggest, loudest Babarian on the planet. Guards the sacred fruit tree with his very large club.' },
   c10_babarianSlinger: { name: 'Babarian Slinger', kind: 'U10 Babarian', hp: 1700, str: 30, pow: 42, end: 34, desc: 'Throws rocks with frightening accuracy. Gowasu insists Babarians will invent writing one day.' },
 
   // ---------------------------------------------------------------- Tournament of Power
