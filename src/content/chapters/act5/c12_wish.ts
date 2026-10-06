@@ -11,8 +11,8 @@ import { HUB } from './hubs';
  * she keeps under a tarp on the old time machine pad. The player gathers the seven Dragon Balls across Earth and
  * dives in the drill pod to the core (two hostile maps with a heat hazard and a guardian). Then everyone shows up to
  * fight over the wish (a dialogue choice), Gohan's feverish Pan gets the wish instead, Beerus recognises the metal as
- * time machine material and erases it along with Bulma's workshop, and Shenron flees the angry god before King Kai's
- * wish. King Kai stays dead (the running gag of the anime).
+ * time machine material and erases it along with Bulma's workshop, and Shenron, out of patience, leaves before King
+ * Kai's wish. King Kai stays dead (the running gag of the anime).
  */
 
 /** Journal entry of the episode. */
@@ -530,8 +530,8 @@ registerScripts({
     ]);
     await s.emote('hero', '?');
     await s.talk([
-      ['shenronAvatar', 'THE GOD OF DESTRUCTION IS... ANGRY. I HAVE GRANTED A WISH. THAT IS PLENTY FOR ONE DAY.', 'shock'],
-      ['shenronAvatar', 'FAREWELL!', 'neutral'],
+      ['shenronAvatar', 'ENOUGH! FIRST YOU QUARREL, THEN YOU BLOW THINGS UP. I HAVE WAITED LONG ENOUGH.', 'angry'],
+      ['shenronAvatar', 'I HAVE GRANTED A WISH. THAT IS PLENTY FOR ONE DAY. FAREWELL!', 'neutral'],
     ]);
     s.flash('#ffffff', 20);
     s.field.map.removeProp('c12_shenron');
@@ -674,7 +674,7 @@ registerScripts({
     const lines = s.flag('post_game')
       ? ['Universe 7 survived the Tournament of Power, everyone says. Wonderful! I watched from the Other World. Where I still live.',
         'Bubbles and I are planning a party for the day somebody remembers us. It\'s been planned for years. The cake is a rock now.']
-      : ['Shenron flew off with a wish left over. He was scared of Beerus. I KNOW the feeling, but STILL!',
+      : ['Shenron flew off with a wish left over. He got tired of waiting while they all bickered. I KNOW the feeling, but STILL!',
         'Do you know what the halo does to my antennae? It tangles them. Every. Single. Morning.'];
     await s.say('kingKai', lines[s.inc('c12_kingKaiTalks') % lines.length], 'angry');
   },

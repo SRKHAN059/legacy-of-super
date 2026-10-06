@@ -1486,3 +1486,11 @@ describe('tuned fights: Chapter 12, the Earth\'s core (ep 68)', () => {
     expect(mantle.avgSenzu, 'mantle tunnels: Senzu per clear').toBeLessThanOrEqual(1);
   }, REPLAY_TIMEOUT);
 });
+
+// ------------------------------------------------------------------------------------------------ grind zones
+
+// The free-roam grind zones (critic round 2, gap 1) are held in tests/grind.test.ts: every hostile zone at the stage
+// it opens, cleared by the fair bot on seeds 1-3 from the committed recording, against one rule with documented
+// exemptions (no knock-out, at most one Senzu a clear, LoG2's per-enemy band, the tuned spawn mix in reach, LoG2's
+// levelling pace), and every story gate ground from its arrival level. The per-act checks the zone retune added here
+// were folded into that sweep.

@@ -13,6 +13,11 @@ import { TILE } from '../../src/engine/constants';
 import type { Button } from '../../src/engine/input';
 import type { MapDef } from '../../src/game/mapdef';
 import { parseGrid } from '../../src/game/world';
+import { GameState } from '../../src/game/state';
+import { Rng } from '../../src/engine/math';
+import { CREATURES } from '../../src/content/creatures';
+import { scanRecord } from '../../src/content/scans';
+import { clearZone, formStats, mobRatio, type ZoneClear } from '../fairbot';
 import { Sim } from '../sim';
 
 /** World builder A: Mt. Paozu, Satan City, Kame House and The Lookout hubs. */
@@ -642,13 +647,16 @@ describe('world earthA: river and reef wildlife (LoG2 Fish for Korin\'s Senzu)',
     if (!del) return;
     expect(closed.has(`${del.x},${del.y}`), 'Delicacy sealed off').toBe(false);
     expect(open.has(`${del.x},${del.y}`), 'Delicacy reachable through the gate').toBe(true);
-    // The inner flats (crabs, vipers, mud golems) are open from the sandbar; the atoll's residents are not.
+    // The inner flats (crabs, vipers, tide slimes) are open from the sandbar; the atoll's residents are not.
     for (const e of reef.enemies ?? []) {
       const atoll = e.x > 22;
       expect(closed.has(`${e.x},${e.y}`), `${e.type} at ${e.x},${e.y}`).toBe(!atoll);
       expect(open.has(`${e.x},${e.y}`), `${e.type} at ${e.x},${e.y}`).toBe(true);
     }
-    expect((reef.enemies ?? []).filter((e) => e.x > 22).map((e) => e.type).sort()).toEqual(['kingCrab', 'kingCrab', 'kingCrab', 'pterodactyl']);
+    expect((reef.enemies ?? []).filter((e) => e.x > 22).map((e) => e.type).sort())
+      .toEqual(['kingCrab', 'kingCrab', 'kingCrab', 'mudSlime', 'mudSlime', 'pterodactyl']);
+    expect((reef.enemies ?? []).filter((e) => e.x <= 22).map((e) => e.type).sort())
+      .toEqual(['crab', 'crab', 'crab', 'crab', 'crab', 'ea_tideSlime', 'ea_tideSlime', 'viper', 'viper']);
     // The open flats are the region's Fish ground (LoG2's Tropical Islands): seven carriers, about one Fish every
     // four visits at the 4% roll, the best yield on Earth before the gate.
     const flats = (reef.enemies ?? []).filter((e) => e.x <= 22 && ENEMIES[e.type]?.drops === 'water');
@@ -1197,8 +1205,9 @@ describe('world ecology (Earth A): homed wildlife keeps out of sight of every wa
   const SIGHT = 110 / TILE;
   /** Wildlife the ecology pass homed on Earth A's hostile maps (the older spawns keep their own placement). */
   const HOMED: Record<string, string[]> = {
-    paozu_forest: ['crab', 'slime'], paozu_peaks: ['viper', 'bear', 'hornet'],
-    korin_base: ['viper', 'crab', 'beetle', 'hornet', 'bear'], kame_reef: ['crab', 'viper', 'mudSlime', 'kingCrab', 'pterodactyl'],
+    paozu_forest: ['crab', 'slime'], paozu_peaks: ['wolf', 'crab', 'viper', 'hornet', 'timberWolf', 'bear'],
+    korin_base: ['viper', 'crab', 'beetle', 'hornet', 'bear'],
+    kame_reef: ['crab', 'viper', 'ea_tideSlime', 'mudSlime', 'kingCrab', 'pterodactyl'],
   };
 
   it('no homed creature can jump the hero on arrival (edge exits, doors, flight circles, landing spots)', async () => {
@@ -1269,5 +1278,127 @@ describe('world ecology (Earth A): Kame House keeps one Delicacy across the move
     };
     expect(await reefDelicacy(false)).toBe(true);
     expect(await reefDelicacy(true)).toBe(false);
+  });
+});
+
+describe('world ecology (Earth A): the grind zones fit LoG2\'s band for the Goku who first walks in (critic round 2)', () => {
+  /**
+   * Each zone as it first opens: the chapter, and Goku's level and kit then (the recorded story run: Paozu Forest
+   * behind the L2 tutorial gate, the peaks' basin on the way to Scarface at L4, Turtle Reef and Korin Forest in the
+   * Chapter 3 Dragon Ball hunt at L11), with the fair bot's EXP per minute there before the retune (same saves, same
+   * seeds), which a clear must still match so the grind stays as quick. Korin Forest was in band already; its brown
+   * bear keeps LoG2's Kuma 69 row (9 hits to knock Goku out at L11), so only its zone medians are held.
+   */
+  const STAGES: Array<{ map: string; chapter: number; level: number; techs: string[]; form: string | null; before: number; perType: boolean }> = [
+    { map: 'paozu_forest', chapter: 1, level: 2, techs: ['kiBlast'], form: null, before: 919, perType: true },
+    { map: 'paozu_peaks', chapter: 1, level: 4, techs: ['kiBlast', 'kamehameha'], form: null, before: 2900, perType: true },
+    { map: 'kame_reef', chapter: 3, level: 11, techs: ['kiBlast', 'kamehameha'], form: 'ssj', before: 14942, perType: true },
+    { map: 'korin_base', chapter: 3, level: 11, techs: ['kiBlast', 'kamehameha'], form: 'ssj', before: 5950, perType: false },
+  ];
+  const SEEDS = [1, 2, 3, 4, 5, 6];
+
+  /** A save with Goku as he walks into a stage (pinned RNG, no Senzu). */
+  function arrival(s: (typeof STAGES)[number]): string {
+    const st = new GameState();
+    st.rng = new Rng(0x6ea0 + s.level);
+    st.data.chapter = s.chapter;
+    st.join('goku', s.level);
+    st.data.active = 'goku';
+    const c = st.char('goku');
+    c.techs = [...s.techs];
+    c.selected = 0;
+    c.form = s.form;
+    st.data.inv = {};
+    return JSON.stringify(st.data);
+  }
+
+  const median = (xs: number[]): number => {
+    const v = [...xs].sort((a, b) => a - b);
+    const m = Math.floor(v.length / 2);
+    return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+  };
+
+  it('the fair bot clears each zone with no knock-out and no Senzu, as fast in EXP per minute as before, and every foe sits in the band', async () => {
+    for (const s of STAGES) {
+      const save = arrival(s);
+      const runs: ZoneClear[] = [];
+      for (const seed of SEEDS) runs.push(await clearZone(save, s.map, seed));
+      for (const r of runs) {
+        expect(r.stopped, `${s.map} seed ${r.seed}`).toBe('cleared');
+        expect(r.kills, `${s.map} seed ${r.seed}: every foe in reach`).toBe(r.scoped);
+        expect(r.kos, `${s.map} seed ${r.seed}: knock-outs`).toBe(0);
+        expect(r.senzu, `${s.map} seed ${r.seed}: Senzu eaten`).toBe(0);
+        expect(r.levelEnd, `${s.map} seed ${r.seed}: one clear is worth a level`).toBeGreaterThan(r.level);
+      }
+      const perMinute = runs.reduce((a, r) => a + r.exp / (r.frames / 3600), 0) / runs.length;
+      expect(perMinute, `${s.map}: EXP per minute`).toBeGreaterThanOrEqual(s.before);
+      // The critic's hits formula (one average melee hit against the foe's END; one average hit of the foe's real
+      // attack stat against Goku's END, form included) for every type the clears met.
+      const st = new GameState(JSON.parse(save) as ConstructorParameters<typeof GameState>[0]);
+      const hero = formStats(st.hero, st.hero.form);
+      const types = [...new Set(runs.flatMap((r) => Object.keys(r.foes).filter((t) => r.foes[t].count > 0)))];
+      const ratios = types.map((t) => ({ t, ...mobRatio(hero, ENEMIES[t]) }));
+      if (s.perType) {
+        for (const q of ratios) {
+          expect(q.hitsToEnd, `${s.map}: hits to kill a ${q.t}`).toBeLessThanOrEqual(7);
+          expect(q.hitsToKO, `${s.map}: ${q.t} hits to knock Goku out`).toBeGreaterThanOrEqual(10);
+        }
+      }
+      const kill = median(ratios.map((q) => q.hitsToEnd));
+      const ko = median(ratios.map((q) => q.hitsToKO));
+      expect(kill, `${s.map}: median hits to kill`).toBeLessThanOrEqual(6);
+      expect(ko, `${s.map}: median hits to knock Goku out`).toBeGreaterThanOrEqual(12);
+      expect(kill >= 3 || ko <= 40, `${s.map}: not a walkover (median ${kill} to kill, ${ko} to KO)`).toBe(true);
+    }
+  }, 180000);
+
+  it('the peaks\' basin is Chapter 1 ground: vipers join the pool from Chapter 3, the big game waits behind the L15 gate', () => {
+    const peaks = def('paozu_peaks');
+    const spawns = (chapter: number) => {
+      const st = new GameState();
+      st.data.chapter = chapter;
+      return (peaks.enemies ?? []).filter((e) => st.check(e.showIf) && !(e.hideIf && st.check(e.hideIf)));
+    };
+    expect(spawns(1).filter((e) => e.type === 'viper')).toEqual([]);
+    expect(spawns(3).filter((e) => e.type === 'viper').length).toBe(2);
+    // Every Chapter 1 resident of the basin (south of the cliff band, west of the gate) is a forest-tier creature.
+    const basin = spawns(1).filter((e) => e.y > 15 && e.x < 30).map((e) => e.type);
+    expect([...new Set(basin)].sort()).toEqual(['crab', 'hawk', 'hornet', 'wolf']);
+    const gate = peaks.barriers?.find((b) => b.id === 'g15');
+    expect(gate).toMatchObject({ level: 15, character: 'goku' });
+    expect((peaks.enemies ?? []).filter((e) => e.y > 15 && e.x > 31).map((e) => e.type).sort()).toEqual(['bear', 'timberWolf']);
+  });
+
+  it('Turtle Reef\'s tide slime: its own blob sprite, a no-Fish exploder between the Bog Slime and the Mud Golem, scanned at its real stats', async () => {
+    const d = ENEMIES.ea_tideSlime;
+    expect(d).toMatchObject({ name: 'Tide Slime', sprite: 'ea_tideSlime', ai: 'exploder' });
+    expect(d.drops).toBeUndefined();
+    expect(CREATURES.ea_tideSlime?.kind).toBe('blob');
+    expect(scanRecord('enemy:ea_tideSlime').entry).toMatchObject({ name: 'Tide Slime', hp: d.hp, str: d.str, pow: d.pow, end: d.end });
+    for (const k of ['hp', 'str', 'pow', 'end'] as const) {
+      expect(d[k], k).toBeGreaterThan(ENEMIES.slime[k]);
+      expect(d[k], k).toBeLessThan(ENEMIES.mudSlime[k]);
+    }
+    const homes = Object.keys(MAPS).filter((id) => (resolveMap(id)?.enemies ?? []).some((e) => e.type === 'ea_tideSlime'));
+    expect(homes).toEqual(['kame_reef']);
+    // Its burst is a mud golem's, softer: max(STR, POW) x1.1 within 32 px, a small bite out of a Chapter 3 Goku.
+    const sim = new Sim();
+    setup(sim, 3, 11);
+    sim.start('dev_arena', 4, 8);
+    await sim.tick(2);
+    const f = sim.game.field;
+    if (!f) throw new Error('no field');
+    const blob = f.spawnEnemy('ea_tideSlime', f.player.x + 12, f.player.y);
+    const calls: Array<[number, number]> = [];
+    const orig = f.damagePlayer.bind(f);
+    f.damagePlayer = (atk, mult, x, y, o) => { calls.push([atk, mult]); return orig(atk, mult, x, y, o); };
+    const before = f.player.cs.hp;
+    blob.die();
+    await sim.tick(45);
+    expect(calls).toContainEqual([Math.max(d.str, d.pow), 1.1]);
+    const taken = before - f.player.cs.hp;
+    expect(taken).toBeGreaterThan(0);
+    expect(taken, 'burst damage').toBeLessThan(f.player.cs.hpMax / 8);
+    expect(sim.errors).toEqual([]);
   });
 });

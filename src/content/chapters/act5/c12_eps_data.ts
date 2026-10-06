@@ -19,21 +19,22 @@ registerQuests([
   },
   {
     id: 'c12_ball', title: 'Universe 6 vs. Universe 7: baseball', star: 'silver', region: 'spot_westcity',
-    desc: 'Champa has challenged Beerus to a baseball game for the right to Earth\'s food. No ki, no flying, no destruction. Yamcha is the only player on Universe 7 who knows the rules.',
+    desc: 'Champa has challenged Beerus to a baseball game for the right to Earth\'s food. Anything goes, except destruction. Yamcha is the only player on Universe 7 who knows the rules.',
   },
 ]);
 
 /**
  * The Earth's core bestiary. Regular enemies follow the round-2 critic's grind band rather than the old T6 row of
- * Guide §6: 6-9 hits to kill and 18-20 hits to knock out a Chapter 12 Goku in Super Saiyan Blue (L37: STR 74,
- * END 64, 906 HP), so the mantle tunnels are a place to level, not a Senzu sink: the fair bot clears all nine of them
- * with the heat running, without a knock-out and on at most one Senzu (tests/balance.test.ts).
+ * Guide §6: 6-8 hits to kill and 16-18 hits to knock out Goku in Super Saiyan Blue at the Chapter 12 floor (L35, about
+ * STR 70-72, END 63-65, 740-800 HP; 6-7 and 21 at L37), so the mantle tunnels are a place to level, not a Senzu sink:
+ * the fair bot clears all nine of them with the heat running, without a knock-out and on at most one Senzu
+ * (tests/balance.test.ts, at L37 and at the L35 floor).
  */
 const CORE: EnemyDef[] = [
-  { id: 'c12_magmaSlime', name: 'Magma Slime', sprite: 'c12_magmaSlime', hp: 1300, str: 39, pow: 39, end: 40, exp: 26000, ai: 'exploder', speed: 1.0, drops: 'rich', desc: 'A blob of living lava. It bursts when beaten, so do not stand next to it.' },
-  { id: 'c12_cinderBat', name: 'Cinder Bat', sprite: 'c12_cinderBat', hp: 1200, str: 39, pow: 1, end: 38, exp: 24000, ai: 'flyer', speed: 1.5, flying: true, desc: 'Roosts over the lava rivers and dives at anything that glows. Goku glows.' },
-  { id: 'c12_crustCrab', name: 'Crust Crab', sprite: 'c12_crustCrab', hp: 1600, str: 40, pow: 1, end: 46, exp: 30000, ai: 'charger', speed: 1.1, box: { w: 20, h: 10 }, desc: 'Its shell is cooled basalt. It charges sideways, which is somehow worse.' },
-  { id: 'c12_lavaSerpent', name: 'Lava Serpent', sprite: 'c12_lavaSerpent', hp: 1500, str: 38, pow: 40, end: 42, exp: 28000, ai: 'shooter', speed: 0.9, shot: { color: '#f88020', cooldown: 90, speed: 2.4, mult: 0.7 }, desc: 'Spits globs of magma from the riverbanks.' },
+  { id: 'c12_magmaSlime', name: 'Magma Slime', sprite: 'c12_magmaSlime', hp: 1150, str: 38, pow: 38, end: 40, exp: 26000, ai: 'exploder', speed: 1.0, drops: 'rich', desc: 'A blob of living lava. It bursts when beaten, so do not stand next to it.' },
+  { id: 'c12_cinderBat', name: 'Cinder Bat', sprite: 'c12_cinderBat', hp: 1100, str: 38, pow: 1, end: 38, exp: 24000, ai: 'flyer', speed: 1.5, flying: true, desc: 'Roosts over the lava rivers and dives at anything that glows. Goku glows.' },
+  { id: 'c12_crustCrab', name: 'Crust Crab', sprite: 'c12_crustCrab', hp: 1200, str: 38, pow: 1, end: 44, exp: 30000, ai: 'charger', speed: 1.1, box: { w: 20, h: 10 }, desc: 'Its shell is cooled basalt. It charges sideways, which is somehow worse.' },
+  { id: 'c12_lavaSerpent', name: 'Lava Serpent', sprite: 'c12_lavaSerpent', hp: 1250, str: 36, pow: 38, end: 40, exp: 28000, ai: 'shooter', speed: 0.9, shot: { color: '#f88020', cooldown: 90, speed: 2.4, mult: 0.7 }, desc: 'Spits globs of magma from the riverbanks.' },
   {
     // The heart's guardian. Tuned like Hit on the hotel roof (fair-play balance: Goku L37 in Super Saiyan Blue wins
     // with about one Senzu, hits ratio near 3) but must be beaten outright: nothing scripted ends it early.

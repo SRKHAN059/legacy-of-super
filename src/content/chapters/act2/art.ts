@@ -194,6 +194,10 @@ registerCreatures({
   c03_pilafMk2: { kind: 'robot', body: '#e8b830', accent: '#e03030', eye: '#40f0f0', size: 48 },
   /** A spoon-thieving puffbird from Beerus's planet. */
   c04_critter: { kind: 'flyer', body: '#f8a0c8', belly: '#fff0f8', accent: '#60d8f0', size: 24 },
+  /** A puffbird chick from the training field: paler and fluffier than Beerus's grounds' grown-ups. */
+  c04_puffChick: { kind: 'flyer', body: '#f8c8e0', belly: '#fffaf8', accent: '#f0d040', size: 24 },
+  /** A hornless Moss Grazer calf, a size down from the herd on Beerus's grounds. */
+  c04_mossCalf: { kind: 'quadruped', body: '#70c0a8', belly: '#c8f0dc', size: 24 },
   /** An invulnerable rolling beetle that patrols the training field. */
   c04_roller: { kind: 'bug', body: '#8058c0', accent: '#f0d850', horns: true, size: 32 },
   /** A stuffed toy bear from Hell's cheerful parade. */

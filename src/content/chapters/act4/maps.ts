@@ -139,11 +139,13 @@ registerMaps([
       // Side chamber.
       ['crate', 34.2, 13.6], ['crate', 35.2, 13.6], ['barrel', 37.4, 15], ['rubble', 34, 21.4],
     ],
+    // The survey drones patrol the dry galleries and the loading platform: a flying shooter backs away from the hero, and
+    // one posted by the underground lake ended up hovering over the water, out of reach of every fist on foot.
     enemies: [
-      { type: 'c09_crystalBat', x: 5, y: 8 }, { type: 'c09_crystalBat', x: 12, y: 7 }, { type: 'c09_rockCrawler', x: 6, y: 15 },
-      { type: 'c09_mineDrone', x: 8, y: 3 }, { type: 'c09_mineDrone', x: 19, y: 14 }, { type: 'c09_haywireMech', x: 22, y: 25 },
+      { type: 'c09_crystalBat', x: 5, y: 8 }, { type: 'c09_mineDrone', x: 12, y: 7 }, { type: 'c09_rockCrawler', x: 6, y: 15 },
+      { type: 'c09_mineDrone', x: 8, y: 3 }, { type: 'c09_crystalBat', x: 19, y: 14 }, { type: 'c09_haywireMech', x: 22, y: 25 },
       { type: 'c09_rockCrawler', x: 29, y: 15 }, { type: 'c09_crystalBat', x: 26, y: 13 }, { type: 'c09_haywireMech', x: 18, y: 20 },
-      { type: 'c09_mineDrone', x: 30, y: 23 }, { type: 'c09_haywireMech', x: 36, y: 17 }, { type: 'c09_crystalBat', x: 30, y: 10 },
+      { type: 'c09_mineDrone', x: 12, y: 23 }, { type: 'c09_haywireMech', x: 36, y: 17 }, { type: 'c09_crystalBat', x: 30, y: 10 },
     ],
     objects: [
       { type: 'save', x: 4, y: 23 },

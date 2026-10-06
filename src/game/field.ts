@@ -38,6 +38,8 @@ interface Pickup {
 
 /** Widest line a toast or banner draws before wrapping (screen minus a margin). */
 const OVERLAY_TEXT_W = SCREEN_W - 20;
+/** Sprite height (px) from which an enemy in front of the hero counts as a giant that could hide them (heroes are 32). */
+const GIANT_H = 40;
 
 interface Toast {
   lines: string[];
@@ -895,6 +897,14 @@ export class Field implements Scene {
     list.push({ y: this.player.y, draw: () => this.player.draw(ctx, cx, cy) });
     list.sort((a, b) => a.y - b.y);
     for (const d of list) d.draw();
+    // A giant in front of the hero (Bergamo grown huge, a dinosaur) would hide them completely: show them through it.
+    if (this.heroBehindGiant()) {
+      const p = this.player;
+      const a = p.alpha;
+      p.alpha = a * 0.5;
+      p.draw(ctx, cx, cy);
+      p.alpha = a;
+    }
 
     for (const e of this.enemies) e.renderMarks(ctx, cx, cy, this.tick);
     for (const b of this.beams) b.render(ctx, cx, cy, this.tick);
@@ -964,6 +974,29 @@ export class Field implements Scene {
       rows.forEach((r, i) => font.drawCentered(ctx, r, SCREEN_W / 2, top + 3 + i * 10, PAL.gold, '#000'));
       ctx.globalAlpha = 1;
     }
+  }
+
+  /**
+   * True when an enemy sprite at least GIANT_H tall stands in front of the hero (drawn after them) and covers most of
+   * the hero's sprite. Ordinary-sized foes never trigger it: overlapping them is normal melee range.
+   */
+  heroBehindGiant(): boolean {
+    const p = this.player;
+    if (p.hidden) return false;
+    const pb = p.frame();
+    const px = p.x - pb.width / 2;
+    const py = p.y - pb.height + 2 - p.z;
+    for (const e of this.enemies) {
+      if (e.dead || e.hidden || e.y <= p.y) continue;
+      const eb = e.frame();
+      if (eb.height < GIANT_H) continue;
+      const ex = e.x - eb.width / 2;
+      const ey = e.y - eb.height + 2 - e.z;
+      const ow = Math.min(px + pb.width, ex + eb.width) - Math.max(px, ex);
+      const oh = Math.min(py + pb.height, ey + eb.height) - Math.max(py, ey);
+      if (ow > 0 && oh > 0 && ow * oh >= pb.width * pb.height * 0.5) return true;
+    }
+    return false;
   }
 
   private drawFlightCircle(ctx: CanvasRenderingContext2D, x: number, y: number): void {

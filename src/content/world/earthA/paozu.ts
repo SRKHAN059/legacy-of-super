@@ -372,16 +372,22 @@ registerMaps([
       ['shrine', 35, 17.6], ['boulder', 33, 27.6], ['rock', 38, 23], ['grassTuft', 34, 22],
     ],
     enemies: [
-      { type: 'timberWolf', x: 17, y: 24 }, { type: 'timberWolf', x: 26, y: 29 }, { type: 'timberWolf', x: 6, y: 25 },
-      { type: 'boar', x: 23, y: 24 }, { type: 'boar', x: 16, y: 19 },
-      { type: 'hawk', x: 13, y: 5 }, { type: 'hawk', x: 31, y: 5 }, { type: 'hawk', x: 5, y: 30 },
-      { type: 'timberWolf', x: 35, y: 25 },
-      // Swamp vipers hunt fish around the waterfall pool and the stream (Fish drops); a brown bear and a giant hornet
-      // claim the lower basin (kept off the plateau, where Goten's dino hunt fights Scarface, and out of a flyer's
-      // sight of the forest trail's arrival).
-      { type: 'viper', x: 4, y: 19 }, { type: 'viper', x: 14, y: 20 },
-      { type: 'bear', x: 8, y: 29 },
-      { type: 'hornet', x: 24, y: 26 },
+      // The lower basin is Chapter 1 ground: Goku crosses it at about L4 to fly up for Scarface, so its residents are
+      // the forest's tier (LoG2's East District band: about 4 hits to kill, 12 to knock him out). Hawks, hornets and
+      // crabs still pay half a level a kill at L4-5, so a clear is worth more per minute than the old big-game basin.
+      // A pair of wolves and a hawk hold the west ledge over the plank bridge, giant hornets and two more hawks the
+      // woods, and shore crabs work the waterfall pool and the stream (Fish drops). Everything stays out of a flyer's
+      // sight of the forest trail's arrival and the flight circle's landing.
+      { type: 'wolf', x: 6, y: 25 }, { type: 'wolf', x: 9, y: 28 },
+      { type: 'hawk', x: 5, y: 30 }, { type: 'hawk', x: 28, y: 26 }, { type: 'hawk', x: 17, y: 24 },
+      { type: 'hornet', x: 24, y: 26 }, { type: 'hornet', x: 16, y: 19 },
+      { type: 'crab', x: 3, y: 22 }, { type: 'crab', x: 14, y: 23 }, { type: 'crab', x: 10, y: 26 },
+      // From Chapter 3 (Goku back at L11+), swamp vipers hunt fish around the pool as well.
+      { type: 'viper', x: 4, y: 19, showIf: 'chapter>=3' }, { type: 'viper', x: 14, y: 20, showIf: 'chapter>=3' },
+      // Hawks circle the falls plateau, where Goten's dino hunt fights Scarface.
+      { type: 'hawk', x: 13, y: 5 }, { type: 'hawk', x: 31, y: 5 },
+      // The hollow behind the Goku L15 gate keeps the mountain's bigger game: a timber wolf and a brown bear.
+      { type: 'timberWolf', x: 35, y: 25 }, { type: 'bear', x: 34, y: 21 },
     ],
     exits: { south: { to: 'paozu_forest', offset: 2 } },
     barriers: [

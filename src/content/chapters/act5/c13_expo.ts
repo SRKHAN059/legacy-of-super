@@ -282,8 +282,12 @@ const AIRBORNE = 'c13_expoLavAir';
 /** Darkened view while blind; a lighter, golden one while Super Saiyan senses his ki. */
 const BLIND_TINT = 'rgba(18,6,30,0.58)';
 const RADAR_TINT = 'rgba(48,32,0,0.28)';
-/** Toxin: HP drained per second (fraction of max), three times faster while transformed; cue timings in frames. */
-export const TOXIN = { base: 0.003, radar: 0.009, listen: 60, reveal: 40, flicker: 150, flickerLen: 4 } as const;
+/**
+ * Toxin: HP drained per second (fraction of max), three times faster while transformed; cue timings in frames. `listen`
+ * is half a second: Lavender strikes about every 80 frames, so a longer wait would only ever end in his wind-up and
+ * standing still would never show him coming.
+ */
+export const TOXIN = { base: 0.003, radar: 0.009, listen: 30, reveal: 40, flicker: 150, flickerLen: 4 } as const;
 
 /** Lavender's cloak strength for one frame (1 = unseen). */
 export function lavenderCloak(c: { radar: boolean; windup: boolean; listening: boolean; airborne: boolean; reveal: number; flicker: number }): number {
@@ -933,7 +937,7 @@ registerScripts({
     await s.talk([
       ['c13_bergamoX', 'Gods of every universe, hear me! I am Bergamo of Universe 9!', 'shout'],
       ['c13_bergamoX', 'Lord Zeno ranked us lowest of all. But look at that man. Son Goku is the one who asked for this tournament!', 'shout'],
-      ['c13_bergamoX', 'Without him, every universe could have lived in peace. His mortal level is the lowest here. He is the enemy of every universe!', 'angry'],
+      ['c13_bergamoX', 'Without him, every universe could have lived in peace. He put us all at risk for his own amusement. He is the enemy of every universe!', 'angry'],
       ['c13_champaX', 'Yeah! Boo! BOOO!', 'angry'],
       ['c13_whisX', 'Oh my. He is making Goku the villain in front of every god at once.', 'neutral'],
       ['c13_bergamoX', 'Lord Zeno. When I defeat him, I humbly ask you to cancel the erasure of the losing universes.', 'neutral'],

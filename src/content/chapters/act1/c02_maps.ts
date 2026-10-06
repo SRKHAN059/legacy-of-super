@@ -206,12 +206,12 @@ registerMaps([
       ['crate', 38, 12.2], ['barrel', 35.2, 15],
     ],
     enemies: [
-      { type: 'pilafRobot', x: 9, y: 8, showIf: PARTY, hideIf: 'c02_machineBeaten' },
-      { type: 'pilafRobot', x: 15, y: 10, showIf: PARTY, hideIf: 'c02_machineBeaten' },
-      { type: 'pilafRobot', x: 21, y: 6, showIf: PARTY, hideIf: 'c02_machineBeaten' },
+      { type: 'c02_guardBot', x: 9, y: 8, showIf: PARTY, hideIf: 'c02_machineBeaten' },
+      { type: 'c02_guardBot', x: 15, y: 10, showIf: PARTY, hideIf: 'c02_machineBeaten' },
+      { type: 'c02_guardBot', x: 21, y: 6, showIf: PARTY, hideIf: 'c02_machineBeaten' },
       { type: 'drone', x: 3, y: 13, showIf: PARTY, hideIf: 'c02_machineBeaten' },
-      { type: 'greenDrone', x: 16, y: 4, showIf: PARTY, hideIf: 'c02_machineBeaten' },
-      { type: 'drone', x: 25, y: 11, showIf: PARTY, hideIf: 'c02_machineBeaten' },
+      { type: 'c02_gangDrone', x: 16, y: 4, showIf: PARTY, hideIf: 'c02_machineBeaten' },
+      { type: 'drone', x: 21, y: 10, showIf: PARTY, hideIf: 'c02_machineBeaten' },
     ],
     objects: [
       { type: 'save', x: 25, y: 14 },

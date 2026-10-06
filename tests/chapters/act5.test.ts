@@ -2607,7 +2607,8 @@ describe('Chapter 13: the Zeno Expo (eps 78-82)', () => {
     lav.hp = Math.floor(lav.maxHp * 0.49);
     await driveUntil(sim, 'Lavender airborne', () => st.flag('c13_expoLavAir') && midFight(sim));
     lav.frozen = 100000;
-    await drive(sim, TOXIN.listen + 4);
+    // Past both the listening time and the reveal from the HP drop that started this phase.
+    await drive(sim, Math.max(TOXIN.listen, TOXIN.reveal) + 4);
     expect(lav.z).toBeGreaterThan(0);
     expect(lav.cloak).toBeGreaterThanOrEqual(0.6);
     // Canon's ending: the full-nelson slam, both down, a draw; Goku's Senzu Bean; the stakes told to every god.

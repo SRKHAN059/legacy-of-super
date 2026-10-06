@@ -98,7 +98,8 @@ registerScripts({
     s.place('hero', mx, my);
     await handOff(s, 'gohan');
     s.music('tense');
-    await s.narrate('Twenty minutes in. Universe 10 is down to its last fighter... and he has found Gohan.');
+    await s.narrate('Twenty minutes in. Universe 10 is down to two fighters... and Piccolo cages Rubalt in a ring of ki blasts and knocks him off the stage.');
+    await s.narrate('Now Universe 10 has one fighter left. He has found Gohan.');
     const [hx, hy] = heroTile(s);
     const [ox, oy] = stageOn(s, 'c14_obniO', 'c14_obni', hx + 4, hy - 2, 'left', 'Obni', FIGHT_MARGIN);
     s.face('hero', 'c14_obniO');

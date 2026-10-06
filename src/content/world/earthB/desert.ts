@@ -148,7 +148,8 @@ registerMaps([
     npcs: [{ id: 'eb_pilaf_captive', sprite: 'townsman', x: 6, y: 4, talk: 'eb_pilaf_captive', name: 'Captive Mechanic' }],
     enemies: [
       { type: 'pilafRobot', x: 13, y: 15 }, { type: 'pilafRobot', x: 18, y: 18 },
-      { type: 'greenDrone', x: 15, y: 9 }, { type: 'greenDrone', x: 16, y: 11 },
+      // The vault corridor: "every robot in the castle guards that hallway" (the captive mechanic).
+      { type: 'pilafRobot', x: 16, y: 8 }, { type: 'pilafRobot', x: 15, y: 11 },
       { type: 'greenDrone', x: 3, y: 14 }, { type: 'pilafRobot', x: 6, y: 18 },
       { type: 'greenDrone', x: 27, y: 14 }, { type: 'greenDrone', x: 25, y: 18 },
       { type: 'pilafRobot', x: 27, y: 3 },

@@ -20,7 +20,8 @@ import { battle, bossFight, heroTile, removeAll } from './helpers';
  *   - `c14_roshi` (ep 105): Master Roshi, out of breath, is cornered by Universe 4. Caway and Dercori attack together;
  *     worn down, Caway sees him flex and jumps off the stage herself, and he seals Dercori in a jar with the Evil
  *     Containment Wave (Zeno finds it neat, so it is allowed). He goes Max Power against Ganos (a bird of prey from
- *     his second phase), ends it with a Kamehameha fired from his own life force, and his heart stops for a moment.
+ *     his second phase), ends it with a Kamehameha fired from his own life force, and his heart stops until Goku's
+ *     Super Saiyan Blue ki starts it again.
  *   - `c14_snipers` (ep 106): Tien against Universe 2's snipers. Harmira, the real sniper, fires from a hiding place
  *     across the ring and bounces his shots off Prum, whose body is a mirror (ki blasts come straight back off him);
  *     Tien has to trace the shots back to the nest. At Harmira's scripted end he shoots the stage out from under Tien,
@@ -325,14 +326,32 @@ registerScripts({
     await s.wait(40);
     await s.narrate('Master Roshi sinks to the stage... and lies still. That Kamehameha took everything he had. His heart has stopped.');
     await s.say('krillin', '(from the stands) MASTER ROSHI! Get up! Please, GET UP!', 'shock');
-    await s.wait(30);
+    // Goku leaves his own fight and drives Super Saiyan Blue ki into the old man's heart until it beats again (ep 105).
+    const [rx0, ry0] = heroTile(s);
+    stageOn(s, 'c14_gokuRoshi', 'gokuSSB', rx0 + side, ry0, side > 0 ? 'left' : 'right', 'Goku');
+    s.aura('c14_gokuRoshi', '#40c0f8');
+    await s.say('c14_gokuRoshi', 'Master Roshi! Come on, hang in there! Your heart just has to start again!', 'shout');
+    for (let i = 0; i < 3; i++) {
+      s.pose('c14_gokuRoshi', 'blast');
+      s.flash('#40c0f8', 6);
+      s.sfx('charge');
+      await s.wait(16);
+      s.pose('c14_gokuRoshi', null);
+      await s.wait(14);
+    }
+    s.aura('c14_gokuRoshi', null);
+    s.sprite('c14_gokuRoshi', 'goku');
     s.flash('#f8f0a0', 8);
     s.pose('hero', 'hurt');
     s.music('topArena');
     await s.talk([
       ['roshi', '...Gwahh! Hoo... hoo... A beautiful lady was waving at me from the other side. It seemed rude to leave without her number.', 'hurt'],
-      ['krillin', '(from the stands) Don\'t SCARE us like that!', 'angry'],
+      ['c14_gokuRoshi', 'Phew! Don\'t scare me like that, Master Roshi! Here, grab my hand.', 'happy'],
+      ['krillin', '(from the stands) Thank goodness...!', 'happy'],
     ]);
+    const [gx0, gy0] = onStage(s, rx0 + side * 8, ry0 - 3);
+    await s.walk('c14_gokuRoshi', gx0, gy0, 3);
+    removeAll(s, 'c14_gokuRoshi');
     await s.narrate('Master Roshi is still in the tournament. Barely.');
     s.set('c14_roshiDone');
     await s.done('c14_epRoshi', false);

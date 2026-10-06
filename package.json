@@ -9,7 +9,7 @@
     "preview": "vite preview --port 4173",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:balance": "vitest run tests/balance.test.ts"
+    "test:balance": "vitest run tests/balance.test.ts tests/grind.test.ts"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

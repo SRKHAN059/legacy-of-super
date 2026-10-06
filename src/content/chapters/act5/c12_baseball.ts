@@ -10,7 +10,7 @@ import { HUB } from './hubs';
 
 /**
  * Chapter 12 episode: the baseball game (anime ep 70). Champa challenges Beerus to a game of baseball, Universe 6
- * against Universe 7, for the right to Earth's food; Whis and Vados umpire (no ki, no flying, no destruction), and
+ * against Universe 7, for the right to Earth's food; Whis and Vados umpire (ki is fair, destruction is banned), and
  * Yamcha, once a pro, is the only player on Universe 7 who knows the rules. The player is Yamcha (a costume over the
  * active hero, who does no fighting here) for the ninth inning, as a LoG2-scale minigame on the existing input:
  *
@@ -20,7 +20,7 @@ import { HUB } from './hubs';
  *   always ends.
  * - Bottom of the ninth, batting: Champa pitches a fastball, a curve and his "godly" pitch that stops in mid-air;
  *   press A as the ball crosses the plate. In the sweet spot it is a walk-off home run; a little off it is a hit; a
- *   miss is a strike, and three of them end with the umpires ruling Champa's last pitch illegal (ki).
+ *   miss is a strike, and three of them end with the umpires ruling Champa's last pitch illegal (destruction).
  * - Baserunning: when Yamcha is on base, the next hit sends him home ahead of the throw. Press A at the right moment
  *   to slide under Botamo's tag; otherwise Champa's tag breaks the no-destruction rule and Vados calls him safe.
  *
@@ -407,7 +407,7 @@ async function yamchaAtBat(s: ScriptApi): Promise<AtBat> {
   // Strike three on the godly pitch: which stood still in mid-air.
   await s.talk([
     ['c12b_whis', 'Strike thr- hm.', 'neutral'],
-    ['c12b_vados', 'Lord Champa. A ball does not stop in mid-air and wait. That pitch was thrown with ki.', 'smirk'],
+    ['c12b_vados', 'Lord Champa. A ball does not stop in mid-air and wait. That pitch was thrown with ki... with the energy of destruction in it.', 'smirk'],
     ['c12b_whis', 'Illegal pitch. The batter takes first base.', 'happy'],
     ['c12b_champa', 'WHAT?! Vados, whose side are you on?!', 'angry'],
     ['c12b_vados', 'The rules\', my lord. As always.', 'smirk'],
@@ -529,7 +529,7 @@ async function bottomOfNinth(s: ScriptApi, u6Runs: number): Promise<number> {
       u7 += 1;
       await tied();
     }
-    await strikeout(s, 'piccolo', 'Piccolo', ['Hmph. Without ki I can barely follow it. Yamcha. How do you hit that?', 'neutral']);
+    await strikeout(s, 'piccolo', 'Piccolo', ['Hmph. A ball has no ki to sense. Without ki I can barely follow it. Yamcha. How do you hit that?', 'neutral']);
     outs = 1;
     board(s, u6, u7, outs);
     await s.narrate('Trunks pops up to Cabba for the second out.');
@@ -730,7 +730,7 @@ registerScripts({
       ['champa', 'Ahem! A contest. Universe 6 against Universe 7. Winner eats all of Earth\'s food. Forever!', 'happy'],
       ['beerus', 'And what contest is that? Another tournament? You lost the last one.', 'neutral'],
       ['vados', 'Baseball, Lord Beerus. An Earth game. Nine to a side, a bat, a ball. I have read the rulebook twice.', 'happy'],
-      ['whis', 'Ohoho! Then Vados and I shall umpire. No ki, no flying, and absolutely no destruction. Of anything.', 'happy'],
+      ['whis', 'Ohoho! Then Vados and I shall umpire. A little ki on the ball is fair play, but absolutely no destruction. Of anything.', 'happy'],
       ['beerus', '...Fine! I accept! ...{hero}. What is baseball?', 'angry'],
     ]);
     // Whoever Beerus asks points him at Yamcha, each in their own way.

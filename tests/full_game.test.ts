@@ -1409,16 +1409,18 @@ describe('story gates (LoG2 §6.6: coloured level gates on the critical path)', 
         expect(shut.errors).toEqual([]);
       });
 
-      it('costs about one or two clears of its zone from the level a player arrives with (EXP table + ROM kill clamp)', async () => {
+      it('costs a real grind of its zone from the level a player arrives with, up to four clears (EXP table + ROM kill clamp)', async () => {
         const visits = await zoneVisits(g);
         for (const [i, v] of visits.entries()) expect(v.length, `regular enemies within reach on ${g.zone[i][0]}`).toBeGreaterThan(0);
         const { kills, clears } = effort(g, visits);
         console.log(`[story gate] ${g.id}: ${g.character} L${g.arrive} -> L${g.level} = ${kills} kills, ${clears.toFixed(2)} clears of `
           + `${g.zone.map((z) => z[0]).join(' + ')} (${visits.map((v) => v.length).join('+')} enemies in reach)`);
-        // A real grind (LoG2's gates were never free), but never more than two passes through the zone.
+        // A real grind (LoG2's gates were never free), but at most four passes through the zone: LoG2's own story gates
+        // cost six to eight visits of their zones. What a gate costs in play is measured with the fair bot in
+        // tests/grind.test.ts ('story gates'), in minutes from the arrival level.
         expect(kills).toBeGreaterThanOrEqual(10);
         expect(clears).toBeGreaterThanOrEqual(0.5);
-        expect(clears).toBeLessThanOrEqual(2);
+        expect(clears).toBeLessThanOrEqual(4);
       });
 
       it('explains itself the first time: who, what level, where to switch and where to train', async () => {

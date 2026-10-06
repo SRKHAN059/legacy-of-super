@@ -273,7 +273,7 @@ registerMaps([
       { type: 'c07_debrisCrawler', x: 10, y: 4 }, { type: 'c07_debrisCrawler', x: 24, y: 16 }, { type: 'c07_debrisCrawler', x: 12, y: 21 },
       { type: 'c07_rockWisp', x: 17, y: 9 }, { type: 'c07_rockWisp', x: 28, y: 6 }, { type: 'c07_rockWisp', x: 31, y: 23 },
       { type: 'c07_debrisGolem', x: 22, y: 14 }, { type: 'c07_debrisGolem', x: 6, y: 13 },
-      { type: 'scarab', x: 19, y: 20 }, { type: 'scarab', x: 30, y: 8 },
+      { type: 'c07_debrisCrawler', x: 19, y: 20 }, { type: 'c07_debrisGolem', x: 30, y: 8 },
     ],
     pickups: [
       { id: 'c07_shard1', item: 'c07_starShard', x: 25, y: 5 },
@@ -401,7 +401,7 @@ registerMaps([
       { type: 'c08_gooHench', x: 12, y: 8 }, { type: 'c08_gooHench', x: 32, y: 12 }, { type: 'c08_gooHench', x: 23, y: 19 },
       { type: 'c08_sporeBeetle', x: 6, y: 19 }, { type: 'c08_sporeBeetle', x: 38, y: 15 }, { type: 'c08_sporeBeetle', x: 28, y: 24 },
       { type: 'c08_gooBlob', x: 16, y: 25 }, { type: 'c08_gooBlob', x: 33, y: 8 },
-      { type: 'giantSnake', x: 13, y: 14 }, { type: 'redRaptor', x: 40, y: 12 },
+      { type: 'c08_stalkSerpent', x: 13, y: 14 }, { type: 'c08_sporeBeetle', x: 40, y: 12 },
     ],
     triggers: [
       { id: 'c08_boysT', x: 2, y: 12, w: 6, h: 6, script: 'c08_boys', showIf: 'chapter==8&c08_landed&!c08_boysFound' },

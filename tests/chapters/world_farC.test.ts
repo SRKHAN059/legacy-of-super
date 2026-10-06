@@ -68,6 +68,7 @@ describe('world farC: maps load at every relevant chapter', () => {
     const pro = await count('future_city', 0);
     expect(pro).toContain('fc_scavDrone');
     expect(pro).not.toContain('fc_hunterDrone');
+    for (const id of ['future_city', 'future_highway', 'future_cc_ruins']) expect(await count(id, 0), id).not.toContain('greenDrone');
     const late = await count('future_city', 9);
     expect(late).toContain('fc_hunterDrone');
     expect(late).not.toContain('fc_scavDrone');

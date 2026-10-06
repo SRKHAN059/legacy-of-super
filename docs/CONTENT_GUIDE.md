@@ -260,6 +260,12 @@ so the engine scales enemy damage by the attacking stat (`enemyPowerScale`: ×1 
 up (`enemyMaxHp`: −25% at 58+; bosses keep their HP). Keep authoring against the tables above; the scouter shows the
 trimmed HP. Exploders' death blast hits with max(STR, POW) ×1.1.
 
+**Regular enemies are tuned in play, not only by tier.** The tables above are where to start; what counts is the
+hero who walks into the zone, at the level and in the form the story brings: LoG2's per-enemy band is 5-9 melee
+strings to drop one and 15 or more of its hits to knock the hero out, and a zone clear costs no knock-out and at most
+one Senzu. Lower HP, END and the attack stat to get there, not EXP (a zone's EXP per minute sets how long the story
+gates take). `tests/grind.test.ts` holds every hostile zone to this (§9).
+
 Keep END < 124. Use `resMelee`/`resKi` (0.5 = half damage) for gimmicks (e.g. a ki-resistant shell).
 `absorbKi: true` = melee-only boss (LoG2 Androids 19/20 — ki heals them; tell the player via dialogue).
 Boss behaviour (`boss.phases`): each phase lists `moves` from `chase shot volley rain beam dash teleport summon
@@ -400,7 +406,8 @@ Frieza attack). World builders own ambient NPCs; chapter agents own story NPCs v
    `src/content/dev/index.ts` under that flag; keep new debug content there, never as a side effect of another
    import. `tests/content.test.ts` (developer content block) reloads the content with the flag off and checks the
    registries and journal are exactly the dev ones minus the dev content.
-4. Fair-play balance (`tests/balance.test.ts`, `npm run test:balance`, part of the default suite, about 45 s). A
+4. Fair-play balance (`tests/balance.test.ts`, part of the default suite, about 45-65 s; `npm run test:balance`
+   runs it together with the grind sweep of point 5). A
    fair bot (`tests/fairbot.ts`) plays fights with real input only: it takes real damage, eats Senzu through the
    pause menu, transforms and fires techniques, and hunts down free-roam waves by walking distance. The file checks:
    - the harness itself (LoG2 reference bosses, the Senzu menu, record and replay, per-fight caps);
@@ -424,6 +431,34 @@ Frieza attack). World builders own ambient NPCs; chapter agents own story NPCs v
    ```
    `LOS_ONLY=<enemy type or script id>` narrows it to one fight, `LOS_SEEDS=<n>` changes the seed count, and
    `LOS_REPLAY_TRACE=<file>` writes one JSON line per replay (compare two runs to check determinism).
+
+   A recording rolls its own level-ups (the full-game run is not seeded), so a fresh one moves every hero's stats by a
+   point or two: re-run this file and `tests/grind.test.ts` on it before committing it, and keep only the story run
+   (the `node -e` filter in the `every story fight` header).
+5. Grind zones and story gates (`tests/grind.test.ts`, part of the default suite, about 30 s). LoG2's core loop is
+   walking into a hostile zone and fighting its regular enemies for EXP; `clearZone` (`tests/fairbot.ts`) has the fair
+   bot do exactly that, sealed in, through real input and real damage both ways, from the save a player has when the
+   zone opens (taken from the committed recording). The file checks:
+   - the sweep: every hostile map with spawns, at each stage its spawn mixes open (`ZONE_STAGES`; a new hostile map
+     without a stage fails), cleared on seeds 1-3 and held to one rule (`RULE`, means over the seeds): no knock-out,
+     at most 1 Senzu a clear; median hits to kill at most 10 and hits to KO at least 12 over the zone's types, and not
+     a walkover (under 3 to kill with over 40 to KO); every type at most 10 hits to kill and at least 12 to KO (9 for
+     a hero of L11 or below, as LoG2's early zones); the regular enemies in reach exactly the stage's `spawns`; two of
+     three seeds cleared, never more than 2 enemies left; and at most 5 minutes of clearing per level at the arrival
+     level (LoG2's slowest zone takes 3.4). Documented exemptions: a stage's `heavy` types, its one big-bodied enemy
+     (the dire wolf, Pilaf's pond King Crab, the red Destroyer, the Universe 4 roamer), each named after the LoG2 enemy
+     that stands behind it and held to LoG2's own extremes (25 hits to kill, 4 to KO);
+   - the story gates (`STORY_GATES`): each ground from its `arrive` level to its gate level in its own zones, visit
+     after visit with HP, EXP and Senzu carried over (20 s per return to a zone), on seeds 1-3. It must cost 2-12
+     minutes of fair-bot play (LoG2's own gates cost this bot 7-15), with no knock-out and at most 1 Senzu per visit.
+     `GATE_SHORT` lists the documented exception (Chapter 3's switching tutorial, capped by Chapter 4's band start);
+   - the harness itself: mob attack stats, the LoG2 reference zones against the ROM tables, map entries, knock-out
+     counting, goal stops and save chaining.
+
+   When you add or retune a hostile zone, add or update its stage (the failure message prints the enemies in reach
+   and every rule it breaks). The report (`LOS_ZONE_REPORT=<file>`, command in the file header) adds LoG2's own zones
+   and gates as the reference, per-type numbers and minutes per level; `LOS_ZONE_ONLY=<map>` narrows it and
+   `LOS_GRIND_SEEDS=1,2,3,4,5,6,7,8` widens the seeds (worth doing before calling a 3-seed failure real).
 
 ## 10. Final report
 

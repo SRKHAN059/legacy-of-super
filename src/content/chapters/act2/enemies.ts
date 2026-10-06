@@ -63,6 +63,18 @@ registerEnemies([
     id: 'c04_roller', name: 'Rolling Beetle', sprite: 'c04_roller', hp: 999, str: 12, pow: 1, end: 50, exp: 0, ai: 'hazard', speed: 1.1,
     invulnerable: true, drops: 'none', desc: 'It rolls back and forth all day. Nobody knows why. Never carry anything fragile near one.',
   },
+  // Whis's training field wildlife: the young of the Puffbirds and Moss Grazers on Beerus's grounds. Vegeta is forced
+  // here at L15 (Super Saiyan) and grinds the shrine's Vegeta 17 gate on them, so they sit where LoG2's Southern
+  // Continent sits for its L18 Vegeta (Scorpions 400 HP / STR 18, Snakes 275 / 15): 6-8 strings to drop one in form,
+  // 15-16 of their hits to knock him out (the grown-ups took 7-10 and knocked him out in 9-10), at the adults' EXP.
+  {
+    id: 'c04_puffChick', name: 'Puffbird Chick', sprite: 'c04_puffChick', hp: 380, str: 14, pow: 1, end: 12, exp: 900, ai: 'flyer', speed: 1.3,
+    desc: 'A puffbird chick from Whis\'s field, still more fluff than bird. Pecks at anything shiny, Saiyan armour included.',
+  },
+  {
+    id: 'c04_mossCalf', name: 'Moss Calf', sprite: 'c04_mossCalf', hp: 480, str: 14, pow: 1, end: 16, exp: 2200, ai: 'charger', speed: 1.1,
+    desc: 'A young Moss Grazer. Whis lets a few roam his field to keep the grass trim. No horns yet, but it still charges.',
+  },
   // ---------------------------------------------------------------- Chapter 5
   {
     id: 'c05_grunt', name: 'Frieza Force Grunt', sprite: 'frizaSoldier', hp: 300, str: 20, pow: 22, end: 15, exp: 900, ai: 'shooter', speed: 1.0,

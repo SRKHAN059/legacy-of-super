@@ -1,6 +1,7 @@
 // Content module: world/earthA (Mt. Paozu, Satan City, Kame House, The Lookout).
 // Registers its maps/scripts/etc. on import.
 import './art';
+import './wildlife';
 import './paozu';
 import './satan';
 import './kame';

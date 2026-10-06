@@ -83,6 +83,7 @@ registerCreatures({
   c08_core: { kind: 'blob', body: '#d050d0', accent: '#f8f070', eye: '#f8f8f8', size: 24 },
   c08_gooBlob: { kind: 'blob', body: '#9040c0', eye: '#f8f070', size: 32 },
   c08_sporeBeetle: { kind: 'bug', body: '#a06838', accent: '#f0d0a0', horns: true, stripes: true, size: 32 },
+  c08_stalkSerpent: { kind: 'snake', body: '#d8ccb0', belly: '#f4ecd8', accent: '#9058b0', eye: '#c040e0', size: 40 },
 });
 
 registerScans({

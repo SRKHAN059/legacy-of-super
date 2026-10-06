@@ -97,20 +97,20 @@ export const SCANS: Record<string, ScanEntry> = {
   c07_attendant: { name: 'Arena Attendant', kind: 'Nameless Planet / staff', hp: 40, str: 3, pow: 2, end: 3, desc: 'One of the staff hired to run the U6-U7 tournament. Has not stopped trembling since Zeno arrived.' },
 
   // ---------------------------------------------------------------- Universe 10 (Babari)
-  babarian: { name: 'Babarian', kind: 'U10 Babarian', hp: 2000, str: 44, pow: 1, end: 38, desc: 'A native of planet Babari. Fights anything that is not a Babarian, and most things that are.' },
+  babarian: { name: 'Babarian', kind: 'U10 Babarian', hp: 1100, str: 34, pow: 1, end: 32, desc: 'A native of planet Babari. Fights anything that is not a Babarian, and most things that are.' },
   c10_babarianChief: { name: 'Babarian Chief', kind: 'U10 Babarian / chief', hp: 4900, str: 49, pow: 40, end: 52, desc: 'The biggest, loudest Babarian on the planet. Guards the sacred fruit tree with his very large club.' },
-  c10_babarianSlinger: { name: 'Babarian Slinger', kind: 'U10 Babarian', hp: 1700, str: 30, pow: 42, end: 34, desc: 'Throws rocks with frightening accuracy. Gowasu insists Babarians will invent writing one day.' },
+  c10_babarianSlinger: { name: 'Babarian Slinger', kind: 'U10 Babarian', hp: 900, str: 24, pow: 33, end: 28, desc: 'Throws rocks with frightening accuracy. Gowasu insists Babarians will invent writing one day.' },
 
   // ---------------------------------------------------------------- Tournament of Power
-  prideTrooper: { name: 'Pride Trooper', kind: 'U11 / Pride Troopers', hp: 5400, str: 66, pow: 60, end: 58, desc: 'A member of Universe 11\'s elite justice squad. Disciplined, fast, and very sure of what is right.' },
+  prideTrooper: { name: 'Pride Trooper', kind: 'U11 / Pride Troopers', hp: 1650, str: 46, pow: 40, end: 42, desc: 'A member of Universe 11\'s elite justice squad. Disciplined, fast, and very sure of what is right.' },
   basil: { name: 'Basil', kind: 'U9 / Trio de Dangers', hp: 5000, str: 66, pow: 1, end: 54, desc: 'The kicking brother of Universe 9\'s Trio de Dangers. A wolf-man who never stops moving.' },
   lavender: { name: 'Lavender', kind: 'U9 / Trio de Dangers', hp: 5000, str: 50, pow: 66, end: 54, desc: 'The poison-breathing brother of the Trio de Dangers. Blinds his foes, then takes his time.' },
   bergamo: { name: 'Bergamo', kind: 'U9 / Trio de Dangers', hp: 9000, str: 64, pow: 62, end: 68, desc: 'Eldest of the Trio de Dangers. Grows larger with every blow he absorbs. Loves a speech.' },
-  universeFighter: { name: 'Rival Fighter', kind: 'Multiverse / entrant', hp: 4800, str: 60, pow: 50, end: 52, desc: 'A warrior from another universe, fighting for its survival. Losing means their whole world is erased.' },
-  c14_u2Fighter: { name: 'U2 Warrior', kind: 'U2 / Team U2', hp: 4700, str: 50, pow: 64, end: 52, desc: 'A warrior of love from Universe 2. Her heart-shaped blasts hurt surprisingly much.' },
-  c14_u4Fighter: { name: 'U4 Fighter', kind: 'U4 / Team U4', hp: 5200, str: 64, pow: 1, end: 54, desc: 'A Universe 4 trickster. Quitela\'s team prefers traps and tricks to a fair fight.' },
-  c14_u9Wolf: { name: 'U9 Fighter', kind: 'U9 / Team U9', hp: 4600, str: 60, pow: 1, end: 52, desc: 'A Universe 9 brawler with a wolf\'s snout. His universe is already in trouble, and he knows it.' },
-  c14_u10Fighter: { name: 'U10 Fighter', kind: 'U10 / Team U10', hp: 4800, str: 58, pow: 62, end: 52, desc: 'A Universe 10 warrior. Fires pressurised water-ki blasts. Gowasu cheers every single one.' },
+  universeFighter: { name: 'Rival Fighter', kind: 'Multiverse / entrant', hp: 1639, str: 46, pow: 40, end: 40, desc: 'A warrior from another universe, fighting for its survival. Losing means their whole world is erased.' },
+  c14_u2Fighter: { name: 'U2 Warrior', kind: 'U2 / Team U2', hp: 1650, str: 38, pow: 46, end: 40, desc: 'A warrior of love from Universe 2. Her heart-shaped blasts hurt surprisingly much.' },
+  c14_u4Fighter: { name: 'U4 Fighter', kind: 'U4 / Team U4', hp: 4100, str: 44, pow: 1, end: 10, desc: 'A Universe 4 trickster. Quitela\'s team prefers traps and tricks to a fair fight.' },
+  c14_u9Wolf: { name: 'U9 Fighter', kind: 'U9 / Team U9', hp: 1650, str: 46, pow: 1, end: 40, desc: 'A Universe 9 brawler with a wolf\'s snout. His universe is already in trouble, and he knows it.' },
+  c14_u10Fighter: { name: 'U10 Fighter', kind: 'U10 / Team U10', hp: 1650, str: 42, pow: 46, end: 40, desc: 'A Universe 10 warrior. Fires pressurised water-ki blasts. Gowasu cheers every single one.' },
 
   // ---------------------------------------------------------------- Frieza Force & old enemies
   frizaSoldier: { name: 'Frieza Soldier', kind: 'Frieza Force / grunt', hp: 90, str: 12, pow: 15, end: 8, desc: 'One of Frieza\'s thousand. Fires ki blasts from range and panics up close.' },

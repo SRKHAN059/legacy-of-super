@@ -72,8 +72,11 @@ const SADALA: EnemyDef[] = [
     },
   },
   { id: 'c13_kaleRematch', name: 'Kale (Legendary)', sprite: 'kaleLSSJ', hp: 6200, str: 72, pow: 1, end: 66, exp: 70000, ai: 'charger', speed: 1.25, box: { w: 16, h: 10 }, drops: 'rich', desc: 'Kale in a Legendary form she can control now. Mostly.' },
-  { id: 'c13_sadalaPtero', name: 'Crag Pterodactyl', sprite: 'c13_sadalaPtero', hp: 5000, str: 64, pow: 1, end: 54, exp: 60000, ai: 'flyer', speed: 1.5, flying: true, desc: 'Sadala\'s native pterodactyl. Nests on the red spires east of the old quarter.' },
-  { id: 'c13_cragHound', name: 'Crag Hound', sprite: 'c13_cragHound', hp: 5400, str: 66, pow: 1, end: 56, exp: 64000, ai: 'rusher', speed: 1.45, desc: 'A rock-skinned hound of the Sadala badlands. Saiyan kids race them for fun.' },
+  // The crags' wildlife is a post-game grind spot on LoG2's late band (its Mushroom Cavern at L45): 7-8 hits to kill
+  // and 16-19 to knock out the Goku L43-44 in Super Saiyan Blue who comes back after the credits, for the best EXP per
+  // minute outside the trophy gates.
+  { id: 'c13_sadalaPtero', name: 'Crag Pterodactyl', sprite: 'c13_sadalaPtero', hp: 1800, str: 50, pow: 1, end: 42, exp: 60000, ai: 'flyer', speed: 1.5, flying: true, desc: 'Sadala\'s native pterodactyl. Nests on the red spires east of the old quarter.' },
+  { id: 'c13_cragHound', name: 'Crag Hound', sprite: 'c13_cragHound', hp: 1850, str: 50, pow: 1, end: 46, exp: 64000, ai: 'rusher', speed: 1.45, desc: 'A rock-skinned hound of the Sadala badlands. Saiyan kids race them for fun.' },
 ];
 
 registerEnemies([...U6, ...LEADER, ...SADALA]);

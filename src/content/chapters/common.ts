@@ -177,8 +177,9 @@ export interface StoryGate {
   zone: Array<[string, number, number]>;
   /**
    * The level `character` has when a player who fights what the story puts in front of them reaches the gate (the
-   * full-game run measures the same). The gate asks for half a clear to two clears of `zone` on top of it, and at
-   * least ten kills (LoG2's effort: one or two zones of grinding).
+   * full-game run measures the same). The gate asks for half a clear to four clears of `zone` on top of it, at least
+   * ten kills, and two to twelve minutes of fair-bot grinding (tests/grind.test.ts; LoG2's own story gates cost that
+   * bot 7 to 15).
    */
   arrive: number;
   /** The hero's first words at the gate: when the hero is `character`, and when it is somebody else. */
@@ -212,8 +213,9 @@ export const STORY_GATES: readonly StoryGate[] = [
     train: 'The bandits, sand snakes and scarabs of the Diablo Desert make good training.',
   },
   {
-    // LoG2's Piccolo 25 into Gingertown: Piccolo, benched since Chapter 5, must catch up before the tournament.
-    id: 'c07_g_stadium', map: 'c07_nameless_grounds', chapter: 7, character: 'piccolo', level: 24,
+    // LoG2's Piccolo 25 into Gingertown, at LoG2's own level: Piccolo, benched since Chapter 5, must catch up before
+    // the tournament (five levels from his L20 arrival, about three minutes of fair-bot grinding on the rim).
+    id: 'c07_g_stadium', map: 'c07_nameless_grounds', chapter: 7, character: 'piccolo', level: 25,
     rect: [18, 4, 4, 1], hint: [16, 5, 8, 1],
     far: ['c07_nameless_arena', ['c07_nameless_grounds', 18, 0, 4, 4]],
     rescue: ['c07_nameless_arena', ['c07_nameless_grounds', 18, 0, 4, 4]],
@@ -225,9 +227,9 @@ export const STORY_GATES: readonly StoryGate[] = [
     train: 'The debris creatures on the crater rim to the east make good training.',
   },
   {
-    // LoG2's Trunks 30 at Dr. Gero's lab, a few levels above the one he rejoins at (there 27, here 30). The side
-    // chamber's Trunks 32 cache in the same mine opens with it.
-    id: 'c09_g_shaft', map: 'c09_mine', chapter: 9, character: 'trunks', level: 32,
+    // LoG2's Trunks 30 at Dr. Gero's lab, three levels above the one he rejoins at (there 27, here 30). The side
+    // chamber's Trunks 32 cache in the same mine opens on the way.
+    id: 'c09_g_shaft', map: 'c09_mine', chapter: 9, character: 'trunks', level: 33,
     rect: [29, 9, 3, 1], hint: [29, 10, 3, 1],
     far: [['c09_mine', 25, 1, 14, 8]],
     rescue: [],
@@ -239,9 +241,10 @@ export const STORY_GATES: readonly StoryGate[] = [
     train: 'The crystal bats, rock crawlers and haywire machines of the mine make good training.',
   },
   {
-    // LoG2's Vegeta 30 on the Tropical Islands: a gate for the character the story is forcing, so Black is fought at
-    // the chapter's band start rather than at the forced floor (34 - 3).
-    id: 'c10_g_courtyard', map: 'c10_lair', chapter: 10, character: 'goku', level: 34,
+    // LoG2's Vegeta 30 on the Tropical Islands: a gate for the character the story is forcing, so Black is fought a
+    // level past the chapter's band start rather than at the forced floor (34 - 3). Two levels over the arrival: one
+    // was under two minutes of fair-bot grinding (tests/grind.test.ts), where LoG2's gates cost that bot 7 to 15.
+    id: 'c10_g_courtyard', map: 'c10_lair', chapter: 10, character: 'goku', level: 35,
     rect: [14, 8, 6, 1], hint: [14, 9, 6, 1],
     // The chapter's first trip (the raid) plays in the courtyard; Black seals it behind them as they retreat.
     standsIf: 'c10_raidDone',
@@ -257,8 +260,9 @@ export const STORY_GATES: readonly StoryGate[] = [
   {
     // LoG2's Goku 40 before the Cell Games, given to the hero the finale leans on most besides Goku: Gohan leads
     // Universe 7's relays in Chapter 14, so Chapter 13 makes the player bring him back up (his Lookout training
-    // lifts him to the band start - 3; the gate asks for one clear of the jungle on top).
-    id: 'c13_g_north', map: 'c13_monster_jungle', chapter: 13, character: 'gohan', level: 40,
+    // lifts him to the band start - 3; the gate asks for two levels of jungle grinding on top, about three minutes of
+    // fair-bot play in tests/grind.test.ts: one level was under two).
+    id: 'c13_g_north', map: 'c13_monster_jungle', chapter: 13, character: 'gohan', level: 41,
     rect: [20, 0, 4, 2], hint: [17, 1, 10, 3],
     far: ['c13_monster_camp', ['c13_monster_jungle', 20, 0, 4, 2]],
     rescue: ['c13_monster_camp', ['c13_monster_jungle', 20, 0, 4, 2]],

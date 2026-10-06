@@ -135,7 +135,7 @@ export class ScriptApi {
       return { name: npc.name || CAST_NAMES[npc.spriteId] || '', portrait: CAST[npc.spriteId] ? portrait(npc.spriteId, expr) : null, top };
     }
     if (who === 'hero') return { name: CHARACTERS[this.hero].name, portrait: portrait(id, expr), top };
-    if (CAST[id]) return { name: CAST_NAMES[id] ?? id, portrait: portrait(id, expr), top };
+    if (CAST[id]) return { name: CAST_NAMES[id] ?? id, portrait: portrait(this.formFace(id), expr), top };
     return { name: who, top };
   }
 
@@ -157,6 +157,16 @@ export class ScriptApi {
 
   private heroSprite(): string {
     return this.game.field?.player.spriteId ?? CHARACTERS[this.hero].sprite;
+  }
+
+  /**
+   * Portrait id for a cast id: the active hero named by their own id while transformed shows the form's face (Super
+   * Saiyan Gohan speaking as 'gohan' in his bout), so lines and beam struggles match the sprite on the field.
+   */
+  private formFace(id: string): string {
+    const player = this.game.field?.player;
+    if (!player?.formActive || id !== CHARACTERS[this.hero].sprite) return id;
+    return CAST[player.spriteId] ? player.spriteId : id;
   }
 
   /** Substitute {hero} with the active character's name. */
@@ -638,7 +648,7 @@ export class ScriptApi {
   async beamStruggle(hero: string, foe: string, heroColor: string, foeColor: string, lines: string[] = [], pressure = 0.18): Promise<void> {
     await this.game.beamStruggle({
       heroName: CAST_NAMES[hero] ?? hero, foeName: CAST_NAMES[foe] ?? foe, heroColor, foeColor,
-      heroPortrait: portrait(hero, 'shout'), foePortrait: portrait(foe, 'angry'), lines: lines.map((l) => this.fmt(l)), pressure,
+      heroPortrait: portrait(this.formFace(hero), 'shout'), foePortrait: portrait(foe, 'angry'), lines: lines.map((l) => this.fmt(l)), pressure,
     });
   }
 

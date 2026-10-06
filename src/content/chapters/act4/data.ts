@@ -6,7 +6,8 @@ import { registerSpots } from '../../world';
 /**
  * Act 4 data: key items, journal entries, world-map spots, regular enemies and bosses for
  * Chapters 9 (SOS from the Future), 10 (Gods of Universe 10) and 11 (Project Zero Mortals).
- * Stats follow CONTENT_GUIDE §6 (T5/T6 mooks, boss rows 29-36 and 37-44).
+ * Bosses follow CONTENT_GUIDE §6 (boss rows 29-36 and 37-44); regular enemies are tuned to LoG2's own per-enemy band
+ * at the level the story brings the hero in (see the regular enemies below).
  */
 
 // ------------------------------------------------------------------ key items
@@ -61,56 +62,66 @@ registerSpots([
 
 // ------------------------------------------------------------------ regular enemies
 
+// Tuned to LoG2's per-enemy band (critic round 2, gap 1; tests/grind.test.ts measures every hostile zone and
+// tests/balance.test.ts 'grind zones: act 4' holds these): with the hero in form at the level the story brings them in,
+// 5-9 strings drop one and it takes 15+ of its own hits to knock the hero out, as LoG2's Tropical Islands (L30) and
+// Snowy Highlands (L35) mobs do. At the T5/T6 rows of CONTENT_GUIDE §6 they took 10-17 strings, and the engine's late-game
+// damage scale let a STR 44 blow take a seventh of Super Saiyan Trunks's health at L30: one clear of the mine cost him
+// his whole bag of Senzu. So HP and END sit below those rows and the attack stat (STR, or POW for shooters) runs 29-39,
+// rising chapter by chapter; EXP keeps the T5/T6 rates, which the faster clears turn into more EXP a minute.
 registerEnemies([
-  // ---- Chapter 9: the abandoned mine (T5).
+  // ---- Chapter 9: the abandoned mine, the Trunks 33 gate's grind zone (Trunks arrives at L30, Super Saiyan).
   {
-    id: 'c09_crystalBat', name: 'Crystal Bat', sprite: 'c09_crystalBat', hp: 1400, str: 38, pow: 1, end: 30, exp: 9500, ai: 'flyer', speed: 1.5,
+    id: 'c09_crystalBat', name: 'Crystal Bat', sprite: 'c09_crystalBat', hp: 720, str: 29, pow: 1, end: 24, exp: 9500, ai: 'flyer', speed: 1.5,
     desc: 'A cave bat that feeds on Hyper-Crystal radiation. Its wings ring like glass when it dives.',
   },
   {
-    id: 'c09_mineDrone', name: 'Survey Drone', sprite: 'c09_mineDrone', hp: 1450, str: 1, pow: 40, end: 32, exp: 10000, ai: 'shooter', speed: 1.0, flying: true,
-    shot: { color: '#40f0f0', cooldown: 85, speed: 2.4, mult: 0.85 },
+    id: 'c09_mineDrone', name: 'Survey Drone', sprite: 'c09_mineDrone', hp: 820, str: 1, pow: 30, end: 26, exp: 10000, ai: 'shooter', speed: 1.0, flying: true,
+    shot: { color: '#40f0f0', cooldown: 95, speed: 2.4, mult: 0.85 },
     desc: 'A Capsule Corp survey drone left running for years. It now treats every visitor as a cave-in hazard.',
   },
   {
-    id: 'c09_rockCrawler', name: 'Rock Crawler', sprite: 'c09_rockCrawler', hp: 1900, str: 42, pow: 1, end: 38, exp: 13000, ai: 'charger', speed: 1.15,
+    id: 'c09_rockCrawler', name: 'Rock Crawler', sprite: 'c09_rockCrawler', hp: 1000, str: 32, pow: 1, end: 32, exp: 13000, ai: 'charger', speed: 1.15,
     desc: 'A beetle the size of a motorbike with crystal-studded horns. It rams first and asks questions never.',
   },
   {
-    id: 'c09_haywireMech', name: 'Haywire Digger', sprite: 'c09_haywireMech', hp: 2100, str: 44, pow: 40, end: 40, exp: 15000, ai: 'heavy', speed: 0.8, box: { w: 20, h: 10 },
+    id: 'c09_haywireMech', name: 'Haywire Digger', sprite: 'c09_haywireMech', hp: 1150, str: 33, pow: 30, end: 36, exp: 15000, ai: 'heavy', speed: 0.8, box: { w: 20, h: 10 },
     shot: { color: '#f8a040', cooldown: 110, speed: 2.0, mult: 0.9 },
     desc: 'A mining robot whose safety chip fried decades ago. Still drilling. Still very angry about it.',
   },
-  // ---- Chapter 10: Babari (T5) and the ruins around Black's hideout (T5).
+  // ---- Chapter 10: Babari (Goku L31, Super Saiyan Blue) and the ruins around Black's hideout, the Goku 35 gate's
+  // grind zone (Goku arrives at L33).
   {
-    id: 'c10_babarian', name: 'Babarian Warrior', sprite: 'babarian', hp: 2000, str: 44, pow: 1, end: 38, exp: 15000, ai: 'rusher', speed: 1.2,
+    id: 'c10_babarian', name: 'Babarian Warrior', sprite: 'babarian', hp: 1100, str: 34, pow: 1, end: 32, exp: 15000, ai: 'rusher', speed: 1.2,
     desc: 'A club-swinging native of Babari. Fights anything that is not a Babarian, and most things that are.',
   },
   {
-    id: 'c10_babarianSlinger', name: 'Babarian Slinger', sprite: 'c10_babarianSlinger', hp: 1700, str: 30, pow: 42, end: 34, exp: 14000, ai: 'shooter', speed: 1.0,
+    id: 'c10_babarianSlinger', name: 'Babarian Slinger', sprite: 'c10_babarianSlinger', hp: 900, str: 24, pow: 33, end: 28, exp: 14000, ai: 'shooter', speed: 1.0,
     shot: { color: '#a08050', cooldown: 80, speed: 2.4, mult: 0.8 },
     desc: 'A Babarian who throws rocks with frightening accuracy. Gowasu insists they will invent writing one day.',
   },
   {
-    id: 'c10_babariBeast', name: 'Horned Lizard', sprite: 'c10_babariBeast', hp: 2200, str: 46, pow: 1, end: 40, exp: 18000, ai: 'charger', speed: 1.1,
+    id: 'c10_babariBeast', name: 'Horned Lizard', sprite: 'c10_babariBeast', hp: 1200, str: 34, pow: 1, end: 34, exp: 18000, ai: 'charger', speed: 1.1,
     desc: 'A Babari predator with a horned snout. The Babarians ride the tame ones. There are no tame ones here.',
   },
   {
-    id: 'c10_mutantHound', name: 'Ruin Hound', sprite: 'c10_mutantHound', hp: 1900, str: 45, pow: 1, end: 38, exp: 16000, ai: 'rusher', speed: 1.35,
+    id: 'c10_mutantHound', name: 'Ruin Hound', sprite: 'c10_mutantHound', hp: 1200, str: 36, pow: 1, end: 32, exp: 16000, ai: 'rusher', speed: 1.35,
     desc: 'Wild dogs grown huge and mean in the ruined city. They avoid Black\'s hideout... mostly.',
   },
   {
-    id: 'c10_scrapMech', name: 'Black\'s Sentry', sprite: 'c10_scrapMech', hp: 2200, str: 46, pow: 44, end: 40, exp: 19000, ai: 'heavy', speed: 0.85, box: { w: 20, h: 10 },
+    id: 'c10_scrapMech', name: 'Black\'s Sentry', sprite: 'c10_scrapMech', hp: 1450, str: 37, pow: 35, end: 38, exp: 19000, ai: 'heavy', speed: 0.85, box: { w: 20, h: 10 },
     shot: { color: '#f070b0', cooldown: 100, speed: 2.2, mult: 0.9 },
     desc: 'A salvaged security robot. Someone painted its visor pink. Someone with a lot of free time.',
   },
-  // ---- Chapter 11: Black's clones (T6) and the sealing wards.
+  // ---- Chapter 11: Black's clones (Rage Trunks, L34) and the sealing wards.
   {
-    id: 'c11_blackClone', name: 'Black Clone', sprite: 'gokuBlack', hp: 2800, str: 50, pow: 1, end: 44, exp: 30000, ai: 'rusher', speed: 1.35,
+    id: 'c11_blackClone', name: 'Black Clone', sprite: 'gokuBlack', hp: 1700, str: 39, pow: 1, end: 38, exp: 30000, ai: 'rusher', speed: 1.35,
     desc: 'A copy of Goku Black born from the rift in the sky. As arrogant as the original, and just as eager to fight.',
   },
   {
-    id: 'c11_roseClone', name: 'Rose Clone', sprite: 'blackRose', hp: 2600, str: 40, pow: 52, end: 42, exp: 32000, ai: 'shooter', speed: 1.15,
+    // A shooter backs away from the hero at its own speed; at 1.15 a Rose Clone drifted into the plaza's north-west
+    // pocket behind the dead tree and dragged a clear out to a minute.
+    id: 'c11_roseClone', name: 'Rose Clone', sprite: 'blackRose', hp: 1300, str: 32, pow: 38, end: 36, exp: 32000, ai: 'shooter', speed: 1.0,
     shot: { color: '#f070b0', cooldown: 70, speed: 2.8, mult: 0.9 },
     desc: 'A clone in Super Saiyan Rose. Fires pink ki from a distance and calls it "beautiful" every single time.',
   },

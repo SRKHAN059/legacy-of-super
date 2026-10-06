@@ -1,15 +1,18 @@
 import '../src/content';
 import { CHARACTERS, FORMS, type CharId } from '../src/content/characters';
 import { ENEMIES, registerEnemies, type BossMove, type EnemyDef } from '../src/content/enemies';
-import { registerMaps } from '../src/content/registry';
+import { MAPS, registerMaps, resolveMap } from '../src/content/registry';
 import { TECHNIQUES, type Technique } from '../src/content/techniques';
+import { SPOTS } from '../src/content/world';
+import { terrainSolid } from '../src/art/tiles';
 import { TILE } from '../src/engine/constants';
 import { BUTTONS, type Button } from '../src/engine/input';
 import { dirVec, overlaps, Rng, type Dir, type Rect } from '../src/engine/math';
 import { enemyMaxHp, type Enemy } from '../src/game/enemy';
-import type { Field } from '../src/game/field';
+import { Field } from '../src/game/field';
 import type { Game } from '../src/game/game';
 import { damage, ENEMY_POWER, enemyPowerScale, MELEE_POWER } from '../src/game/leveling';
+import type { EnemySpawn, MapDef } from '../src/game/mapdef';
 import type { Player } from '../src/game/player';
 import { registerScripts, ScriptApi, type FightOpts, type FightResult, type ScriptCtx } from '../src/game/script';
 import { GameState, type CharState, type SaveData } from '../src/game/state';
@@ -268,6 +271,11 @@ export class FairBot {
   private dodgeVec = { x: 0, y: 0 };
   private path: { pts: Array<{ x: number; y: number }>; t: number } | null = null;
   private stuck = { x: 0, y: 0, n: 0 };
+  /**
+   * Path only through steps the feet box can slide along, not just between free tiles (set by `clearZone`: a long walk
+   * across a zone meets props straddling two tiles; the story-fight replays keep the paths they were tuned with).
+   */
+  slidePaths = false;
   private lastL = -9;
   private lastPose = 0;
   /** The map `lastL` / `lastPose` were stamped on. */
@@ -285,6 +293,12 @@ export class FairBot {
   private roomT = 0;
   private roomWait = 0;
 
+  /**
+   * Enemies the bot leaves alone until a field tick (zone clears only: one it cannot get at, hovering over a wall or
+   * across a ledge, while others wait). Always empty in story fights.
+   */
+  private shunned = new Map<Enemy, number>();
+
   constructor(sim: Sim, seed: number) {
     this.sim = sim;
     this.rng = new Rng((seed * 2654435761) >>> 0 || 1);
@@ -292,6 +306,17 @@ export class FairBot {
 
   get game(): Game {
     return this.sim.game;
+  }
+
+  /** The enemy the current engagement is aimed at (null between engagements). */
+  get target(): Enemy | null {
+    return this.plan?.target ?? null;
+  }
+
+  /** Leave an enemy alone until field tick `until` (see `shunned`). */
+  shun(e: Enemy, until: number): void {
+    this.shunned.set(e, until);
+    if (this.plan?.target === e) this.plan = null;
   }
 
   // ---------------------------------------------------------------------------------------------- fight lifecycle
@@ -568,7 +593,7 @@ export class FairBot {
       if (b.run.kind === 'wave') return true;
       return !!e.uid || e.def.id === minion || d(e) < 48;
     };
-    const live = f.enemies.filter((e) => this.vulnerable(f, e) && (e === b.boss || inScope(e)));
+    const live = f.enemies.filter((e) => this.vulnerable(f, e) && (e === b.boss || inScope(e)) && !((this.shunned.get(e) ?? -1) > f.tick));
     // Reachable on foot first (a player cannot punch across a river), nearest by the walk there, not as the crow
     // flies: in a free-roam wave spread through alleys the bot hunts down whoever is the shortest walk away. Ki can
     // still reach the rest.
@@ -1246,6 +1271,9 @@ export class FairBot {
       for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]] as Array<[number, number]>) {
         const k = key(nx, ny);
         if (prev.has(k) || !free(nx, ny)) continue;
+        // The feet box must also slide from one tile's foot point to the next: a prop's footprint can straddle two
+        // free tiles (the crater rim's dead tree between rows 4 and 5), and a path through it wedges the hero.
+        if (this.slidePaths && !this.lineFree(f, x * TILE + 8, y * TILE + 14, nx * TILE + 8, ny * TILE + 14)) continue;
         prev.set(k, key(x, y));
         q.push([nx, ny]);
       }
@@ -1854,4 +1882,495 @@ export function noteFor(facts: FightFacts, st: FightStats, extra: string[] = [])
   if (facts.optional) parts.push('optional side fight');
   if (facts.superboss) parts.push('post-game superboss');
   return [...parts, ...extra].join('; ');
+}
+
+// ------------------------------------------------------------------------------------------------ zone clears
+
+/**
+ * Free-roam zone clears (critic round 2, gap 1). The story-fight replays above never measure LoG2's core loop: walking
+ * into a hostile zone and fighting its regular enemies for EXP. `clearZone` puts the hero on a map with a given save,
+ * spawns the map's enemies exactly as the game does for that save (showIf / hideIf / defeated flags), and has the
+ * FairBot hunt down every enemy it can reach on foot from where the player enters, nearest by walking distance,
+ * through real input and real damage both ways. The map is held the way a player clearing it would hold it: exits
+ * and doors are sealed (nobody walks out halfway through a clear), story triggers are left alone (a clear measures
+ * the zone, not a cutscene the hero happens to cross), and a knock-out does not end the run: it is counted, the hero
+ * gets back up at full HP (LoG2: Game Over and reload) and the clear goes on, so "KOs per clear" can exceed one.
+ */
+
+/** What one enemy type did in a zone clear. */
+export interface ZoneFoe {
+  /** Spawned within reach of the entry (the clear's scope). */
+  count: number;
+  killed: number;
+  /** Damage it dealt the hero, and the knock-outs it landed the last blow of. */
+  dealt: number;
+  koBlows: number;
+}
+
+/**
+ * Why a clear stopped: every enemy in scope died ('cleared'); the caller's `until` goal was met first ('goal'); no
+ * kill for `stallFrames` ('stalled'); the play-time budget ran out ('budget'); a story script on entering the map
+ * never handed the controls back ('locked'); or the hero ended up on another map ('left').
+ */
+export type ZoneStop = 'cleared' | 'goal' | 'stalled' | 'budget' | 'locked' | 'left';
+
+/** One zone clear on one seed. */
+export interface ZoneClear {
+  map: string;
+  seed: number;
+  hero: CharId;
+  level: number;
+  levelEnd: number;
+  /** The hero's Z form (the bot transforms whenever the triangle is full). */
+  form: string | null;
+  /** Tile the hero entered on. */
+  entry: { x: number; y: number };
+  /** Regular enemies on the map, those reachable on foot from the entry (the scope), and those killed. */
+  spawned: number;
+  scoped: number;
+  kills: number;
+  stopped: ZoneStop;
+  /**
+   * Frames of field play until the last kill (dialogue and the pause menu stop the field clock); a stalled clear
+   * stops counting at its last kill (the player gives up on the rest and walks on).
+   */
+  frames: number;
+  kos: number;
+  senzu: number;
+  fish: number;
+  cookies: number;
+  /** Damage the hero took (every hit counted in full, also the one that knocks the hero out). */
+  taken: number;
+  /** EXP the hero gained (kills only; the ROM clamp applies). */
+  exp: number;
+  /** Per enemy type. */
+  foes: Record<string, ZoneFoe>;
+  /**
+   * The save when the clear stopped (`JSON.stringify(state.data)`): HP, EXP, levels and the Senzu left, for chaining
+   * clears the way a player grinds (leave the map, come back to fresh spawns). The clear's own enemy uids are dropped.
+   */
+  save: string;
+}
+
+/** Options for `clearZone`. */
+export interface ZoneOptions {
+  /** Entry tile (default: the landing spot, door, flight circle or save point from which the most enemies are reachable). */
+  entry?: { x: number; y: number };
+  /** Frames of play before the clear is given up (capped a second below FIGHT_CAP, so the test bot never takes over). */
+  maxFrames?: number;
+  /** Frames without a kill before the clear is given up. */
+  stallFrames?: number;
+  /** Called after the bot's input every tick of the clear (debug traces). */
+  watch?: (bot: FairBot) => void;
+  /** Stop as soon as this holds (checked every 5 ticks), e.g. the hero reaching a story gate's level: 'goal'. */
+  until?: (st: GameState) => boolean;
+}
+
+/** The attack stat a regular enemy hits with: POW for shooters, the stronger of the two for flamers and exploders. */
+export function mobAttack(def: EnemyDef): number {
+  if (def.ai === 'shooter') return def.pow;
+  if (def.ai === 'heavy' || def.ai === 'exploder') return Math.max(def.str, def.pow);
+  return def.str;
+}
+
+/** `hitsRatio` for a regular enemy: hits to kill it, and its hits (with its real attack stat) to knock the hero out. */
+export function mobRatio(hero: RatioHero, def: EnemyDef): HitsRatio {
+  return hitsRatio(hero, { ...def, str: mobAttack(def), boss: undefined });
+}
+
+/** Regular enemies a zone clear fights (not bosses, scripted actors, invulnerable herds or hazards). */
+function zoneFoe(e: Enemy): boolean {
+  return !e.dead && e.state !== 'dying' && !e.isBoss && !e.puppet && !e.hidden && !e.def.invulnerable && e.def.ai !== 'hazard';
+}
+
+/**
+ * Where a player can enter a map, in tiles: its world-map landing spots, the doors, flight circles and edge exits of
+ * other maps that lead to it, then its own save points, flight circles and world signs, then its centre.
+ */
+export function zoneEntries(mapId: string): Array<{ x: number; y: number }> {
+  const def = resolveMap(mapId);
+  if (!def) return [];
+  const grid = parseGrid(def);
+  const W = grid[0].length;
+  const H = grid.length;
+  const out: Array<{ x: number; y: number }> = [];
+  for (const s of Object.values(SPOTS)) if (s.map === mapId && !s.toWorld) out.push({ x: s.tx, y: s.ty });
+  for (const id of Object.keys(MAPS)) {
+    if (id === mapId) continue;
+    const m = resolveMap(id);
+    for (const w of m?.warps ?? []) if (w.to === mapId) out.push({ x: w.tx, y: w.ty });
+    for (const o of m?.objects ?? []) if (o.type === 'flight' && o.to === mapId) out.push({ x: o.tx, y: o.ty });
+    for (const [side, ex] of Object.entries(m?.exits ?? {})) {
+      if (!m || ex?.to !== mapId) continue;
+      // Game.edgeExit keeps the coordinate along the edge (plus the exit's offset): arrive where the middle of the
+      // source edge's open ground lands, on the opposite edge of this map.
+      const src = parseGrid(m);
+      const sw = src[0].length;
+      const sh = src.length;
+      const along = side === 'north' || side === 'south'
+        ? Array.from({ length: sw }, (_, x) => x).filter((x) => !terrainSolid(src[side === 'north' ? 0 : sh - 1][x]))
+        : Array.from({ length: sh }, (_, y) => y).filter((y) => !terrainSolid(src[y][side === 'west' ? 0 : sw - 1]));
+      if (!along.length) continue;
+      const k = along[Math.floor(along.length / 2)] + (ex.offset ?? 0);
+      if (side === 'north') out.push({ x: Math.min(W - 1, Math.max(0, k)), y: H - 2 });
+      else if (side === 'south') out.push({ x: Math.min(W - 1, Math.max(0, k)), y: 1 });
+      else if (side === 'east') out.push({ x: 1, y: Math.min(H - 1, Math.max(0, k)) });
+      else out.push({ x: W - 2, y: Math.min(H - 1, Math.max(0, k)) });
+    }
+  }
+  for (const o of def.objects ?? []) if (o.type === 'save' || o.type === 'flight' || o.type === 'worldSign') out.push({ x: o.x, y: o.y + 1 });
+  out.push({ x: Math.floor(W / 2), y: Math.floor(H / 2) });
+  return out;
+}
+
+/** Frames a clear's target may go undented before the bot turns to the others, and how long it then leaves it. */
+const SHUN_AFTER = 15 * 60;
+const SHUN_FOR = 30 * 60;
+
+/** The zone clear running in this process (the damage hook attributes hits to its enemy types). */
+interface ActiveZone {
+  field: Field;
+  foes: Record<string, ZoneFoe>;
+  /** Type of the enemy that landed the latest hit. */
+  last: string | null;
+  kos: number;
+}
+
+let ZONE: ActiveZone | null = null;
+let zoneHooked = false;
+
+/** Attribute every hit on the hero during a zone clear to the enemy type that dealt it (installed once). */
+function installZoneHooks(): void {
+  if (zoneHooked) return;
+  zoneHooked = true;
+  const orig = Field.prototype.damagePlayer;
+  Field.prototype.damagePlayer = function (this: Field, atk: number, mult: number, fromX: number, fromY: number, opts?: { noKnock?: boolean; noInv?: boolean }): number {
+    const z = ZONE;
+    if (!z || z.field !== this) return orig.call(this, atk, mult, fromX, fromY, opts);
+    // The attacker: the nearest enemy (alive or bursting) whose STR or POW is the attack stat.
+    let who: Enemy | null = null;
+    let bd = Infinity;
+    for (const e of this.enemies) {
+      if (e.dead || e.puppet) continue;
+      if (e.def.str !== atk && e.def.pow !== atk && Math.max(e.def.str, e.def.pow) !== atk) continue;
+      const d = Math.hypot(e.x - fromX, e.y - fromY);
+      if (d < bd) { bd = d; who = e; }
+    }
+    const type = who?.def.id ?? '?';
+    z.last = type;
+    const dealt = orig.call(this, atk, mult, fromX, fromY, opts);
+    if (dealt > 0) (z.foes[type] ??= { count: 0, killed: 0, dealt: 0, koBlows: 0 }).dealt += dealt;
+    return dealt;
+  };
+}
+
+/**
+ * Clear a hostile map with the FairBot on one seed, from `save` (a `JSON.stringify(state.data)`): every regular enemy
+ * the game spawns for that save and the hero can reach on foot from the entry. See the section comment.
+ */
+export async function clearZone(save: string, mapId: string, seed: number, opts: ZoneOptions = {}): Promise<ZoneClear> {
+  installZoneHooks();
+  const sim = new Sim();
+  sim.fair = true;
+  const bot = new FairBot(sim, seed);
+  bot.slidePaths = true;
+  const g = sim.game;
+  const data = JSON.parse(save) as SaveData;
+  data.seed = ((seed + 1) * 0x9e3779b1) >>> 0;
+  g.state = new GameState(data);
+  const st = g.state;
+  const cs = st.hero;
+  const def = resolveMap(mapId);
+  if (!def) throw new Error(`clearZone: no map ${mapId}`);
+  /** True once the clear hands the player the controls (free roam: no script holds them). */
+  let holding = false;
+  sim.driver = () => {
+    const f = g.field;
+    if (f) {
+      // No story triggers on the field (walk-in and A-button ones alike): a clear measures the zone.
+      if (f.def.triggers?.length) (f as unknown as { def: MapDef }).def = { ...f.def, triggers: [] };
+      if (holding && g.lockDepth === 0) g.allowControl = true;
+    }
+    bot.step();
+    if (holding) opts.watch?.(bot);
+  };
+  const revive = (): boolean => { const pl = g.field?.player; if (pl) { pl.cs.hp = pl.cs.hpMax; pl.inv = 90; } return true; };
+  g.onPlayerDown = revive;
+  const settle = async (limit: number): Promise<boolean> => {
+    for (let calm = 0, t = 0; calm < 6; t += 5) {
+      if (t > limit) return false;
+      await sim.tick(5);
+      calm = g.lockDepth === 0 ? calm + 1 : 0;
+    }
+    return true;
+  };
+  const candidates = opts.entry ? [opts.entry] : zoneEntries(mapId);
+  const first = candidates[0] ?? { x: 1, y: 1 };
+  const blank = (stopped: ZoneStop): ZoneClear => ({
+    map: mapId, seed, hero: cs.id, level: cs.level, levelEnd: cs.level, form: cs.form, entry: first, spawned: 0, scoped: 0, kills: 0, stopped,
+    frames: 0, kos: 0, senzu: 0, fish: 0, cookies: 0, taken: 0, exp: 0, foes: {}, save,
+  });
+  // Sealed from the first frame: exits, doors, flight circles and save points stay shut (a player clearing the zone
+  // stays in it), also while the map's entry scripts run.
+  g.fightDepth++;
+  g.startField(mapId, first.x, first.y, 'down');
+  if (!(await settle(6000))) {
+    // A story scene runs on entry (a scripted fight, say): let the test bot finish it, then walk in afresh.
+    sim.fair = false;
+    await settle(40000);
+    sim.fair = true;
+    g.startField(mapId, first.x, first.y, 'down');
+    if (!(await settle(6000))) { sim.driver = null; g.fightDepth = 0; return blank('locked'); }
+  }
+  const f = g.field;
+  if (!f || f.def.id !== mapId) { sim.driver = null; g.fightDepth = 0; return blank('left'); }
+  // Enter where the most of the zone is reachable on foot.
+  const p = f.player;
+  let best = { at: first, n: -1, reach: new Set<string>() };
+  for (const c of candidates) {
+    p.x = c.x * TILE + 8;
+    p.y = c.y * TILE + 14;
+    unstick(f);
+    const reach = sim.reach();
+    const n = f.enemies.filter((e) => zoneFoe(e) && Sim.inReach(reach, e)).length;
+    if (n > best.n) best = { at: { x: Math.floor(p.x / TILE), y: Math.floor((p.y - 8) / TILE) }, n, reach };
+  }
+  p.x = best.at.x * TILE + 8;
+  p.y = best.at.y * TILE + 14;
+  p.dir = 'down';
+  const spawned = f.enemies.filter(zoneFoe);
+  const scope = spawned.filter((e) => Sim.inReach(best.reach, e));
+  const foes: Record<string, ZoneFoe> = {};
+  scope.forEach((e, i) => {
+    e.uid ??= `zone:${i}`;
+    (foes[e.def.id] ??= { count: 0, killed: 0, dealt: 0, koBlows: 0 }).count++;
+  });
+  const zone: ActiveZone = { field: f, foes, last: null, kos: 0 };
+  g.onPlayerDown = () => {
+    zone.kos++;
+    if (zone.last) (foes[zone.last] ??= { count: 0, killed: 0, dealt: 0, koBlows: 0 }).koBlows++;
+    return revive();
+  };
+  const hero = cs.id;
+  const level = cs.level;
+  const exp0 = cs.exp;
+  const maxFrames = Math.min(opts.maxFrames ?? FIGHT_CAP, FIGHT_CAP - 60);
+  const stallFrames = opts.stallFrames ?? 90 * 60;
+  let stopped: ZoneStop = 'budget';
+  let t0 = f.tick;
+  let lastKill = f.tick;
+  let killed = 0;
+  ZONE = zone;
+  holding = true;
+  const run = bot.begin('wave', '', { uid: scope.map((e) => e.uid).join(',') }, -1, 1);
+  t0 = f.tick;
+  lastKill = t0;
+  let chase: { e: Enemy | null; hp: number; since: number } = { e: null, hp: 0, since: t0 };
+  try {
+    // Real ticks per field frame are bounded too: dialogue (signs, NPCs the bot bumps into) holds the field clock.
+    for (let ticks = 0; ticks < maxFrames * 3 + 20000; ticks += 5) {
+      await sim.tick(5);
+      if (g.field !== f) { stopped = 'left'; break; }
+      const down = scope.filter((e) => e.dead || e.state === 'dying').length;
+      if (down > killed) { killed = down; lastKill = f.tick; }
+      // A target the bot has chased for SHUN_AFTER frames without denting it (a drone hovering over a wall, a
+      // flyer across a ledge): a player turns to the others first and comes back to it later.
+      const t = bot.target;
+      if (t && t !== chase.e) chase = { e: t, hp: t.hp, since: f.tick };
+      else if (t && t.hp < chase.hp) { chase.hp = t.hp; chase.since = f.tick; }
+      else if (t && f.tick - chase.since > SHUN_AFTER) { bot.shun(t, f.tick + SHUN_FOR); chase = { e: null, hp: 0, since: f.tick }; }
+      if (down === scope.length) { stopped = 'cleared'; break; }
+      if (opts.until?.(st)) { stopped = 'goal'; break; }
+      if (f.tick - t0 >= maxFrames || bot.assisting) { stopped = 'budget'; break; }
+      if (f.tick - lastKill >= stallFrames) { stopped = 'stalled'; break; }
+    }
+  } finally {
+    bot.end('cleared');
+    g.fightDepth = 0;
+    holding = false;
+    if (ZONE === zone) ZONE = null;
+    sim.driver = null;
+  }
+  for (const e of scope) if (e.dead || e.state === 'dying') foes[e.def.id].killed++;
+  const c = st.char(hero);
+  const out = JSON.parse(JSON.stringify(st.data)) as SaveData;
+  for (const k of Object.keys(out.flags)) if (k.startsWith('defeated:zone:')) delete out.flags[k];
+  return {
+    map: mapId, seed, hero, level, levelEnd: c.level, form: c.form, entry: best.at, spawned: spawned.length, scoped: scope.length, kills: killed, stopped,
+    frames: (stopped === 'stalled' ? lastKill : f.tick) - t0, kos: zone.kos, senzu: run.senzu, fish: run.fish, cookies: run.cookies,
+    taken: Object.values(foes).reduce((a, x) => a + x.dealt, 0), exp: c.exp - exp0, foes, save: JSON.stringify(out),
+  };
+}
+
+// ------------------------------------------------------------------------------------------------ LoG2 reference zones
+
+/** A LoG2 regular enemy (ROM enemy_stats.csv) and the bestiary entry whose sprite and behaviour stand in for it. */
+export interface Log2Foe {
+  /** ROM stat index. */
+  idx: number;
+  name: string;
+  hp: number;
+  str: number;
+  pow: number;
+  end: number;
+  exp: number;
+  /** ROM melee / energy damage-taken multipliers (x128). */
+  mel: number;
+  en: number;
+  /** Bestiary id lending its sprite, AI, speed and shot (the ports in src/content/bestiary.ts). */
+  like: string;
+}
+
+/** The LoG2 regular enemies the reference zones use (ROM enemy_stats.csv, values verbatim). */
+export const LOG2_FOES: Record<number, Log2Foe> = Object.fromEntries(([
+  [1, 'Alligator', 600, 29, 1, 20, 5400, 128, 128, 'crab'],
+  [8, 'Tiger Bandit', 38, 6, 3, 4, 14, 128, 128, 'bandit'],
+  [9, 'Tiger Bandit', 325, 10, 12, 8, 650, 128, 128, 'banditBrute'],
+  [10, 'Tiger Bandit', 1120, 34, 42, 25, 25250, 128, 128, 'bandit'],
+  [12, 'Warlord\'s Henchman', 900, 10, 30, 26, 3200, 128, 128, 'soldier'],
+  [14, 'Snake', 530, 32, 1, 28, 3290, 128, 128, 'sandSnake'],
+  [16, 'T-Rex', 5120, 49, 1, 55, 36900, 128, 128, 'blueTRex'],
+  [17, 'Wolf', 65, 8, 1, 4, 45, 128, 128, 'wolf'],
+  [31, 'Destroyer', 1463, 32, 39, 29, 4170, 128, 128, 'mechTrooper'],
+  [32, 'Destroyer', 4200, 49, 44, 43, 58900, 128, 128, 'goldMech'],
+  [33, 'Destroyer', 3120, 46, 42, 39, 43180, 128, 128, 'redMech'],
+  [37, 'Eggbot', 250, 19, 25, 18, 875, 128, 128, 'mudSlime'],
+  [38, 'Eggbot', 525, 35, 41, 22, 2670, 128, 128, 'mudSlime'],
+  [39, 'Eggbot', 1349, 47, 53, 52, 46200, 128, 128, 'voidSlime'],
+  [40, 'Eggbot', 1130, 38, 44, 34, 33170, 128, 128, 'voidSlime'],
+  [51, 'Warlord\'s Henchman', 1100, 15, 42, 36, 16200, 128, 128, 'soldier'],
+  [53, 'Snake', 35, 7, 1, 3, 13, 128, 128, 'snake'],
+  [54, 'Triceratops', 870, 40, 1, 40, 35000, 128, 64, 'boar'],
+  [55, 'Saber-Toothed Tiger', 1500, 25, 1, 21, 20000, 128, 128, 'iceSabertooth'],
+  [57, 'Wolf', 675, 29, 1, 24, 1680, 128, 128, 'timberWolf'],
+  [58, 'Hawk', 110, 10, 1, 5, 300, 128, 128, 'hawk'],
+  [65, 'Ladybug', 29, 1, 7, 4, 16, 128, 128, 'drone'],
+  [66, 'Ladybug', 175, 1, 16, 11, 520, 128, 128, 'greenDrone'],
+  [67, 'Ladybug', 700, 1, 32, 29, 11200, 128, 128, 'goldDrone'],
+  [69, 'Kuma Mercenary', 125, 17, 1, 15, 250, 128, 128, 'bear'],
+  [70, 'Kuma Mercenary', 940, 35, 1, 32, 9800, 128, 128, 'greyBear'],
+  [71, 'Kuma Mercenary', 596, 25, 1, 20, 3610, 128, 128, 'bear'],
+  [75, 'Ninja', 900, 34, 25, 27, 5200, 128, 128, 'bandit'],
+  [80, 'Pterodactyl', 900, 28, 1, 16, 9578, 128, 128, 'pterodactyl'],
+  [83, 'Snake', 275, 15, 1, 14, 600, 128, 128, 'viper'],
+  [85, 'Warlord\'s Henchman', 90, 2, 8, 6, 325, 128, 96, 'soldier'],
+  [86, 'Ninja', 1400, 37, 31, 31, 36800, 128, 128, 'bandit'],
+  [88, 'Pterodactyl', 1200, 40, 1, 30, 25000, 128, 128, 'stormPtero'],
+  [90, 'Scorpion', 400, 18, 1, 11, 750, 128, 128, 'scarab'],
+  [91, 'Snake', 125, 10, 1, 5, 350, 128, 128, 'snake'],
+  [92, 'Saber-Toothed Tiger', 750, 32, 1, 14, 6160, 128, 128, 'sabertooth'],
+  [99, 'T-Rex', 1750, 40, 1, 30, 3750, 128, 128, 'tRex'],
+  [102, 'Warthog', 300, 20, 1, 14, 800, 128, 128, 'boar'],
+  [103, 'Scorpion', 110, 11, 1, 5, 375, 128, 128, 'scarab'],
+  [104, 'Wolf', 1000, 65, 1, 35, 1300, 128, 128, 'snowWolf'],
+] as Array<[number, string, number, number, number, number, number, number, number, string]>).map(([idx, name, hp, str, pow, end, exp, mel, en, like]) => [idx, { idx, name, hp, str, pow, end, exp, mel, en, like }]));
+
+/**
+ * A LoG2 hostile zone at the stage the story opens it (log2_mechanics.md §10): the ROM area, the hero LoG2 has there
+ * and at what level, and its regular enemies with their ROM placement counts in that area. Enemies behind a gate a
+ * later chapter opens (the Goku gates' Triceratops, Pterodactyls, T-Rexes and Destroyers, the L50 trophy guards),
+ * one-off guardians and LoG2's invulnerable stampede herds are left to the stage that opens them.
+ */
+export interface Log2Zone {
+  id: string;
+  /** ROM area name (areas.csv). */
+  area: string;
+  stage: string;
+  hero: CharId;
+  level: number;
+  form: string | null;
+  techs: string[];
+  charged: boolean;
+  senzu: number;
+  /** [ROM stat index, spawners of it in the area]. */
+  foes: Array<[number, number]>;
+}
+
+export const LOG2_ZONES: Log2Zone[] = [
+  { id: 'east_early', area: 'East District 439', stage: 'Trunks Saga ch. 1-3 (Gohan L3)', hero: 'gohan', level: 3, form: null, techs: ['kiBlast'], charged: false, senzu: 0, foes: [[53, 7], [17, 5]] },
+  { id: 'wastelands', area: 'Northern Wastelands', stage: 'Trunks Saga ch. 2 (Gohan L3)', hero: 'gohan', level: 3, form: null, techs: ['kiBlast'], charged: false, senzu: 0, foes: [[65, 3], [8, 8]] },
+  { id: 'highway', area: 'West City Highway', stage: 'Trunks Saga ch. 4 (Gohan L6)', hero: 'gohan', level: 6, form: null, techs: ['kiBlast'], charged: false, senzu: 0, foes: [[65, 5], [53, 13], [8, 6], [17, 17]] },
+  { id: 'jungle', area: 'Triceratops Jungle', stage: 'Trunks Saga ch. 5 (Piccolo L10)', hero: 'piccolo', level: 10, form: null, techs: ['kiBlast'], charged: false, senzu: 0, foes: [[65, 2], [69, 19], [9, 2]] },
+  { id: 'warlord', area: 'Warlord\'s Domain', stage: 'Trunks Saga ch. 6 (Piccolo L11)', hero: 'piccolo', level: 11, form: null, techs: ['kiBlast'], charged: false, senzu: 0, foes: [[65, 5], [8, 2], [85, 23]] },
+  { id: 'south', area: 'Southern Continent', stage: 'Android Saga ch. 9 (Vegeta L18, SSJ)', hero: 'vegeta', level: 18, form: 'ssj', techs: ['kiBlast', 'bigBang'], charged: false, senzu: 2, foes: [[65, 7], [85, 4], [103, 12], [66, 6], [83, 8], [9, 24], [90, 7]] },
+  { id: 'north', area: 'Northern Mountains', stage: 'Android Saga ch. 10-12 (Piccolo L22)', hero: 'piccolo', level: 22, form: null, techs: ['kiBlast', 'specialBeamCannon'], charged: true, senzu: 2, foes: [[8, 4], [85, 10], [58, 6], [66, 11], [37, 57], [83, 10], [102, 27], [9, 45], [14, 3], [57, 7]] },
+  { id: 'ginger', area: 'Outside Gingertown', stage: 'Android Saga ch. 14 (Trunks L27, SSJ)', hero: 'trunks', level: 27, form: 'ssj', techs: ['kiBlast', 'burningAttack'], charged: false, senzu: 2, foes: [[91, 12], [66, 2], [38, 9], [71, 21], [12, 5], [31, 2], [99, 1]] },
+  { id: 'tropical', area: 'Tropical Islands', stage: 'Perfect Cell ch. 20 (Vegeta L30, SSJ)', hero: 'vegeta', level: 30, form: 'ssj', techs: ['kiBlast', 'bigBang', 'energyPunch'], charged: true, senzu: 2, foes: [[1, 41], [67, 9], [92, 27], [80, 5]] },
+  { id: 'snowy', area: 'Snowy Highlands', stage: 'Cell Games prep ch. 23 (Goku L35, SSJ)', hero: 'goku', level: 35, form: 'ssj', techs: ['kiBlast', 'kamehameha', 'spiritBomb'], charged: true, senzu: 2, foes: [[67, 5], [70, 20], [104, 4], [10, 11], [55, 3]] },
+  { id: 'east_late', area: 'East District 439', stage: 'Cell Games prep ch. 23, Tao\'s castle (Goku L35, SSJ)', hero: 'goku', level: 35, form: 'ssj', techs: ['kiBlast', 'kamehameha', 'spiritBomb'], charged: true, senzu: 2, foes: [[67, 9], [75, 20], [12, 10], [40, 15], [86, 39], [33, 5]] },
+  { id: 'north_late', area: 'Northern Mountains', stage: 'Cell Games prep, beyond the Goku 40 gate (Goku L40, SSJ)', hero: 'goku', level: 40, form: 'ssj', techs: ['kiBlast', 'kamehameha', 'spiritBomb'], charged: true, senzu: 2, foes: [[54, 22], [88, 4], [16, 5], [31, 1], [32, 3]] },
+  { id: 'wastelands_late', area: 'Northern Wastelands', stage: 'Cell Games prep, beyond the Goku gate (Goku L40, SSJ)', hero: 'goku', level: 40, form: 'ssj', techs: ['kiBlast', 'kamehameha', 'spiritBomb'], charged: true, senzu: 2, foes: [[51, 11], [10, 2], [86, 4]] },
+  { id: 'mushroom', area: 'Mushroom Cavern', stage: 'post-Cell trophy grind (Goku L45, SSJ)', hero: 'goku', level: 45, form: 'ssj', techs: ['kiBlast', 'kamehameha', 'spiritBomb'], charged: true, senzu: 2, foes: [[9, 3], [39, 8], [32, 2]] },
+];
+
+/** Spawn points per LoG2 reference map (our hostile maps hold 4-33; most 8-15). */
+export const LOG2_SPAWNS = 12;
+
+/** A LoG2 enemy as an engine enemy: ROM stats and resistances, the stand-in's sprite and behaviour. */
+export function log2EnemyDef(f: Log2Foe): EnemyDef {
+  const like = ENEMIES[f.like] ?? ENEMIES.wolf;
+  return {
+    ...like, id: `log2_${f.idx}`, name: `${f.name} (LoG2)`, hp: f.hp, str: f.str, pow: f.pow, end: f.end, exp: f.exp,
+    resMelee: f.mel / 128, resKi: f.en / 128, drops: undefined, boss: undefined, invulnerable: undefined,
+    desc: `LoG2 reference: ROM stat entry ${f.idx}.`,
+  };
+}
+
+/** Spawn counts for a reference map: the zone's ROM proportions scaled to LOG2_SPAWNS, at least one of each type. */
+export function log2Spawns(z: Log2Zone): Array<[number, number]> {
+  const total = z.foes.reduce((a, [, n]) => a + n, 0);
+  const out = z.foes.map(([idx, n]) => [idx, Math.max(1, Math.round((n / total) * LOG2_SPAWNS))] as [number, number]);
+  // Trim the most common types back to the total (rounding up the rare ones can overshoot).
+  while (out.reduce((a, [, n]) => a + n, 0) > Math.max(LOG2_SPAWNS, out.length)) {
+    const top = out.reduce((a, b) => (b[1] > a[1] ? b : a));
+    top[1]--;
+  }
+  return out;
+}
+
+let log2Ready = false;
+
+/**
+ * Register the LoG2 enemies and one open reference map per LoG2 zone (`log2_<id>`): 44 x 30 tiles of grass ringed by
+ * cliffs, with a few rock outcrops, the spawns spread over the field and the entry at the bottom centre.
+ */
+export function registerLog2Zones(): void {
+  if (log2Ready) return;
+  log2Ready = true;
+  registerEnemies(Object.values(LOG2_FOES).map(log2EnemyDef));
+  const W = 44;
+  const H = 30;
+  const rows = Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => (x === 0 || y === 0 || x === W - 1 || y === H - 1 ? '#' : '.')));
+  for (const [cx, cy] of [[9, 7], [33, 6], [20, 14], [8, 21], [35, 21], [26, 24]]) {
+    for (let y = cy; y < cy + 2; y++) for (let x = cx; x < cx + 3; x++) rows[y][x] = '#';
+  }
+  const grid = rows.map((r) => r.join(''));
+  const slots: Array<[number, number]> = [];
+  for (const y of [4, 10, 17, 23]) for (const x of [6, 16, 27, 38]) slots.push([x, y]);
+  const maps: MapDef[] = LOG2_ZONES.map((z) => {
+    const enemies: EnemySpawn[] = [];
+    let k = 0;
+    for (const [idx, n] of log2Spawns(z)) for (let i = 0; i < n; i++) { const [x, y] = slots[k++ % slots.length]; enemies.push({ type: `log2_${idx}`, x, y }); }
+    return { id: `log2_${z.id}`, name: `${z.area} (LoG2)`, music: 'field', hostile: true, region: 'LoG2 reference', legend: { '.': 'grass', '#': 'cliff' }, grid, enemies };
+  });
+  registerMaps(maps);
+}
+
+/** Entry tile of every LoG2 reference map. */
+export const LOG2_ENTRY = { x: 22, y: 27 };
+
+/** A save for a LoG2 reference zone: the hero LoG2 sends there, at its level, techniques, form and Senzu supply. */
+export function log2Save(z: Log2Zone): string {
+  const st = new GameState();
+  st.rng = new Rng(0x10c2 + z.level);
+  st.data.chapter = 1;
+  st.join(z.hero, z.level);
+  st.data.active = z.hero;
+  const c = st.char(z.hero);
+  c.techs = [...z.techs];
+  c.selected = 0;
+  c.form = z.form;
+  c.charged = z.charged;
+  st.data.inv = z.senzu ? { senzu: z.senzu } : {};
+  return JSON.stringify(st.data);
 }

@@ -723,8 +723,8 @@ describe('world ecology: wildlife homes, gated collectibles and grinding grounds
     expect(await soldiers(6)).toEqual([]);
     expect(await soldiers(7)).toEqual([]);
     expect(await soldiers(8)).toEqual(['soldierB', 'soldierC', 'soldierC', 'soldierElite']);
-    // T4/T5 troopers for a Chapter 8+ party (L29+): LoG2's Warlord's Henchman tiers (3,200 / 16,200 EXP), each kill
-    // worth well under half a level there.
+    // T4 troopers for the Chapter 8 party (Vegeta L26 SSB, tests/balance.test.ts 'grind zones: world B'): LoG2's
+    // Warlord's Henchman tiers (3,200 / 16,200 EXP), each kill worth well under half a level from L29 on.
     expect(ENEMIES.soldierC.exp).toBe(16200);
     const span29 = EXP_TABLE[30] - EXP_TABLE[29];
     for (const t of ['soldierB', 'soldierC', 'soldierElite']) expect(killExp(ENEMIES[t].exp, 29), t).toBeLessThan(span29 / 2);

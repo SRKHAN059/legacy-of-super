@@ -159,7 +159,7 @@ registerMaps([
     ],
     enemies: [
       { type: 'c00_scavDrone', x: 9, y: 4, showIf: 'chapter==0' }, { type: 'c00_rat', x: 10, y: 11, showIf: 'chapter==0' },
-      { type: 'c00_rat', x: 16, y: 8, showIf: 'chapter==0' }, { type: 'greenDrone', x: 20, y: 6, showIf: 'chapter==0' },
+      { type: 'c00_rat', x: 16, y: 8, showIf: 'chapter==0' }, { type: 'c00_sentry', x: 20, y: 6, showIf: 'chapter==0' },
       { type: 'c00_scavDrone', x: 22, y: 12, showIf: 'chapter==0' },
     ],
     objects: [

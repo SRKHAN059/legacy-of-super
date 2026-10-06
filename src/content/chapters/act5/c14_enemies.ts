@@ -218,7 +218,7 @@ const VETERANS: EnemyDef[] = [
 
 /** Free-roam Pride Troopers for the late tournament, when Universe 11 is the only rival left standing. */
 const ROAMERS: EnemyDef[] = [
-  { id: 'c14_prideLancer', name: 'Pride Lancer', sprite: 'prideTrooper', hp: 5200, str: 64, pow: 1, end: 56, exp: 62000, ai: 'reach', speed: 1.2, desc: 'A Pride Trooper who strikes from beyond arm\'s length with a ki spear.' },
+  { id: 'c14_prideLancer', name: 'Pride Lancer', sprite: 'prideTrooper', hp: 1650, str: 46, pow: 1, end: 42, exp: 62000, ai: 'reach', speed: 1.2, desc: 'A Pride Trooper who strikes from beyond arm\'s length with a ki spear.' },
 ];
 
 registerEnemies([...PRIDE_SQUAD, ...FIREBALLS, ...PRIDE_TAG, ...NAMEKIANS, ...TRICKSTERS, ...VETERANS, ...ROAMERS]);

@@ -4,7 +4,8 @@ import { HUB } from './hubs';
 /**
  * Chapter 4 map: Whis's Training Field on Beerus's planet. A pond (fill water jars), a hazard lane of rolling
  * beetles on the way to the basin plaza, three training boulders, a thieving puffbird, a sparring ring for the
- * Whis and Goku-vs-Vegeta fights, and a Vegeta L17 gate in front of a little shrine.
+ * Whis and Goku-vs-Vegeta fights, and a Vegeta L17 gate in front of a little shrine. Its wildlife is the young of
+ * Beerus's grounds (puffbird chicks, a moss calf; see enemies.ts), tuned for Vegeta's L15-17 grind to that gate.
  */
 registerMaps([
   {
@@ -47,7 +48,7 @@ registerMaps([
     enemies: [
       { type: 'c04_roller', x: 13, y: 18 }, { type: 'c04_roller', x: 16, y: 22 }, { type: 'c04_roller', x: 19, y: 17 },
       { type: 'c04_critter', x: 14, y: 6, id: 'c04_critter', onDefeat: 'c04_critter_caught', showIf: 'quest:c04_training' },
-      { type: 'fc_puffbird', x: 6, y: 12 }, { type: 'fc_puffbird', x: 18, y: 11 }, { type: 'fc_mossBeast', x: 15, y: 9 },
+      { type: 'c04_puffChick', x: 6, y: 12 }, { type: 'c04_puffChick', x: 18, y: 11 }, { type: 'c04_mossCalf', x: 15, y: 9 },
     ],
     npcs: [{ id: 'c04_fieldWhis', sprite: 'whis', x: 26, y: 12, dir: 'left', talk: 'c04_fieldWhis_talk', name: 'Whis', showIf: 'chapter==4' }],
     barriers: [{ id: 'c04_v17', x: 30, y: 4, w: 1, h: 2, level: 17, character: 'vegeta' }],

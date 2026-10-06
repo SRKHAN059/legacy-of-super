@@ -5,7 +5,10 @@ import { registerMaps } from '../../registry';
  * Future Earth (region "Future Earth", world 'future').
  * Edge chain (west → east): future_hideout_out ↔ future_highway ↔ future_city; future_city north ↔ future_cc_ruins.
  * The hideout hatch warps down into future_hideout_in.
- * Enemy tiers: prologue (Trunks L6) uses `chapter<9`; Ch9+ swaps in T5 patrols (`chapter>=9`), Ch11 adds heavies.
+ * Enemy mixes: prologue (Trunks L6) uses `chapter<9`; Ch9+ swaps in Black's patrols (`chapter>=9`) for the Goku L33
+ * who grinds the Goku 35 gate here, Ch11 adds a heavy. The prologue mix keeps to drones and Scrap Hounds for the L6
+ * Trunks who walks in (LoG2's West City Highway band: a few hits to kill, about 12 to knock out); Guard Drones belong
+ * to the Chapter 2-3 zones. Stats and their LoG2 band: ./enemies.ts.
  */
 
 const EARLY = 'chapter<9';
@@ -101,9 +104,11 @@ registerMaps([
       // Prologue: T1 near the shelter, T2 deeper in.
       early('fc_scavDrone', 38, 7), early('fc_scavDrone', 31, 10), early('drone', 28, 3), early('drone', 40, 11),
       early('fc_scrapHound', 12, 15), early('fc_scrapHound', 6, 20), early('fc_scrapHound', 22, 21),
-      early('greenDrone', 27, 21), early('greenDrone', 8, 27),
-      // Ch9+: Black's purge patrols.
-      late('fc_hunterDrone', 38, 7), late('fc_hunterDrone', 16, 10), late('fc_hunterDrone', 6, 20),
+      early('fc_scrapHound', 27, 21), early('fc_scrapHound', 8, 27),
+      // Ch9+: Black's purge patrols (the Goku 35 gate's grind zone with the Capsule Corp ruins). Two Hunter Drones, not
+      // three: their lasers deal most of a clear's damage, and three cost the Goku L33 who grinds here a Senzu Bean on
+      // every clear.
+      late('fc_hunterDrone', 38, 7), late('fc_hunterDrone', 16, 10), late('fc_ravager', 6, 20),
       late('mechTrooper', 26, 15), late('fc_ravager', 18, 15), late('goldDrone', 28, 26), late('fc_ravager', 14, 25),
       late('redMech', 31, 21, 'chapter>=11'),
     ],
@@ -171,10 +176,14 @@ registerMaps([
       ['crater', 19.5, 19], ['crater', 33, 22.5], ['rubble', 22, 13.4], ['smallRock', 5, 17],
     ],
     enemies: [
-      early('fc_scavDrone', 10, 5), early('drone', 38, 6), early('fc_scrapHound', 33, 7),
-      early('fc_scrapHound', 8, 19), early('fc_scrapHound', 33, 22), early('greenDrone', 22, 15),
-      late('fc_hunterDrone', 10, 5), late('fc_hunterDrone', 38, 6), late('fc_ravager', 23, 18),
-      late('mechTrooper', 36, 21), late('goldDrone', 13, 15),
+      // The prologue's Scavenger Drone waits on the service road: from the west end of the deck it backed away from a
+      // hero coming in from the east, over the rocks by the exit, and peppered an L6 Trunks it could not be reached by.
+      early('fc_scavDrone', 14, 17), early('drone', 38, 6), early('fc_scrapHound', 33, 7),
+      early('fc_scrapHound', 8, 19), early('fc_scrapHound', 33, 22), early('fc_scrapHound', 22, 15),
+      // Ch9+: the Hunter Drones patrol the middle of the open ground under the overpass. A shooter backs away from the
+      // hero: on the deck it backs out over the cliffs, out of reach, and near an edge it backs into a corner.
+      late('fc_hunterDrone', 12, 16), late('fc_hunterDrone', 34, 19), late('fc_ravager', 23, 18),
+      late('mechTrooper', 38, 6), late('goldDrone', 13, 15),
     ],
     objects: [
       { type: 'sign', x: 2, y: 3, text: 'ROUTE 9 - West City 3 km. Overpass damaged: use the ramp to the service road.' },
@@ -329,7 +338,7 @@ registerMaps([
       ['rubble', 29, 21.2], ['smallRock', 6, 13],
     ],
     enemies: [
-      early('fc_scrapHound', 20, 20), early('fc_scrapHound', 9, 22), early('fc_scavDrone', 14, 11), early('fc_scavDrone', 26, 11), early('greenDrone', 32, 16),
+      early('fc_scrapHound', 20, 20), early('fc_scrapHound', 9, 22), early('fc_scavDrone', 14, 11), early('fc_scavDrone', 26, 11), early('fc_scrapHound', 32, 16),
       late('fc_hunterDrone', 14, 11), late('fc_hunterDrone', 26, 11), late('fc_ravager', 20, 18), late('goldDrone', 32, 16),
       late('redMech', 26, 7, 'chapter>=11'),
     ],

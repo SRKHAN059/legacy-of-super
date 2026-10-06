@@ -75,6 +75,7 @@ registerCast({
 
 registerCreatures({
   c00_drone: { kind: 'drone', body: '#8a7058', accent: '#f0a030', size: 24 },
+  c00_sentry: { kind: 'drone', body: '#48607a', accent: '#f04848', size: 24 },
   c00_rat: { kind: 'quadruped', body: '#7a8068', belly: '#a8b090', eye: '#f04040', size: 24 },
   c01_fang: { kind: 'quadruped', body: '#c87028', belly: '#f0d8a8', accent: '#402010', eye: '#f0e040', stripes: true, size: 40 },
   c01_gregory: { kind: 'bug', body: '#58b048', accent: '#f0e060', size: 24 },
@@ -84,6 +85,9 @@ registerCreatures({
   c01_scarface: { kind: 'dino', body: '#7a8a48', belly: '#d8d0a0', accent: '#b03828', eye: '#f8c020', horns: true, stripes: true, size: 48 },
   c02_drone: { kind: 'drone', body: '#e8e8f0', accent: '#40a0f0', size: 24 },
   c02_mech: { kind: 'robot', body: '#5878c8', accent: '#f8d040', size: 48 },
+  // The cargo hold's guards wear the Pilaf Machine's blue and yellow.
+  c02_guardBot: { kind: 'robot', body: '#e0c050', accent: '#4060b0', size: 32 },
+  c02_gangDrone: { kind: 'drone', body: '#6070c0', accent: '#f8d040', size: 24 },
 });
 
 registerScans({
@@ -109,12 +113,18 @@ registerScans({
 // ------------------------------------------------------------------ enemies & bosses
 
 registerEnemies([
-  // Prologue (Trunks L6).
+  // Prologue (Trunks L6). The tunnel and depot are the Prologue's grind zones; they sit in LoG2's early band (its West
+  // City Highway at L6) against an L6 Trunks (STR 13, END 8, 150 HP): 5-6 melee hits to kill, 15 hits to knock
+  // him out (tests/balance.test.ts 'grind zones: act 1'). EXP stays at the T2 rate, so faster kills pay more a minute.
   {
-    id: 'c00_scavDrone', name: 'Scavenger Drone', sprite: 'c00_drone', hp: 150, str: 1, pow: 12, end: 8, exp: 160, ai: 'shooter', speed: 0.9, flying: true,
+    id: 'c00_scavDrone', name: 'Scavenger Drone', sprite: 'c00_drone', hp: 110, str: 1, pow: 7, end: 6, exp: 160, ai: 'shooter', speed: 0.9, flying: true,
     shot: { color: '#f0a030', cooldown: 100, speed: 2.2, mult: 0.7 }, desc: 'A rusty salvage drone. Its targeting was reprogrammed long ago to shoot anything warm.',
   },
-  { id: 'c00_rat', name: 'Mutant Rat', sprite: 'c00_rat', hp: 170, str: 13, pow: 1, end: 9, exp: 180, ai: 'rusher', speed: 1.15, desc: 'Something that used to be a rat. The ruins changed it.' },
+  { id: 'c00_rat', name: 'Mutant Rat', sprite: 'c00_rat', hp: 120, str: 7, pow: 1, end: 6, exp: 180, ai: 'rusher', speed: 1.15, desc: 'Something that used to be a rat. The ruins changed it.' },
+  {
+    id: 'c00_sentry', name: 'Depot Sentry', sprite: 'c00_sentry', hp: 150, str: 1, pow: 7, end: 9, exp: 320, ai: 'shooter', speed: 1.0, flying: true,
+    shot: { color: '#f04848', cooldown: 80, speed: 2.4, mult: 0.8 }, desc: 'A Capsule Corp security drone still guarding Depot No. 4. Nobody told it the company is gone.',
+  },
   {
     id: 'c00_blackToy', name: '???', sprite: 'gokuBlack', hp: 6000, str: 15, pow: 14, end: 110, exp: 0, ai: 'boss', speed: 1.1, drops: 'none',
     desc: 'He has Goku\'s face. He does not have Goku\'s eyes.',
@@ -196,6 +206,18 @@ registerEnemies([
   {
     id: 'c02_punkGun', name: 'Punk Gunner', sprite: 'c02_punk', hp: 160, str: 6, pow: 13, end: 8, exp: 280, ai: 'shooter', speed: 0.9,
     shot: { color: '#d0d0d0', cooldown: 110, speed: 2.0, mult: 0.7 }, desc: 'He bought a rocket pistol online. He has not read the manual.',
+  },
+  // The cargo hold is the Vegeta L10 gate's grind zone, and Vegeta walks in at L9 with 165-175 HP. The shared Pilaf
+  // robot and Guard Drone are Diablo Desert's, sized for the Vegeta L12-15 who grinds there, so the hold has its own
+  // guards in LoG2's early band (its Triceratops Jungle at L10): 5 hits to kill in Super Saiyan, 15 to knock him out.
+  // Their EXP sits at or above the L9-11 kill cap (575-887), so one sweep of the hold still levels him for the gate.
+  {
+    id: 'c02_guardBot', name: 'Guard Robot', sprite: 'c02_guardBot', hp: 240, str: 9, pow: 8, end: 14, exp: 1100, ai: 'heavy', speed: 0.7,
+    desc: 'A Pilaf Gang guard robot from a mail-order kit. Shu built it, Mai painted it, and it attacks whoever is closest.',
+  },
+  {
+    id: 'c02_gangDrone', name: 'Gang Drone', sprite: 'c02_gangDrone', hp: 210, str: 1, pow: 9, end: 10, exp: 900, ai: 'shooter', speed: 1.0, flying: true,
+    shot: { color: '#f8d040', cooldown: 85, speed: 2.3, mult: 0.75 }, desc: 'A Pilaf Gang lookout drone with a laser bolted on. One of the ones that work.',
   },
   {
     id: 'c02_pilafMachine', name: 'Pilaf Machine', sprite: 'c02_mech', hp: 900, str: 19, pow: 14, end: 18, exp: 1800, ai: 'boss', speed: 0.8, box: { w: 22, h: 10 },

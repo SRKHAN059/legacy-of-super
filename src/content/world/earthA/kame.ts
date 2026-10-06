@@ -7,9 +7,9 @@ import { registerMaps } from '../../registry';
  *
  * Turtle Reef (kame_reef, hostile) is the region's LoG2 Tropical-Islands stand-in: the low-tide sandbar off the
  * island's east beach (rows 12-13) walks straight onto it. Its water wildlife (crabs, vipers, king crabs) is what
- * drops the Fish that Korin trades for Senzu Beans. Inner flats: open from Ch2 (crabs, vipers, mud golems).
- * Outer atoll: behind the Gohan L25 gate 'ea_g25_gohan' on the spit (22, 12-13): king crabs, a pterodactyl and
- * the region's Delicacy.
+ * drops the Fish that Korin trades for Senzu Beans. Inner flats: open from Ch2 (crabs, vipers, tide slimes).
+ * Outer atoll: behind the Gohan L25 gate 'ea_g25_gohan' on the spit (22, 12-13): king crabs, a pterodactyl, mud
+ * golems and the region's Delicacy.
  */
 
 registerMaps([
@@ -116,15 +116,18 @@ registerMaps([
       ['grassTuft', 36, 12.6], ['flowers', 30, 20], ['flowers', 31.6, 19.6], ['smallRock', 26.4, 15.6],
     ],
     enemies: [
-      // Inner flats (open from Chapter 2). LoG2's Tropical Islands let every foe roll for a Fish; here the shore
-      // wildlife carries them, so the flats hold the region's biggest crab-and-viper population.
+      // Inner flats (open from Chapter 2; Goku first fishes here at about L11 in Chapter 3). LoG2's Tropical Islands
+      // let every foe roll for a Fish; here the shore wildlife carries them, so the flats hold the region's biggest
+      // crab-and-viper population. Tide slimes ooze over the rock reef.
       { type: 'crab', x: 9, y: 14 }, { type: 'crab', x: 15, y: 12 }, { type: 'crab', x: 11, y: 17 },
       { type: 'crab', x: 16, y: 17 }, { type: 'crab', x: 14, y: 19 },
       { type: 'viper', x: 13, y: 9 }, { type: 'viper', x: 19, y: 5 },
-      { type: 'mudSlime', x: 8, y: 20 }, { type: 'mudSlime', x: 16, y: 21 },
-      // Outer atoll (Gohan L25).
+      { type: 'ea_tideSlime', x: 8, y: 20 }, { type: 'ea_tideSlime', x: 16, y: 21 },
+      // Outer atoll (Gohan L25): king crabs, a pterodactyl and the mud golems (LoG2's Eggbot 37, a foe of its L22
+      // Northern Mountains).
       { type: 'kingCrab', x: 28, y: 7 }, { type: 'kingCrab', x: 35, y: 15 }, { type: 'kingCrab', x: 27, y: 16 },
       { type: 'pterodactyl', x: 32, y: 19 },
+      { type: 'mudSlime', x: 36, y: 10 }, { type: 'mudSlime', x: 31, y: 17 },
     ],
     exits: { west: { to: 'kame_island' } },
     barriers: [{ id: 'ea_g25_gohan', x: 22, y: 12, w: 1, h: 2, level: 25, character: 'gohan' }],

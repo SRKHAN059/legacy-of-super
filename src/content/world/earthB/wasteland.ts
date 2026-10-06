@@ -17,7 +17,8 @@ import { heroTalk } from './talk';
  *    Vegeta L50 trophy gate 'g50_vegeta' at x40-42 y10 → chest 'trophy_vegeta' (trophyVegeta) at (41,5).
  *    NW plateau (flight from (14,12) → (6,4); back from (8,6) → (13,13)): good spot for spectators/Bulma's camp.
  *    From Chapter 8, Frieza Force remnants who regrouped after Resurrection 'F' (a trooper, two heavies, an elite;
- *    T4/T5 for a party at L29+) dig in around two crashed pods under the trophy cliffs, x 37-44 rows 12-19.
+ *    T4, for the Vegeta L26 SSB who leads Chapter 8) dig in around two crashed pods under the trophy cliffs,
+ *    x 37-44 rows 12-19. The Chapter 5 wildlife (tuned for Gohan L16 / Piccolo L18) stays beside them.
  *    The pod at (38,14) is examined from just below it (38-39, 15-16).
  */
 
@@ -127,7 +128,7 @@ registerMaps([
       { type: 'pterodactyl', x: 30, y: 6 }, { type: 'pterodactyl', x: 16, y: 6 },
       { type: 'greyBear', x: 40, y: 28 },
       { type: 'raptor', x: 12, y: 28 }, { type: 'raptor', x: 34, y: 29 }, { type: 'raptor', x: 44, y: 14 },
-      // Frieza Force remnants (T4/T5): they never got the news.
+      // Frieza Force remnants (T4): they never got the news.
       { type: 'soldierElite', x: 41, y: 13, showIf: REMNANTS }, { type: 'soldierB', x: 39, y: 12, showIf: REMNANTS },
       { type: 'soldierC', x: 37, y: 19, showIf: REMNANTS }, { type: 'soldierC', x: 43, y: 17, showIf: REMNANTS },
     ],

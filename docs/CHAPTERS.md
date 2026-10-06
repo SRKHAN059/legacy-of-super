@@ -25,18 +25,39 @@ technique!"), and a handoff into the next chapter. Side content is silver/bronze
 ## Party timeline (repeat of Guide §5, enforced by `ensureChapterState`)
 
 Prologue Trunks L6 (leaves after) · Ch1 Goku L1 · Ch2 Vegeta joins L8 · Ch5 Gohan L16 + Piccolo L18 ·
-Ch9 Trunks rejoins L30 · forms/techs per Guide §5. Level curve (the band each chapter is tuned for,
-`CHAPTER_MIN_LEVEL` = its start): P 6 · 1: 1–8 · 2: 8–12 · 3: 12–15 · 4: 15–18 · 5: 18–22 · 6: 22–25 · 7: 25–29 ·
-8: 29–31 · 9: 30–34 · 10: 34–37 · 11: 37–40 · 12: 40–42 · 13: 42–45 · 14: 45–48.
+Ch9 Trunks rejoins L30 · Ch13 Gohan back to L39 (Lookout training) · forms/techs per Guide §5.
+
+**Level bands: what play delivers.** The fights are tuned at the levels a story run reaches by fighting what the
+story puts in front of the player and grinding only the story gates (the full-game run, recorded in
+`tests/fixtures/story_fights.json`; the fair-play suites replay it). Those are the bands below. `CHAPTER_MIN_LEVEL`
+(P 6 · 1 · 8 · 12 · 15 · 18 · 22 · 25 · 29 · 30 · 34 · 37 · 40 · 42 · 45, `chapters/common.ts`) is not a promise of
+these levels: it is the anchor of the safety nets (hand-over at −5, a story-forced character at −3) and the level a
+chapter started standalone (tests, `?map=` dev entry) floors the party at. From Chapter 7 on, the heroes a player
+actually plays arrive below it, because the nets only catch a player who skipped the fighting; a player who grinds
+past the gates is stronger than this, never weaker.
+
+| Ch | Heroes played (story fights) | Ch | Heroes played (story fights) |
+|---|---|---|---|
+| P | Trunks 6–7 | 8 | Goku 26–27, Vegeta 26–28 |
+| 1 | Goku 1–10 | 9 | Trunks 30–33 (Trunks 33 gate), Goku 28 |
+| 2 | Vegeta 8–12 (Goku 10 waits) | 10 | Goku 29–35 (Goku 35 gate before Black), Vegeta 29 |
+| 3 | Goku 10–14, Vegeta 12–15 (Vegeta 15 gate) | 11 | Trunks 34–35, Goku 35, Vegeta 29 |
+| 4 | Vegeta 15, Goku 16 | 12 | Goku 35–37 (Chapter 12 floor 35) |
+| 5 | Gohan 16–18, Piccolo 18–19 | 13 | Goku 39–41, Gohan 39–41 (Gohan 41 gate), Vegeta 39 |
+| 6 | Goku 19–20, Vegeta 19 | 14 | Goku 41–44, Gohan 42–43, Vegeta and Piccolo 42 (forced floor), guests at their own levels |
+| 7 | Goku 22–24, Vegeta 22–24, Piccolo 20–25 (Piccolo 25 gate) | post | Goku 44 at the credits; the L50 trophy gates and superbosses |
+
+Free-roam zones are tuned at the same levels: `tests/grind.test.ts` clears every hostile zone with the fair bot at
+the level its hero walks in with, and grinds every story gate from its arrival level.
 
 **Levels come from EXP, as in LoG2.** Characters join at their story level (LoG2's SetMinLevel). Nothing raises a
-character to the band in a playthrough that started with the prologue: the band is what normal play plus the
+character to a band in a playthrough that started with the prologue: the bands above are what normal play plus the
 story gates below deliver. The hand-over is only a safety net: the hero who played the chapter that just ended (the
-active character when `cNN_start` runs) is lifted to `CHAPTER_MIN_LEVEL[N] - HANDOVER_LEVEL_GAP` (band start − 5)
+active character when `cNN_start` runs) is lifted to `CHAPTER_MIN_LEVEL[N] - HANDOVER_LEVEL_GAP` (anchor − 5)
 if they are below it, which only catches a player who avoided nearly every fight. Benched characters are never
 raised: they fall behind and must be rotated in to keep up (the story gates, the side gates and the L50 trophies
 depend on it). The other safety net is `force(s, id)`: when the story puts a character on the field, they are
-lifted to at least band start − 3 (`CHAPTER_MIN_LEVEL[chapter] - FORCED_LEVEL_GAP`) so a forced segment is never a
+lifted to at least anchor − 3 (`CHAPTER_MIN_LEVEL[chapter] - FORCED_LEVEL_GAP`) so a forced segment is never a
 wall; a character who joined in that chapter keeps their join level. A chapter started standalone (tests, the
 `?map=` dev entry) still floors the whole party at `CHAPTER_MIN_LEVEL[N]` and opens the story gates of earlier
 chapters, so every chapter remains playable on its own.
@@ -46,17 +67,24 @@ chapters, so every chapter remains playable on its own.
 LoG2 put coloured level gates on the critical path (Piccolo 10 and 25, Vegeta 30, Trunks 30, Goku 40). Ours are
 `STORY_GATES` in `chapters/common.ts`: the table places each barrier and its once-only hint trigger by overlay,
 so act and world map files stay untouched. Each gate's level is the level its character arrives with by normal play
-(`arrive`, what the full-game run measures) plus one or two clears of the hostile zone beside it, computed from the
-EXP table and the ROM kill clamp (`tests/full_game.test.ts` asserts 0.5–2 clears and at least 10 kills, and the
-full run grinds every gate on real enemies and prints the effort).
+(`arrive`, what the full-game run measures) plus a real grind of the hostile zone beside it. What that grind costs is
+measured in play: `tests/grind.test.ts` has the fair bot grind each gate from its arrival level, visit after visit,
+and asserts 2–12 minutes (LoG2's own gates cost that bot 7–15: Piccolo 25 about 7, Trunks 30 about 7, Goku 40
+about 15). `tests/full_game.test.ts` adds the EXP-table view (0.5–4 clears, at least 10 kills) and grinds every gate
+on real enemies in the full run.
 
-| Ch | Gate | Where | Save point (switch) | Grind zone | Arrives | LoG2 parallel |
-|---|---|---|---|---|---|---|
-| 3 | Vegeta 15 | Pilaf Castle courtyard gate (`pilaf_castle_out`), Dragon Balls 2–3 behind it | outside the gate | Diablo Desert | 12 | Piccolo 10 (first rotation) |
-| 7 | Piccolo 24 | walkway to the stadium (`c07_nameless_grounds`) | landing site | crater rim | 20 | Piccolo 25 |
-| 9 | Trunks 32 | deep shaft of the mine (`c09_mine`): Excavator, third crystal | beside the shaft | the mine | 30 | Trunks 30 |
-| 10 | Goku 34 | Black's courtyard (`c10_lair`), stands after the raid | below the courtyard (Goku is forced) | ruins + future city | 33 | Vegeta 30 (forced) |
-| 13 | Gohan 40 | north trail to the poacher camp (`c13_monster_jungle`) | south end of the jungle | the jungle | 39 (Lookout training) | Goku 40 |
+| Ch | Gate | Where | Save point (switch) | Grind zone | Arrives | Fair-bot grind | LoG2 parallel |
+|---|---|---|---|---|---|---|---|
+| 3 | Vegeta 15 | Pilaf Castle courtyard gate (`pilaf_castle_out`), Dragon Balls 2–3 behind it | outside the gate | Diablo Desert | 12 | 1.2 min, 13 kills | Piccolo 10 (first rotation; free in LoG2) |
+| 7 | Piccolo 25 | walkway to the stadium (`c07_nameless_grounds`) | landing site | crater rim | 20 | 2.5 min, 20 kills | Piccolo 25 |
+| 9 | Trunks 33 | deep shaft of the mine (`c09_mine`): Excavator, third crystal | beside the shaft | the mine | 30 | 3.6 min, 24 kills | Trunks 30 |
+| 10 | Goku 35 | Black's courtyard (`c10_lair`), stands after the raid | below the courtyard (Goku is forced) | ruins + future city | 33 | 3.6 min, 24 kills | Vegeta 30 (forced) |
+| 13 | Gohan 41 | north trail to the poacher camp (`c13_monster_jungle`) | south end of the jungle | the jungle | 39 (Lookout training) | 4.0 min, 28 kills | Goku 40 |
+
+The Chapter 3 gate is the one short grind on purpose: it teaches switching heroes at a save point, as LoG2's
+Piccolo 10 did (Piccolo joins at L10, so it costs nothing there), and it cannot ask for more than L15, the band start
+Vegeta plays Chapter 4 at. The other four were raised a level or two in the zone retune, when the gentler zones made
+one level a minute or two of play.
 
 Rules every story gate keeps (tested): the required character is in the party and switchable at a save point on
 the near side (or is the hero the story is forcing); the far side is unreachable on foot until the gate breaks; the
