@@ -294,9 +294,9 @@ registerScripts({
     s.boom(hx + 3, hy, 20, '#f8e048');
     s.shake(24, 3);
     await s.talk([
-      ['caulifla', 'Ha! HAHA! Look at this! I feel like I could punch a hole in the planet!', 'happy'],
+      ['c13_cauliflaSSJ', 'Ha! HAHA! Look at this! I feel like I could punch a hole in the planet!', 'happy'],
       ['cabba', 'On the first try?! It took me... Master Vegeta had to threaten to destroy Sadala!', 'shock'],
-      ['caulifla', 'Bet I could take you right now. Come on, teacher. Show me what Super Saiyan is for!', 'smirk'],
+      ['c13_cauliflaSSJ', 'Bet I could take you right now. Come on, teacher. Show me what Super Saiyan is for!', 'smirk'],
     ]);
     cabbaSSJ(s, true);
     await s.powerUp('hero', '#f8e048', 30);
@@ -397,7 +397,7 @@ registerScripts({
     if (shouted) await s.say('cabbaSSJ', 'Caulifla, PLEASE! She won\'t stop! She\'s going to kill me!', 'shout');
     s.pose('c13_kaleC2', 'charge');
     s.aura('c13_kaleC2', '#a0f060');
-    await s.say('kale', 'GRAAAAH!', 'shout');
+    await s.say('c13_kaleBerserk', 'GRAAAAH!', 'shout');
     // Caulifla throws herself between them (ep 93). Kale's blast tears past them both and takes the far ridge
     // with it; then Caulifla talks her down.
     const [hx, hy] = heroTile(s);
@@ -408,7 +408,7 @@ registerScripts({
       s.sfx('dash');
       await s.walk('c13_cauliflaC2', mx, my, 6);
       s.face('c13_cauliflaC2', 'c13_kaleC2');
-      await s.say('caulifla', 'KALE! STOP!', 'shout');
+      await s.say('c13_cauliflaSSJ', 'KALE! STOP!', 'shout');
     }
     // The blast goes wide, over everyone's heads, into the ridge on the far side of the crags.
     const [rx, ry] = [bx < 20 ? 34 : 5, 2];
@@ -424,9 +424,9 @@ registerScripts({
     s.aura('c13_kaleC2', null);
     s.pose('hero', null);
     await s.talk([
-      ['caulifla', 'That\'s ENOUGH, Kale! Look at me! It\'s me!', 'shout'],
-      ['caulifla', 'You think I\'d ditch you for this guy? Not in a million years. You\'re my little sis. Nobody\'s taking me anywhere.', 'happy'],
-      ['kale', '...Sis...', 'sad'],
+      ['c13_cauliflaSSJ', 'That\'s ENOUGH, Kale! Look at me! It\'s me!', 'shout'],
+      ['c13_cauliflaSSJ', 'You think I\'d ditch you for this guy? Not in a million years. You\'re my little sis. Nobody\'s taking me anywhere.', 'happy'],
+      ['c13_kaleBerserk', '...Sis...', 'sad'],
     ]);
     s.sprite('c13_kaleC2', 'kale');
     s.pose('c13_kaleC2', 'ko');

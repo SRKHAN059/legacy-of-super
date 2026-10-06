@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { portrait } from '../../src/art/registry';
 import { CAST } from '../../src/content/cast';
 import { handOff } from '../../src/content/chapters/act5/helpers';
 import { SATAN_RULE_GOKU_LEVEL } from '../../src/content/chapters/act5/post';
@@ -1398,6 +1399,31 @@ describe('Chapter 13 interludes: Goku vs. Gohan, Universe 6, the gated animals',
     const log3 = record(sim3);
     expect(await sim3.run('c13_u6_episode', {}, TICKS)).toBe(true);
     expect(log3.length).toBe(0);
+  });
+
+  it('a Saiyan who has transformed on screen speaks with the transformed portrait (Caulifla, Kale)', async () => {
+    const sim = friezaReady();
+    const st = sim.game.state;
+    st.addQuest('c13_u6');
+    st.completeQuest('c13_u6');
+    const faces: Array<{ text: string; portrait: unknown }> = [];
+    const g = sim.game;
+    const orig = g.say.bind(g);
+    g.say = (lines) => {
+      for (const l of lines) faces.push({ text: l.text, portrait: l.portrait });
+      return orig(lines);
+    };
+    await beat(sim, 'cc_yard', 'act5_beerus_talk', 25, 17);
+    const face = (re: RegExp): unknown => faces.find((f) => re.test(f.text))?.portrait;
+    // Before the change: the everyday faces.
+    expect(face(/A tingle in my back\.\.\. Like/)).toBe(portrait('caulifla', 'shout'));
+    expect(face(/You're going to leave me behind/)).toBe(portrait('kale', 'sad'));
+    // Golden Caulifla and berserk Kale on screen: the dialogue box shows the same look.
+    expect(face(/punch a hole in the planet/)).toBe(portrait('c13_cauliflaSSJ', 'happy'));
+    expect(face(/^KALE! STOP!/)).toBe(portrait('c13_cauliflaSSJ', 'shout'));
+    expect(face(/^GRAAAAH!/)).toBe(portrait('c13_kaleBerserk', 'shout'));
+    expect(face(/^\.\.\.Sis\.\.\.$/)).toBe(portrait('c13_kaleBerserk', 'sad'));
+    expect(sim.errors).toEqual([]);
   });
 
   it('berserk Kale cannot be hurt; reaching Caulifla and pressing A makes her step in', async () => {

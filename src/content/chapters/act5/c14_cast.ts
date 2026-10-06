@@ -25,7 +25,8 @@ registerCast({
   c14_knsi: { body: 'male', skin: '#c0a0e0', hair: 'spiky', hairColor: '#402060', ...PRIDE, face: 'stern' },
 
   // ---------------------------------------------------------------- Universe 2: the Kamikaze Fireballs (eps 102, 117-118)
-  // Everyday looks, before the transformation.
+  // Everyday looks, before the transformation. `c14_sanka` is Su Roas (Rozie's everyday self); `c14_suroas` is the
+  // wild Sanka Ku (Kakunsa's).
   c14_brianne: { body: 'big', skin: SKIN, hair: 'bun', hairColor: '#f0a0c0', accent: '#f8f0a0', top: '#f0e8f8', topStyle: 'dress', sleeves: 'short', pants: '#f0e8f8', boots: '#f080b0', face: 'gentle' },
   c14_sanka: { body: 'female', skin: '#e0b0a0', hair: 'bob', hairColor: '#806048', top: '#a8c8e8', topStyle: 'shirt', sleeves: 'short', pants: '#506088', boots: '#f0f0f0' },
   c14_suroas: { body: 'female', skin: '#b08058', hair: 'ponytail', hairColor: '#403028', top: '#c8b090', topStyle: 'vest', under: '#c8b090', sleeves: 'none', pants: '#806848', boots: '#503828' },
@@ -43,7 +44,7 @@ registerCast({
   c14_damom: { body: 'child', skin: '#b0a080', hair: 'mohawk', hairColor: '#605030', top: '#806040', topStyle: 'vest', under: '#806040', sleeves: 'none', pants: '#504030', boots: '#302010', face: 'stern' },
 }, {
   c14_kahseral: 'Kahseral', c14_tupper: 'Tupper', c14_zoiray: 'Zoiray', c14_kettle: 'Kettle', c14_cocotte: 'Cocotte', c14_knsi: 'K\'nsi',
-  c14_brianne: 'Brianne', c14_sanka: 'Sanka', c14_suroas: 'Su Roas', c14_rozie: 'Rozie', c14_kakunsa: 'Kakunsa', c14_superRibrianne: 'Ribrianne',
+  c14_brianne: 'Brianne', c14_sanka: 'Su Roas', c14_suroas: 'Sanka Ku', c14_rozie: 'Rozie', c14_kakunsa: 'Kakunsa', c14_superRibrianne: 'Ribrianne',
   c14_saonel: 'Saonel', c14_pirina: 'Pirina', c14_damom: 'Damom',
 });
 
@@ -55,8 +56,8 @@ registerScans({
   c14_cocotte: { name: 'Cocotte', kind: 'U11 / Pride Troopers', hp: 750, str: 50, pow: 58, end: 54, desc: 'A Pride Trooper who folds space itself. She seals her squad\'s targets into a pocket they cannot slip out of.' },
   c14_knsi: { name: 'K\'nsi', kind: 'U11 / Pride Troopers', hp: 2514, str: 54, pow: 56, end: 54, desc: 'A Pride Trooper who partners with Dyspo. Sure he is fast enough to catch an assassin.' },
   c14_brianne: { name: 'Brianne', kind: 'U2 / Kamikaze Fireballs', hp: 900, str: 10, pow: 40, end: 20, desc: 'An idol of Universe 2 in her everyday clothes. The readings soar the moment she transforms.' },
-  c14_sanka: { name: 'Sanka Ku', kind: 'U2 / Kamikaze Fireballs', hp: 800, str: 12, pow: 36, end: 18, desc: 'Brianne\'s loyal partner. Becomes Rozie when she transforms.' },
-  c14_suroas: { name: 'Su Roas', kind: 'U2 / Kamikaze Fireballs', hp: 1100, str: 30, pow: 8, end: 22, desc: 'A wild girl from Universe 2 who would rather bite than pose. Becomes Kakunsa when she transforms.' },
+  c14_sanka: { name: 'Su Roas', kind: 'U2 / Kamikaze Fireballs', hp: 800, str: 12, pow: 36, end: 18, desc: 'Brianne\'s loyal partner. Becomes Rozie when she transforms.' },
+  c14_suroas: { name: 'Sanka Ku', kind: 'U2 / Kamikaze Fireballs', hp: 1100, str: 30, pow: 8, end: 22, desc: 'A wild girl from Universe 2 who would rather bite than pose. Becomes Kakunsa when she transforms.' },
   ribrianne: { name: 'Ribrianne', kind: 'U2 / Kamikaze Fireballs', hp: 9000, str: 56, pow: 62, end: 56, desc: 'Leader of the Kamikaze Fireballs. Believes love is the strongest power there is.' },
   c14_superRibrianne: { name: 'Super Ribrianne', kind: 'U2 / Kamikaze Fireballs', hp: 9000, str: 56, pow: 62, end: 56, desc: 'Ribrianne grown giant on the love of all Universe 2. Her readings fill the screen.' },
   c14_rozie: { name: 'Rozie', kind: 'U2 / Kamikaze Fireballs', hp: 6400, str: 50, pow: 60, end: 52, desc: 'Ribrianne\'s second in command. Fires arrows of love that hurt like real ones.' },

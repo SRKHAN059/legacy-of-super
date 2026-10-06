@@ -549,6 +549,24 @@ describe('presentation', () => {
     expect(picked).toBe(0);
   });
 
+  it('a screen flash keeps fading while a line of dialogue covers the field (the line is never read through a wash)', async () => {
+    const sim = new Sim();
+    sim.start('dev_sandbox', 17, 5);
+    const f = field(sim);
+    const flashOf = () => (f as unknown as { screenFlash: { t: number } | null }).screenFlash;
+    registerScripts({ test_eng_flash: async (s) => { s.flash('#f878b8', 18); await s.say('narrator', 'Transform!'); } });
+    void sim.game.runScript('test_eng_flash');
+    await flush();
+    expect(sim.game.scenes.top).toBeInstanceOf(DialogueScene);
+    expect(flashOf()?.t).toBe(18);
+    await step(sim, 10);
+    expect(flashOf()?.t).toBe(8);
+    await step(sim, 8);
+    expect(flashOf()).toBeNull();
+    // Nothing else moves under the box: the world itself only runs when the field is on top.
+    expect(sim.game.scenes.top).toBeInstanceOf(DialogueScene);
+  });
+
   it('the dialogue box opens at the top when the speaker stands low on screen; L/R move it', async () => {
     const sim = new Sim();
     sim.start('dev_sandbox', 17, 5);
@@ -1229,6 +1247,25 @@ describe('save-code panel and opening: details', () => {
       expect(root.hidden).toBe(true);
       expect(doc.text.value).toBe('');
       expect(doc.activeElement).toBe(doc.body);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('Export selects the code from the top even when the window has no focus (no focus event fires)', async () => {
+    const doc = withPanelDom(null);
+    try {
+      const ui = new DomSaveCodeUi();
+      // A background window moves activeElement on focus() but dispatches no focus event.
+      const box = doc.text;
+      box.focus = (): void => { doc.activeElement = box; };
+      box.scrollTop = 151;
+      const shown = ui.showExport('File 1 save code', encodeSaveCode(richSave()));
+      expect(doc.activeElement).toBe(box);
+      expect(box.selected).toBe(true);
+      expect(box.scrollTop).toBe(0);
+      doc.els['code-close'].dispatch('click');
+      await shown;
     } finally {
       vi.unstubAllGlobals();
     }

@@ -146,7 +146,8 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
   **Golden Frieza** (`boss.stamina` drain: stalling works), `endAt` ≈0.3 → Sorbet's ray gun downs Goku (cutscene) →
   Vegeta (forced) vs **Golden Frieza** again → Frieza destroys the Earth (white-out) → in the void Whis rewinds time
   3 minutes → Goku finishes Frieza (**beam struggle** Kamehameha vs Frieza's blast). Vegeta learns `galickGun`.
-  Piccolo is healed by a Senzu. Epilogue party at `cc_yard`. → `c07_start`.
+  Piccolo died shielding Gohan (end of Ch5); Goten and Trunks carry him to the Lookout and Porunga revives him after
+  the rewind. Epilogue party at `cc_yard`. → `c07_start`.
 
 ### Chapter 7 — "Tournament of Destroyers" (Goku/Vegeta/Piccolo; L25→29) — LoG2 parallel: Cell Games-style match card
 - Champa and Vados visit `beerus_grounds` (cutscene); the Super Dragon Ball bet; recruit Team U7 (Goku, Vegeta,

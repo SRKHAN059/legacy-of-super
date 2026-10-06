@@ -93,7 +93,7 @@ registerScripts({
     s.sprite('c14_kaleP', 'kaleLSSJ');
     await s.talk([
       ['caulifla', 'Kale... your eyes! You\'re actually in there this time!', 'shock'],
-      ['kale', 'Get away from my sister!', 'shout'],
+      ['kaleLSSJ', 'Get away from my sister!', 'shout'],
     ]);
     await s.blast('c14_kaleP', boss, '#90f070');
     const b = s.actor(boss);
@@ -128,17 +128,17 @@ registerScripts({
     await s.narrate('Elsewhere on the west ring, Android 17 runs into Universe 2\'s warriors of love.');
     const [hx, hy] = heroTile(s);
     const [bx, by] = stageOn(s, 'c14_brianneF', 'c14_brianne', hx + 3, hy - 3, 'left', 'Brianne', FIGHT_MARGIN);
-    const [rx, ry] = stageOn(s, 'c14_sankaF', 'c14_sanka', hx + 6, hy - 2, 'left', 'Sanka', FIGHT_MARGIN);
-    const [kx, ky] = stageOn(s, 'c14_suroasF', 'c14_suroas', hx + 4, hy - 1, 'left', 'Su Roas', FIGHT_MARGIN);
+    const [rx, ry] = stageOn(s, 'c14_sankaF', 'c14_sanka', hx + 6, hy - 2, 'left', 'Su Roas', FIGHT_MARGIN);
+    const [kx, ky] = stageOn(s, 'c14_suroasF', 'c14_suroas', hx + 4, hy - 1, 'left', 'Sanka Ku', FIGHT_MARGIN);
     s.face('hero', 'c14_suroasF');
     await s.talk([
       ['c14_brianneF', 'Android 17 of Universe 7! The maidens of Universe 2 have chosen you as our first sweetheart!', 'happy'],
       ['android17', 'Sweetheart. Right. ...You do know this is a fistfight?', 'smirk'],
       ['c14_suroasF', 'Grrr... Brianne, let me bite him already!', 'angry'],
-      ['c14_sankaF', 'Not yet, Su Roas! We fight at our most beautiful, or not at all!', 'happy'],
+      ['c14_sankaF', 'Not yet, Sanka! We fight at our most beautiful, or not at all!', 'happy'],
       ['c14_brianneF', 'Exactly. Watch closely, Universe 7. Love is about to bloom!', 'happy'],
     ]);
-    await s.narrate('Su Roas leaps in while the other two hang back behind a barrier of love that no blow can pass. Take Su Roas down - and keep an eye on the girls in the back!');
+    await s.narrate('Sanka Ku leaps in while the other two hang back behind a barrier of love that no blow can pass. Take Sanka Ku down - and keep an eye on the girls in the back!');
     s.letterbox(false);
     s.music('boss');
     removeAll(s, 'c14_brianneF', 'c14_sankaF', 'c14_suroasF');
@@ -259,8 +259,12 @@ registerScripts({
       ['hit', 'And you are slower than you think.', 'neutral'],
       ['dyspo', 'We\'ll see about that. Universe 11 does not lose the same fight twice!', 'angry'],
     ]);
+    // Dyspo is not eliminated (Gohan and Frieza face him in ep 124): he streaks off across the ring, not over its edge.
     const d = s.actor(dys);
-    await ringOut(s, dys, Math.floor(d.x / 16) + 12, Math.floor((d.y - 14) / 16) - 12);
+    const [rx, ry] = onStage(s, Math.floor(d.x / 16) + 12, Math.floor((d.y - 14) / 16) - 6);
+    s.sfx('dash');
+    await s.walk(dys, rx, ry, 8);
+    removeAll(s, dys);
     await s.talk([
       ['goku', 'Thanks, Hit! We make a pretty good team!', 'happy'],
       ['hit', 'Don\'t get used to it. The next time we meet, we are opponents again.', 'neutral'],

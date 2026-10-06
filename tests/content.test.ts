@@ -12,9 +12,10 @@ import { GENERIC_SCAN_KEY, GENERIC_SCAN_SPRITES, NPC_SCAN_OVERRIDES, SCAN_ALIASE
 import { SPOTS } from '../src/content/world';
 import { FORMS } from '../src/content/characters';
 import { TECHNIQUES } from '../src/content/techniques';
+import { Enemy } from '../src/game/enemy';
 import { SCRIPTS } from '../src/game/script';
 import { parseGrid } from '../src/game/world';
-import { SCREEN_W } from '../src/engine/constants';
+import { SCREEN_W, TILE } from '../src/engine/constants';
 import { measure, wrap } from '../src/engine/fontdata';
 import { ScouterScene } from '../src/ui/scouter';
 import { ScouterDbScene } from '../src/ui/scouterdb';
@@ -76,6 +77,26 @@ describe('content integrity', () => {
       }
     });
   }
+
+  it('every map enemy spawn starts clear of terrain, props and gates (an overlapping one is frozen in place for good)', () => {
+    const stuck: string[] = [];
+    for (const id of Object.keys(MAPS)) {
+      const m = resolveMap(id);
+      if (!m?.enemies?.length) continue;
+      const sim = new Sim();
+      sim.game.state.data.chapter = 15;
+      for (const b of m.barriers ?? []) sim.game.state.set(`gate:${id}:${b.id}`);
+      sim.start(id);
+      const f = sim.game.field;
+      if (!f) throw new Error(`no field on ${id}`);
+      for (const s of m.enemies) {
+        // Field.enter places a map spawn at the tile's centre, feet near its bottom edge.
+        const e = new Enemy(s.type, s.x * TILE + 8, s.y * TILE + 14);
+        if (f.col.blocked(e.box(), e.flying)) stuck.push(`${id}: ${s.type} at ${s.x},${s.y}`);
+      }
+    }
+    expect(stuck).toEqual([]);
+  }, 120000);
 
   it('enemies reference valid sprites, scripts and minions', () => {
     for (const e of Object.values(ENEMIES)) {

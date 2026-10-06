@@ -257,11 +257,11 @@ registerScripts({
     await s.say('goku', 'Heh, you\'re good! But Super Saiyan isn\'t the end of the road. Watch closely!', 'happy');
     await s.powerUp('hero', '#f8f080', 40);
     await s.narrate('Sparks crackle through Goku\'s golden aura. Super Saiyan 2!');
-    await s.say('caulifla', 'Sparks... and that tingle in my back, only way stronger. Like THIS?!', 'shout');
+    await s.say('c13_cauliflaSSJ', 'Sparks... and that tingle in my back, only way stronger. Like THIS?!', 'shout');
     await s.powerUp('c14_cauliflaA', '#f8f080', 40);
     await s.talk([
       ['goku', 'You got it on your first try?! Now THAT\'s talent!', 'shock'],
-      ['caulifla', 'Super Saiyan 2, huh? Hah! Now we can really go at it!', 'smirk'],
+      ['c13_cauliflaSSJ', 'Super Saiyan 2, huh? Hah! Now we can really go at it!', 'smirk'],
       ['kale', 'Sis... he\'s all you look at now... I won\'t let anyone take you away from me!', 'shout'],
     ]);
     await s.powerUp('c14_kaleA', '#90f070', 50);
@@ -301,7 +301,7 @@ registerScripts({
 
     // --- 6. Universe 10 falls in the dark (ep 103); Goku and Hit team up against Dyspo and K'nsi (ep 104).
     await s.fadeOut(20);
-    await erased(s, 'Twenty minutes in. Gohan outlasts Universe 10\'s last fighter, Obuni... and Zeno erases Universe 10.');
+    await erased(s, 'Twenty minutes in. Gohan knocks out Universe 10\'s last fighter, Obuni... and Zeno erases Universe 10.');
     await s.call('c14_dyspoTag');
 
     // --- 7. More time passes in the dark (eps 105-107), then Frieza vs Frost (ep 108; Frieza is a guest).
@@ -403,6 +403,8 @@ registerScripts({
     s.letterbox(true);
     await clearStage(s);
     // --- 1. Caulifla and Kale fuse: Kefla (eps 112-116). Goku takes the central ring; Ultra Instinct -Sign- returns.
+    //        Cabba's last stand (ep 112) is told first: the student Chapter 13 played meets his end at Frieza's hands.
+    await s.narrate('Elsewhere, Cabba breaks through to Super Saiyan 2 against Universe 4\'s Monna... only for Frieza to throw him out of the ring. From the stands, he begs Vegeta to wish Universe 6 back. Vegeta gives his word.');
     await handOff(s, 'goku');
     s.music('tense');
     const [gx, gy] = heroTile(s);
@@ -410,6 +412,15 @@ registerScripts({
     stageOn(s, 'c14_kaleB', 'kale', gx + 2, gy - 4, 'down', 'Kale');
     await s.talk([
       ['caulifla', 'Told you we\'d be back, Universe 7! Kale\'s got that power under control now.', 'smirk'],
+      ['goku', 'You two learn fast. Then here\'s one more lesson. Watch closely!', 'happy'],
+    ]);
+    // Ep 113: Goku shows them Super Saiyan 3 (the form the post-game Caulifla is practising on Sadala).
+    s.transformNow('ssj');
+    await s.powerUp('hero', '#f8e048', 60);
+    s.shake(30, 2);
+    await s.narrate('Goku\'s golden hair flows all the way down his back. Super Saiyan 3!');
+    await s.talk([
+      ['caulifla', 'Long hair, no eyebrows... and WAY stronger. Okay, we can\'t take that one at a time.', 'shock'],
       ['caulifla', 'Earrings from our Supreme Kai. Put one on, Kale. Let\'s see how he handles two of us... as ONE.', 'smirk'],
       ['goku', 'Potara?! Uh oh.', 'shock'],
     ]);
@@ -417,6 +428,8 @@ registerScripts({
     s.flash('#ffffff', 20);
     s.shake(20, 3);
     removeAll(s, 'c14_cauliflaB', 'c14_kaleB');
+    // Super Saiyan 3 drains Goku far too fast to hold against a fusion: he drops it.
+    s.transformNow(null);
     stageOn(s, 'c14_keflaB', 'kefla', gx, gy - 4, 'down', 'Kefla', FIGHT_MARGIN);
     await s.talk([
       ['kefla', 'I\'m Kefla. And you\'re finished, Goku!', 'smirk'],
@@ -672,7 +685,7 @@ registerScripts({
     s.face('c14_friezaHurt', 'c14_jiren4');
     await s.talk([
       ['goku', 'Frieza... 17... one more time. Everything we have!', 'shout'],
-      ['frieza', 'Just this once, monkey.', 'smirk'],
+      ['goldenFrieza', 'Just this once, monkey.', 'smirk'],
     ]);
     await s.beamStruggle('android17', 'jiren', '#60e0a0', '#f02020', [
       'Goku, Frieza and Android 17 fire as one!',

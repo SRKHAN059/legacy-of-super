@@ -400,8 +400,8 @@ registerMaps([
     enemies: [
       { type: 'c08_gooHench', x: 12, y: 8 }, { type: 'c08_gooHench', x: 32, y: 12 }, { type: 'c08_gooHench', x: 23, y: 19 },
       { type: 'c08_sporeBeetle', x: 6, y: 19 }, { type: 'c08_sporeBeetle', x: 38, y: 15 }, { type: 'c08_sporeBeetle', x: 28, y: 24 },
-      { type: 'c08_gooBlob', x: 16, y: 24 }, { type: 'c08_gooBlob', x: 33, y: 8 },
-      { type: 'giantSnake', x: 13, y: 15 }, { type: 'redRaptor', x: 40, y: 12 },
+      { type: 'c08_gooBlob', x: 16, y: 25 }, { type: 'c08_gooBlob', x: 33, y: 8 },
+      { type: 'giantSnake', x: 13, y: 14 }, { type: 'redRaptor', x: 40, y: 12 },
     ],
     triggers: [
       { id: 'c08_boysT', x: 2, y: 12, w: 6, h: 6, script: 'c08_boys', showIf: 'chapter==8&c08_landed&!c08_boysFound' },

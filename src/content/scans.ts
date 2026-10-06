@@ -117,7 +117,7 @@ export const SCANS: Record<string, ScanEntry> = {
   frizaSoldierB: { name: 'Frieza Trooper', kind: 'Frieza Force / trooper', hp: 900, str: 30, pow: 34, end: 26, desc: 'A seasoned Frieza Force trooper. Prefers close combat, and loot.' },
   frizaSoldierC: { name: 'Frieza Heavy', kind: 'Frieza Force / heavy', hp: 1100, str: 36, pow: 36, end: 36, desc: 'A bulky Frieza Force brute with a point-blank blaster and very big fists.' },
   frizaElite: { name: 'Frieza Elite', kind: 'Frieza Force / officer', hp: 2000, str: 42, pow: 48, end: 38, desc: 'A Frieza Force officer. Fast, accurate shots, and a scouter of his own pointed straight back at you.' },
-  ginyu: { name: 'Captain Ginyu', kind: 'Frieza Force / Ginyu', hp: 2400, str: 34, pow: 32, end: 30, desc: 'Captain of the Ginyu Force. Swaps bodies with his foes. Last seen on Namek, inside a frog.' },
+  ginyu: { name: 'Captain Ginyu', kind: 'Frieza Force / Ginyu', hp: 2400, str: 34, pow: 32, end: 30, desc: 'Captain of the Ginyu Force. Swaps bodies with his foes. Spent years stuck in a frog\'s body after a swap went wrong on Namek.' },
   c12_raditz: { name: 'Raditz', kind: 'Saiyan / memory', hp: 1500, str: 30, pow: 28, end: 26, desc: 'Goku\'s older brother, dead for decades. The thing wearing his face in this forest is not him.' },
   c12_nappa: { name: 'Nappa', kind: 'Saiyan / memory', hp: 5200, str: 54, pow: 50, end: 58, desc: 'The Saiyan who nearly killed Krillin long ago. The forest has made him larger than life.' },
   c12_cell: { name: 'Cell', kind: 'Bio-Android / memory', hp: 8000, str: 60, pow: 60, end: 64, desc: 'Dr. Gero\'s perfect creation, gone since the Cell Games. Here it is fear wearing his shape.' },

@@ -160,7 +160,10 @@ export class DomSaveCodeUi implements SaveCodeUi {
       this.active = { submit: done, cancel: done };
       // Focus the (read-only, selected) code rather than a button: releasing the Space (A) that opened the panel
       // over a focused button can click it in some browsers and shut the panel at once. Enter or Esc closes it.
+      // The selection is also set here: a window without focus (another app in front) fires no focus event.
       d.text.focus();
+      d.text.setSelectionRange(0, d.text.value.length, 'backward');
+      d.text.scrollTop = 0;
       void this.copy(true);
     });
   }

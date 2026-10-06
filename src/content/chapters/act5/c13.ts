@@ -764,7 +764,7 @@ registerScripts({
       s.sprite('c13_friezaB', 'goldenFrieza');
     }
     await s.talk([
-      ['frieza', 'Golden... and this time, I don\'t get tired.', 'smirk'],
+      ['goldenFrieza', 'Golden... and this time, I don\'t get tired.', 'smirk'],
       ['goku', 'Heh. Bring it!', 'shout'],
     ]);
     s.letterbox(false);

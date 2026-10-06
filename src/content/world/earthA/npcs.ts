@@ -544,7 +544,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       ],
       gohan: ['Little Gohan! Videl\'s young man! You take good care of that girl, and that baby. And wear a scarf, it\'s cold.', 'happy'],
       piccolo: [
-        [GRANNY, 'Oh! You gave me a fright. You look just like the Demon King from when I was a girl.', 'shock'],
+        [GRANNY, 'Oh! You gave me a fright. You look just like the Demon King from the news, all those years ago.', 'shock'],
         ['hero', '...I get that a lot.'],
         [GRANNY, 'But you have kind eyes. He never did. Have a cracker.', 'happy'],
       ],
@@ -1095,7 +1095,7 @@ export const EA_TALK: Record<string, NpcTalk> = {
       trunks: [['narrator', 'Bee drops a chewed ball at Trunks\'s feet and wags.'], ['hero', 'There weren\'t many dogs left in my time. ...Okay, buddy. One throw.', 'happy']],
       satan: [
         ['narrator', 'Bee goes wild, spinning in circles and barking at Mr. Satan.'],
-        ['hero', 'BEE! My brave boy! You scared off a lion-man from outer space once, you know! HAHAHA!', 'happy'],
+        ['hero', 'BEE! My brave boy! You\'re the reason Buu and I became friends, you know! HAHAHA!', 'happy'],
       ],
       android17: [['narrator', 'Bee sniffs 17\'s hand and immediately sits, perfectly still.'], ['hero', 'Good dog. Better trained than most rangers.', 'smirk']],
       frieza: [['narrator', 'Bee bares his teeth and growls at Frieza. Brave dog.'], ['hero', 'How charming. It thinks it can protect something.', 'smirk']],

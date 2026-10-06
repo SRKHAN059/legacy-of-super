@@ -227,9 +227,9 @@ registerMaps([
     ],
     enemies: [
       { type: 'c10_babarian', x: 5, y: 10 }, { type: 'c10_babarian', x: 12, y: 12 }, { type: 'c10_babariBeast', x: 9, y: 4 },
-      { type: 'c10_babarianSlinger', x: 21, y: 5 }, { type: 'c10_babarianSlinger', x: 21, y: 21 },
-      { type: 'c10_babarian', x: 25, y: 18 }, { type: 'c10_babarian', x: 34, y: 19 }, { type: 'c10_babarianSlinger', x: 28, y: 23 },
-      { type: 'c10_babariBeast', x: 37, y: 13 }, { type: 'c10_babariBeast', x: 12, y: 21 },
+      { type: 'c10_babarianSlinger', x: 21, y: 5 }, { type: 'c10_babarianSlinger', x: 21, y: 22 },
+      { type: 'c10_babarian', x: 25, y: 18 }, { type: 'c10_babarian', x: 34, y: 19 }, { type: 'c10_babarianSlinger', x: 28, y: 24 },
+      { type: 'c10_babariBeast', x: 37, y: 14 }, { type: 'c10_babariBeast', x: 12, y: 21 },
     ],
     objects: [
       { type: 'save', x: 4, y: 23 },

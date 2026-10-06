@@ -295,7 +295,7 @@ registerProp('c13_tarp', () => {
 });
 
 registerScans({
-  android17: { name: 'Android 17', kind: 'Android / park ranger', hp: 8200, str: 54, pow: 52, end: 65, desc: 'A former android, now a park ranger on Monster Island. His energy never runs out.' },
+  android17: { name: 'Android 17', kind: 'Android / park ranger', hp: 8200, str: 54, pow: 52, end: 65, desc: 'Dr. Gero\'s android, now a park ranger on Monster Island. His energy never runs out.' },
   android18: { name: 'Android 18', kind: 'Android / Z Fighter', hp: 7600, str: 58, pow: 58, end: 60, desc: 'Krillin\'s wife and Marron\'s mother. Will fight for a good price.' },
   tien: { name: 'Tien', kind: 'Earthling / Z Fighter', hp: 6400, str: 52, pow: 54, end: 56, desc: 'A stoic martial artist who runs a mountain dojo with Chiaotzu.' },
   jiren: { name: 'Jiren', kind: 'U11 / Pride Troopers', hp: '???', str: '???', pow: '???', end: '???', desc: 'Universe 11\'s Pride Trooper. Said to surpass even his God of Destruction.' },

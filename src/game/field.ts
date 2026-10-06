@@ -487,6 +487,14 @@ export class Field implements Scene {
     this.screenFlash = { color, t: frames, max: frames };
   }
 
+  /**
+   * A dialogue or menu is open over the field: the world stands still, but a screen flash keeps fading, so a line
+   * that follows a flash (a power-up, a blast) is never read through a solid wash of colour.
+   */
+  covered(): void {
+    if (this.screenFlash) { this.screenFlash.t--; if (this.screenFlash.t <= 0) this.screenFlash = null; }
+  }
+
   /** Hit's Time-Skip: the world (player) freezes briefly. */
   timeSkip(frames: number): void {
     this.skipT = frames;

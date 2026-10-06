@@ -12,6 +12,8 @@ export interface Scene {
   enter?(): void;
   /** Called when the scene is removed. */
   exit?(): void;
+  /** Called each tick instead of `update` while transparent scenes cover this one (cosmetic timers only). */
+  covered?(): void;
 }
 
 /** Stack of scenes; only the top one updates, transparent ones render over those below. */
@@ -58,9 +60,10 @@ export class SceneStack {
     this.push(s);
   }
 
-  /** Update the top scene. */
+  /** Update the top scene; the scenes it shows through to get their `covered` tick. */
   update(input: Input): void {
     this.top?.update(input);
+    for (let i = this.stack.length - 1; i > 0 && this.stack[i].transparent; i--) this.stack[i - 1].covered?.();
   }
 
   /** Render from the lowest visible scene upward. */
