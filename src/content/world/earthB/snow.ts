@@ -46,6 +46,7 @@ registerMaps([
       { type: 'iceSabertooth', x: 30, y: 21 }, { type: 'iceSabertooth', x: 26, y: 10 },
       { type: 'stormPtero', x: 11, y: 12 }, { type: 'stormPtero', x: 36, y: 13 },
       { type: 'direWolf', x: 35, y: 26 },
+      { type: 'stormPtero', x: 18, y: 13 }, { type: 'iceSabertooth', x: 5, y: 16 },
     ],
     exits: { north: { to: 'snow_peak' } },
     pickups: [{ id: 'del_snow_entry_1', item: 'delicacy', x: 15, y: 7, hidden: true }],

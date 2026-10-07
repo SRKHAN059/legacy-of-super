@@ -156,6 +156,7 @@ registerMaps([
       { type: 'c13_poacherBrute', x: 12, y: 10, hideIf: 'c13_poachersGone' }, { type: 'c13_poacherDrone', x: 34, y: 7, hideIf: 'c13_poachersGone' },
       { type: 'c13_jungleRaptor', x: 8, y: 13 }, { type: 'c13_mossBoar', x: 33, y: 24 }, { type: 'c13_jungleRaptor', x: 36, y: 27 },
       { type: 'c13_mossBoar', x: 11, y: 27 }, { type: 'c13_jungleRaptor', x: 28, y: 4 },
+      { type: 'c13_jungleRaptor', x: 27, y: 20 }, { type: 'c13_mossBoar', x: 21, y: 15 }, { type: 'c13_jungleRaptor', x: 33, y: 16 },
     ],
     objects: [
       { type: 'save', x: 13, y: 30 },
@@ -226,6 +227,8 @@ registerMaps([
       { type: 'c13_poacher', x: 14, y: 19, hideIf: 'c13_poachersGone' }, { type: 'c13_poacherBrute', x: 24, y: 20, hideIf: 'c13_poachersGone' },
       { type: 'c13_poacherBrute', x: 8, y: 11, hideIf: 'c13_poachersGone' }, { type: 'c13_poacherDrone', x: 31, y: 6, hideIf: 'c13_poachersGone' },
       { type: 'c13_poacherDrone', x: 8, y: 21, hideIf: 'c13_poachersGone' },
+      { type: 'c13_poacherBrute', x: 19, y: 7, hideIf: 'c13_poachersGone' }, { type: 'c13_poacherBrute', x: 24, y: 3, hideIf: 'c13_poachersGone' },
+      { type: 'c13_poacherBrute', x: 3, y: 3, hideIf: 'c13_poachersGone' },
       { type: 'c13_jungleRaptor', x: 30, y: 21, showIf: 'c13_poachersGone' }, { type: 'c13_mossBoar', x: 10, y: 21, showIf: 'c13_poachersGone' },
     ],
     objects: [
@@ -247,7 +250,10 @@ registerMaps([
       ['pillar', 9, 9], ['pillar', 26, 9], ['statue', 23, 4], ['rock', 31, 17], ['flowers', 29, 18],
     ],
     npcs: [
-      { id: 'c13_tienD', sprite: 'tien', x: 15, y: 7, talk: 'c13_tien_talk', name: 'Tien', showIf: 'done:c13_tien' },
+      // Tien teaches here once recruited, except on the Tournament of Power's stage and, after the credits, while he is
+      // still unbeaten in the Satan Dojo challenge he took up (he spars there until then: act1/overlays.ts).
+      { id: 'c13_tienD', sprite: 'tien', x: 15, y: 7, talk: 'c13_tien_talk', name: 'Tien', showIf: 'done:c13_tien&!post_game', hideIf: 'c14_departed&!c14_won' },
+      { id: 'c13_tienD', sprite: 'tien', x: 15, y: 7, talk: 'c13_tien_talk', name: 'Tien', showIf: 'done:c13_tien&post_game', hideIf: 'quest:c02_spar&!c02_beatTien' },
       { id: 'c13_chiaotzuD', sprite: 'chiaotzu', x: 20, y: 7, talk: 'c13_chiaotzu_dojo', name: 'Chiaotzu', showIf: 'done:c13_tien' },
       { id: 'c13_yurinD', sprite: 'c13_yurin', x: 24, y: 12, talk: 'c13_yurin_talk', name: 'Yurin', showIf: 'done:c13_tien' },
       { id: 'c13_stuA', sprite: 'c13_student', x: 11, y: 12, talk: 'c13_student_talk', name: 'Student', showIf: 'done:c13_tien', wander: 2 },
@@ -271,7 +277,13 @@ registerMaps([
     grid: wild.rows(),
     props: [...wildProps, ['crater', 16, 10], ['crater', 22, 14]],
     onEnter: 'c13_spot_enter',
-    enemies: [{ type: 'direWolf', x: 26, y: 5 }, { type: 'direWolf', x: 9, y: 19 }, { type: 'redRaptor', x: 30, y: 15 }, { type: 'redRaptor', x: 6, y: 9 }],
+    enemies: [
+      { type: 'direWolf', x: 26, y: 5 }, { type: 'direWolf', x: 9, y: 19 }, { type: 'redRaptor', x: 30, y: 15 }, { type: 'redRaptor', x: 6, y: 9 },
+      // The rest of the pack (LoG2 density) comes back once Gohan's training is over (the plateau's first visit: the
+      // sparring bout is fought with the map's wildlife around), and keeps to the rim, clear of Piccolo's ring.
+      ...([['direWolf', 33, 11], ['direWolf', 2, 5], ['redRaptor', 23, 2], ['redRaptor', 28, 2], ['redRaptor', 28, 12], ['redRaptor', 7, 2]] as Array<[string, number, number]>)
+        .map(([type, x, y]) => ({ type, x, y, showIf: 'done:c13_gohan' })),
+    ],
     objects: [
       { type: 'save', x: 4, y: 12 }, { type: 'worldSign', x: 4, y: 14 },
       { type: 'breakable', x: 12, y: 4, size: 3, item: 'end1', id: 'c13_wildRock' }, { type: 'breakable', x: 25, y: 9, size: 2 },
@@ -293,7 +305,13 @@ registerMaps([
       { id: 'c13_ani6', sprite: 'c13_rainbowSnake', x: 4, y: 20, talk: 'c13_animal_talk', name: 'Rainbow Snake', showIf: 'c13_animalsLoose', hideIf: 'c13_ani_c13_ani6' },
     ],
     onEnter: 'c13_spot_enter',
-    enemies: [{ type: 'giantSnake', x: 30, y: 20 }, { type: 'giantSnake', x: 6, y: 8 }],
+    // Once Frieza's assassins are dealt with (the lake's first visit, a field battle against everything on the map), the
+    // serpents come back to the shore at LoG2 density; the palace steps and Baba's arena stay clear.
+    enemies: [
+      { type: 'giantSnake', x: 30, y: 20 }, { type: 'giantSnake', x: 6, y: 8 },
+      ...([[26, 4], [10, 3], [33, 5], [2, 15], [2, 23], [33, 11], [2, 5], [33, 16]] as Array<[number, number]>)
+        .map(([x, y]) => ({ type: 'giantSnake', x, y, showIf: 'done:c13_frieza' })),
+    ],
     objects: [
       { type: 'save', x: 9, y: 23 }, { type: 'worldSign', x: 26, y: 23 },
       { type: 'breakable', x: 33, y: 13, size: 2 }, { type: 'breakable', x: 2, y: 12, size: 1, look: 'jar' },

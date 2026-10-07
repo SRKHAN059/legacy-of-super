@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error -- Node built-ins; the project ships no @types/node (this file reads the recording and writes the report).
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { STORY_GATES, type StoryGate } from '../src/content/chapters/common';
+import { STORY_GATES, storyGateFlag, type StoryGate } from '../src/content/chapters/common';
 import type { CharId } from '../src/content/characters';
 import { ENEMIES, registerEnemies, type EnemyDef } from '../src/content/enemies';
 import { MAPS, registerMaps, resolveMap } from '../src/content/registry';
@@ -24,7 +24,7 @@ import { type RecordedRoot, Sim } from './sim';
  * enemies as the game does for that save, and has it clear every enemy reachable on foot, nearest walk first, through
  * real input and real damage both ways.
  *
- * What runs in the default suite (about 25 s of test time):
+ * What runs in the default suite (about 45 s of test time):
  *   - harness checks: the attack stat a mob hits with, the LoG2 reference data against the ROM tables, entry points,
  *     knock-out counting and a real zone clear;
  *   - the zone sweep: every hostile map with spawns, at the stage each of its spawn mixes opens (`ZONE_STAGES`), cleared
@@ -32,7 +32,9 @@ import { type RecordedRoot, Sim } from './sim';
  *     exemptions;
  *   - the story gates: each coloured gate on the story path (src/content/chapters/common.ts STORY_GATES) ground with
  *     the fair bot from the level its character arrives with to the gate's level, in the gate's own zones, and held to
- *     LoG2's "a few minutes of play" (`GATE_MINUTES`).
+ *     what LoG2's own gates cost this bot (`GATE_MINUTES`, `GATE_KOS`);
+ *   - the pace: the median minutes per level of the stages in each level range against LoG2's measured band
+ *     (`PACE_BANDS`, critic round 3: the grind-and-rotate loop was two to four times lighter than LoG2's).
  *
  * The saves come from a recording of the story run, the committed one (tests/fixtures/story_fights.json) unless
  * LOS_ZONE_FIGHTS names another. LOS_GRIND_SEEDS=1,2,3,4,5,6 widens the seeds (thresholds are means over the seeds).
@@ -90,18 +92,34 @@ const RULE = {
 };
 
 /**
- * Fair-bot minutes a story gate may cost from the level its character arrives with: LoG2's gates took a few minutes of
- * play each (its Piccolo 25 gate costs this bot about 4 minutes of the Northern Mountains, the report shows).
+ * Fair-bot minutes a story gate may cost from the level its character arrives with. LoG2's own gates cost this bot
+ * about 7 (Piccolo 25, Trunks 30) and 14-15 (Goku 40) minutes and 70-87 kills over six to eight visits of their zones
+ * (the report's LoG2 gates, ground on the ROM stats and placements): five is the floor, fifteen the ceiling.
  */
-const GATE_MINUTES = { min: 2, max: 12 };
+const GATE_MINUTES = { min: 5, max: 15 };
 /**
- * Story gates held to a shorter grind, with why. Chapter 3's is the first gate, the one that teaches switching heroes at
- * a save point: LoG2's counterpart, Piccolo 10, costs nothing (Piccolo joins at L10), and this one may not ask for more
- * than L15, the band Vegeta plays Chapter 4 in (CHAPTER_MIN_LEVEL[4], checked in tests/full_game.test.ts).
+ * Knock-outs a story gate's grind may cost, mean over the seeds. HP carries from visit to visit and only a level-up,
+ * a Senzu Bean or a food drop refills it (LoG2), so a grind of LoG2's length costs this bot the odd knock-out even in
+ * LoG2: its Trunks 30 gate 0.33-0.67 (a knock-out on one or two of three seeds), its Goku 40 gate 6.7-7.7. Ours may
+ * cost one on average, the bot's worst Trunks 30 run.
  */
-const GATE_SHORT: Record<string, { min: number; why: string }> = {
-  c03_g_castle: { min: 1, why: 'the switching tutorial (LoG2 Piccolo 10), capped by the Chapter 4 band start' },
-};
+const GATE_KOS = 1;
+/**
+ * LoG2's levelling pace: minutes of fair-bot clearing per level at the hero's level in LoG2's own zones, as the report
+ * measures them from the ROM stats and placements (LoG2's hero at that stage; `LOG2_ZONES`). The median over our stages
+ * in each level range must fall inside the range's band, give or take `PACE_SLACK` for seed noise (critic round 3: at
+ * 0.28 minutes a level in L16-29 against LoG2's 0.68-1.34, the grind-and-rotate loop was two to four times lighter).
+ * The tutorial's zones (the Prologue and Chapters 1-2, `fromChapter`) are left out: they level two to four times
+ * faster than LoG2's opening zones (0.07-0.25 minutes a level against 0.29-1.56), and the levels Chapters 1-2's story
+ * fights are tuned at come from them (Goku L1-10 in the story run); the grind-and-rotate loop starts in Chapter 3.
+ */
+const PACE_BANDS: Array<{ from: number; to: number; lo: number; hi: number; fromChapter: number; log2: string }> = [
+  { from: 1, to: 15, lo: 0.29, hi: 1.56, fromChapter: 3, log2: 'East District 0.34 and Northern Wastelands 1.56 (Gohan L3), West City Highway 0.86 (L6), Triceratops Jungle 0.29 (Piccolo L10), Warlord\'s Domain 0.66 (L11)' },
+  { from: 16, to: 29, lo: 0.68, hi: 1.34, fromChapter: 0, log2: 'Southern Continent 0.68 (Vegeta L18), Northern Mountains 1.34 (Piccolo L22), Outside Gingertown 0.99 (Trunks L27)' },
+  { from: 30, to: 39, lo: 0.95, hi: 1.46, fromChapter: 0, log2: 'Tropical Islands 0.95 (Vegeta L30), Snowy Highlands 1.46 and East District 1.04 (Goku L35)' },
+  { from: 40, to: 50, lo: 2.68, hi: 3.1, fromChapter: 0, log2: 'Northern Mountains 2.68 and Northern Wastelands 3.10 (Goku L40), Mushroom Cavern 2.96 (Goku L45)' },
+];
+const PACE_SLACK = 0.15;
 /** Re-entering a zone for fresh spawns (LoG2 respawns a map on re-entry): walk out at the nearest exit and back. */
 const REENTRY_SECONDS = 20;
 
@@ -111,18 +129,19 @@ type Area = 'act1' | 'act2' | 'act3' | 'act4' | 'act5' | 'worldA' | 'worldB' | '
 
 /**
  * One hostile map at the moment the player first gets to fight there: which recorded story script's starting save
- * stands for that moment (`from`: script id, optionally the chapter it ran in; 'post' = the save right after the
- * credits), the hero who walks in (default: that save's active hero) and at what level (default: theirs), and flags
- * that select the spawn mix (a chapter's own enemies).
+ * stands for that moment (`from`: script id, optionally the chapter it ran in, or a list of them, the first one the
+ * recording has winning; 'post' = the save right after the credits), the hero who walks in (default: that save's
+ * active hero) and at what level (default: theirs), and flags that select the spawn mix (a chapter's own enemies).
  */
 interface ZoneStage {
   area: Area;
   map: string;
   /** Chapter number, or 'post' for the post-game. */
   chapter: string;
-  from: { script: string; chapter?: number } | 'post';
+  from: RootRef | RootRef[] | 'post';
   hero?: CharId;
   level?: number;
+  /** Flags set on the save (`!flag` clears one: a story gate the recorded save had already broken, say). */
   flags?: string[];
   /** Spawn mix label when a map has more than one stage. */
   mix?: string;
@@ -137,8 +156,14 @@ interface ZoneStage {
 const C03 = { script: 'c03_mk2_ambush' };
 const C10 = { script: 'c10_chief_talk' };
 const C11 = { script: 'c11_showdown' };
-const C12 = { script: 'c12_roof_enter' };
+/**
+ * Days of Peace: the first Chapter 12 episode the recording played (the story run may take the six in another order).
+ * The stages pin Goku's level, so the root only supplies the party and the kit.
+ */
+const C12: RootRef[] = [{ script: 'c12_roof_enter', chapter: 12 }, { script: 'c12_videl_meadow', chapter: 12 }, { script: 'c12_wyrm_fight', chapter: 12 }];
 const C13_END = { script: 'act5_beerus_talk', chapter: 13 };
+/** Gohan after his Lookout training (Ultimate form, Kamehameha): the first recorded save past it. */
+const C13_TRAINED = { script: 'c13_camp_boss' };
 const C14_A = { script: 'act5_beerus_talk', chapter: 14 };
 const C14_B = { script: 'c14_stageB' };
 
@@ -146,6 +171,8 @@ const C14_B = { script: 'c14_stageB' };
 const DIRE_WOLF = { direWolf: 'LoG2\'s Snowy Highlands wolf (ROM 104: 1000 HP, STR 65), which knocks Goku L35 out in 4 hits' };
 /** LoG2's red Destroyer ported verbatim (ROM 33), a lone guard of Future Earth's ruins in Chapter 11. */
 const RED_MECH = { redMech: 'LoG2\'s Destroyer (ROM 33, verbatim), 22 hits to kill and 10 to KO for Goku L35 in LoG2\'s East District' };
+/** LoG2's blue T-Rex (ROM 16, verbatim) in the dino park beyond the Goku 40 gate, LoG2's own post-gate grind. */
+const BLUE_TREX = { blueTRex: 'LoG2\'s T-Rex (ROM 16, verbatim) behind its Goku 40 gate: 5,120 HP, the heaviest grind enemy LoG2 has' };
 /** The Universe 4 roamer keeps the HP of Universe 4's set pieces (tests/chapters/act5.test.ts). */
 const U4 = { c14_u4Fighter: 'the stage\'s big-bodied fighter, as LoG2\'s Mushroom Cavern keeps its Destroyer (20 hits to kill for Goku L45)' };
 
@@ -185,34 +212,41 @@ const ZONE_STAGES: ZoneStage[] = [
   },
   { area: 'act4', map: 'c10_babari', chapter: '10', from: C10, why: 'Planet Babari, Goku L31', spawns: { c10_babariBeast: 3, c10_babarian: 4, c10_babarianSlinger: 2 } },
   {
-    area: 'act4', map: 'c10_lair', chapter: '10', from: C10, hero: 'goku', level: 33, why: 'Goku 35 story gate grind zone (with the future city); Goku arrives L33',
-    spawns: { c10_mutantHound: 4, c10_scrapMech: 1 },
+    area: 'act4', map: 'c10_lair', chapter: '10', from: C10, hero: 'goku', level: 32, why: 'Goku 35 story gate grind zone (with the future city); Goku arrives L32',
+    spawns: { c10_mutantHound: 8, c10_scrapMech: 1 },
   },
-  { area: 'act4', map: 'c11_rift_sky', chapter: '11', from: C11, why: 'the rift, Trunks L34', spawns: { c11_blackClone: 2, c11_roseClone: 2 } },
+  { area: 'act4', map: 'c11_rift_sky', chapter: '11', from: C11, why: 'the rift, Trunks L34', spawns: { c11_blackClone: 8, c11_roseClone: 2 } },
   // Act 5: Chapters 12-14 and the post-game.
   {
-    area: 'act5', map: 'c12_pan_meadow', chapter: '12', from: { script: 'c12_videl_meadow' }, why: 'Pan\'s meadow, Goku L37',
-    spawns: { c12_ironBoar: 2, direWolf: 2, stormPtero: 2 }, heavy: DIRE_WOLF,
+    area: 'act5', map: 'c12_pan_meadow', chapter: '12', from: [{ script: 'c12_videl_meadow', chapter: 12 }, ...C12], hero: 'goku', level: 37, why: 'Pan\'s meadow, Goku L37',
+    spawns: { c12_ironBoar: 3, direWolf: 4, stormPtero: 3 }, heavy: DIRE_WOLF,
   },
-  { area: 'act5', map: 'c12_forest', chapter: '12', from: C12, why: 'Days of Peace episode, Goku L35 (Chapter 12 floor)', spawns: { c12_shadeWolf: 4, giantSnake: 1 } },
   {
-    area: 'act5', map: 'c12_core_mantle', chapter: '12', from: C12, why: 'Earth\'s core episode, Goku L35',
+    area: 'act5', map: 'c12_forest', chapter: '12', from: C12, hero: 'goku', level: 35, why: 'Days of Peace episode, Goku L35 (Chapter 12 floor)',
+    spawns: { c12_shadeWolf: 8, giantSnake: 2 },
+  },
+  {
+    area: 'act5', map: 'c12_core_mantle', chapter: '12', from: C12, hero: 'goku', level: 35, why: 'Earth\'s core episode, Goku L35',
     spawns: { c12_cinderBat: 2, c12_crustCrab: 2, c12_lavaSerpent: 2, c12_magmaSlime: 3 },
   },
   {
-    area: 'act5', map: 'c13_monster_jungle', chapter: '13', from: { script: 'c13_gohanL_talk' }, hero: 'gohan', level: 39, why: 'Gohan 41 story gate grind zone; Gohan arrives L39',
-    spawns: { c13_jungleRaptor: 3, c13_mossBoar: 2, c13_poacher: 2, c13_poacherBrute: 1, c13_poacherDrone: 1 },
+    area: 'act5', map: 'c13_monster_jungle', chapter: '13', from: C13_TRAINED, hero: 'gohan', level: 39, flags: ['!gate:c13_monster_jungle:c13_g_north'],
+    why: 'Gohan 42 story gate grind zone; Gohan arrives L39 from his Lookout training, in Ultimate form',
+    spawns: { c13_jungleRaptor: 5, c13_mossBoar: 3, c13_poacher: 2, c13_poacherBrute: 1, c13_poacherDrone: 1 },
   },
   {
     area: 'act5', map: 'c13_monster_camp', chapter: '13', from: { script: 'c13_camp_boss' }, why: 'poacher camp, Goku L40',
-    spawns: { c13_poacher: 3, c13_poacherBrute: 2, c13_poacherDrone: 2 },
+    spawns: { c13_poacher: 3, c13_poacherBrute: 5, c13_poacherDrone: 2 },
   },
   {
-    area: 'act5', map: 'c13_training_wilds', chapter: '13', from: { script: 'c13_gohanL_talk' }, hero: 'gohan', level: 39, why: 'Gohan\'s training ground, Gohan L39',
-    spawns: { direWolf: 2, redRaptor: 2 }, heavy: DIRE_WOLF,
+    area: 'act5', map: 'c13_training_wilds', chapter: '13', from: C13_TRAINED, hero: 'gohan', level: 39, why: 'Gohan\'s training ground, Gohan L39 (Ultimate)',
+    spawns: { direWolf: 4, redRaptor: 6 }, heavy: DIRE_WOLF,
   },
-  { area: 'act5', map: 'c13_baba_lake', chapter: '13', from: C13_END, why: 'Baba\'s lake before the tournament, Goku L41', spawns: { giantSnake: 2 } },
-  { area: 'act5', map: 'c13_sadala_crags', chapter: 'post', from: 'post', why: 'post-game Sadala, credits save', spawns: { c13_cragHound: 3, c13_sadalaPtero: 2 } },
+  {
+    area: 'act5', map: 'c13_baba_lake', chapter: '14', from: C14_A, why: 'Baba\'s lake before the tournament (first reached in Frieza\'s recruitment), Goku L41',
+    spawns: { giantSnake: 10 },
+  },
+  { area: 'act5', map: 'c13_sadala_crags', chapter: 'post', from: 'post', why: 'post-game Sadala, credits save', spawns: { c13_cragHound: 8, c13_sadalaPtero: 2 } },
   // World A: Mt. Paozu, Kame House, the Lookout.
   {
     area: 'worldA', map: 'paozu_forest', chapter: '1', from: { script: 'c01_shrine_pray' }, why: 'first hostile zone, Goku L2 (the L2 gate tutorial)',
@@ -230,7 +264,7 @@ const ZONE_STAGES: ZoneStage[] = [
   // World B: Diablo Desert, the Rocky Wasteland, the Snowy Highlands.
   {
     area: 'worldB', map: 'desert_entry', chapter: '3', from: C03, hero: 'vegeta', level: 12, why: 'Vegeta 15 story gate grind zone; Vegeta arrives L12',
-    spawns: { bandit: 3, banditBrute: 2, sandSnake: 2, scarab: 1 },
+    spawns: { bandit: 4, banditBrute: 3, sandSnake: 3, scarab: 1 },
   },
   {
     area: 'worldB', map: 'desert_oasis', chapter: '3', from: C03, hero: 'vegeta', level: 12, why: 'Vegeta 15 story gate grind zone; Vegeta arrives L12',
@@ -239,33 +273,34 @@ const ZONE_STAGES: ZoneStage[] = [
   },
   {
     area: 'worldB', map: 'pilaf_castle_out', chapter: '3', from: C03, hero: 'vegeta', level: 12, why: 'the gate\'s courtyard; Vegeta arrives L12',
-    spawns: { bandit: 1, banditBrute: 1, greenDrone: 2, pilafRobot: 2 },
+    spawns: { bandit: 2, banditBrute: 2, greenDrone: 2, pilafRobot: 4 },
   },
   { area: 'worldB', map: 'pilaf_castle_in', chapter: '3', from: C03, hero: 'vegeta', level: 15, why: 'behind the Vegeta 15 gate', spawns: { greenDrone: 3, pilafRobot: 6 } },
-  { area: 'worldB', map: 'waste_entry', chapter: '5', from: { script: 'c05_wave1' }, why: 'Resurrection F, Gohan L16 forced', spawns: { boar: 2, hawk: 2, raptor: 2, timberWolf: 3 } },
+  { area: 'worldB', map: 'waste_entry', chapter: '5', from: { script: 'c05_wave1' }, why: 'Resurrection F, Gohan L16 forced', spawns: { boar: 2, hawk: 2, raptor: 3, timberWolf: 3 } },
   {
     area: 'worldB', map: 'waste_canyon', chapter: '5', from: { script: 'c05_wave2' }, why: 'Resurrection F, Gohan L16 forced',
-    spawns: { boar: 2, pterodactyl: 2, raptor: 2, sabertooth: 1, timberWolf: 2 },
+    spawns: { boar: 3, pterodactyl: 2, raptor: 2, sabertooth: 1, timberWolf: 2 },
   },
   {
     area: 'worldB', map: 'waste_mesa', chapter: '5', from: { script: 'c05_wave3' }, mix: 'wildlife', why: 'Resurrection F, Piccolo L18',
-    spawns: { greyBear: 1, pterodactyl: 2, raptor: 3, sabertooth: 2 },
+    spawns: { greyBear: 1, pterodactyl: 2, raptor: 4, sabertooth: 3 },
   },
   {
     area: 'worldB', map: 'waste_mesa', chapter: '8', from: { script: 'c08_boys' }, mix: 'Frieza Force stragglers (chapter>=8)', why: 'Chapter 8 hero Vegeta L26',
-    spawns: { greyBear: 1, pterodactyl: 2, raptor: 3, sabertooth: 2, soldierB: 1, soldierC: 2, soldierElite: 1 },
+    spawns: { greyBear: 1, pterodactyl: 2, raptor: 4, sabertooth: 3, soldierB: 1, soldierC: 2, soldierElite: 1 },
   },
   {
-    area: 'worldB', map: 'snow_entry', chapter: '12', from: C12, why: 'Snowy Highlands unlocked in Chapter 12; Goku L35',
-    spawns: { direWolf: 1, iceSabertooth: 2, snowWolf: 3, stormPtero: 2 }, heavy: DIRE_WOLF,
+    area: 'worldB', map: 'snow_entry', chapter: '12', from: C12, hero: 'goku', level: 35, why: 'Snowy Highlands unlocked in Chapter 12; Goku L35',
+    spawns: { direWolf: 1, iceSabertooth: 3, snowWolf: 3, stormPtero: 3 }, heavy: DIRE_WOLF,
   },
   {
-    area: 'worldB', map: 'snow_peak', chapter: '12', from: C12, why: 'Snowy Highlands unlocked in Chapter 12; Goku L35',
+    area: 'worldB', map: 'snow_peak', chapter: '12', from: C12, hero: 'goku', level: 35, why: 'Snowy Highlands unlocked in Chapter 12; Goku L35',
     spawns: { direWolf: 2, iceSabertooth: 2, snowWolf: 1, stormPtero: 2 }, heavy: DIRE_WOLF,
   },
   {
-    area: 'worldB', map: 'snow_peak', chapter: 'post', from: 'post', mix: 'trophy-gate grind', why: 'post-game L50 trophy gates, credits save',
-    spawns: { direWolf: 2, iceSabertooth: 2, snowWolf: 1, stormPtero: 2 },
+    area: 'worldB', map: 'snow_peak', chapter: 'post', from: 'post', flags: ['gate:snow_peak:g40_goku'], mix: 'trophy-gate grind',
+    why: 'post-game L50 trophy-gate grind, credits save: the Goku L44 who grinds here has long broken the dino park\'s Goku 40 gate',
+    spawns: { blueTRex: 2, direWolf: 2, eb_trihorn: 3, iceSabertooth: 2, redRaptor: 3, snowWolf: 1, stormPtero: 2 }, heavy: BLUE_TREX,
   },
   // World C: Future Earth, Beerus's planet, the Tournament of Power, Hell.
   {
@@ -281,32 +316,33 @@ const ZONE_STAGES: ZoneStage[] = [
     spawns: { fc_scavDrone: 2, fc_scrapHound: 3 },
   },
   {
-    area: 'worldC', map: 'future_city', chapter: '10', from: C10, hero: 'goku', level: 33, mix: 'Black\'s hunters (chapter>=9)', why: 'Goku 35 story gate grind zone; Goku arrives L33',
-    spawns: { fc_hunterDrone: 2, fc_ravager: 3, goldDrone: 1, mechTrooper: 1 },
+    area: 'worldC', map: 'future_city', chapter: '10', from: C10, hero: 'goku', level: 33, mix: 'Black\'s hunters (chapter>=9)',
+    why: 'Goku 35 story gate grind zone, ground from L32 (Goku spends most of it at L33-34)',
+    spawns: { fc_hunterDrone: 2, fc_ravager: 4, goldDrone: 1, mechTrooper: 1 },
   },
   {
     area: 'worldC', map: 'future_highway', chapter: '10', from: C10, hero: 'goku', level: 33, mix: 'Black\'s hunters (chapter>=9)', why: 'Goku 35 gate period; Goku L33',
-    spawns: { fc_hunterDrone: 2, fc_ravager: 1, goldDrone: 1, mechTrooper: 1 },
+    spawns: { fc_hunterDrone: 2, fc_ravager: 2, goldDrone: 1, mechTrooper: 2 },
   },
   {
-    area: 'worldC', map: 'future_cc_ruins', chapter: '10', from: C10, hero: 'goku', level: 33, mix: 'Black\'s hunters (chapter>=9)', why: 'Goku 35 story gate grind zone; Goku arrives L33',
-    spawns: { fc_hunterDrone: 2, fc_ravager: 1, goldDrone: 1 },
+    area: 'worldC', map: 'future_cc_ruins', chapter: '10', from: C10, hero: 'goku', level: 33, mix: 'Black\'s hunters (chapter>=9)', why: 'Goku 35 gate period; Goku L33',
+    spawns: { fc_hunterDrone: 2, fc_ravager: 2, goldDrone: 1, mechTrooper: 1 },
   },
   {
     area: 'worldC', map: 'future_city', chapter: '11', from: C11, flags: ['c11_inFuture'], mix: 'Zamasu\'s clones (chapter 11)', why: 'Chapter 11 in the future, Trunks L34',
-    spawns: { c11_blackClone: 5, c11_roseClone: 3, fc_hunterDrone: 2, fc_ravager: 3, goldDrone: 1, mechTrooper: 1, redMech: 1 }, heavy: RED_MECH,
+    spawns: { c11_blackClone: 5, c11_roseClone: 3, fc_hunterDrone: 2, fc_ravager: 4, goldDrone: 1, mechTrooper: 1, redMech: 1 }, heavy: RED_MECH,
   },
   {
     area: 'worldC', map: 'future_cc_ruins', chapter: '11', from: C11, flags: ['c11_inFuture'], mix: 'red Destroyer (chapter>=11)', why: 'Chapter 11 in the future, Trunks L34',
-    spawns: { fc_hunterDrone: 2, fc_ravager: 1, goldDrone: 1, redMech: 1 }, heavy: RED_MECH,
+    spawns: { fc_hunterDrone: 2, fc_ravager: 2, goldDrone: 1, mechTrooper: 1, redMech: 1 }, heavy: RED_MECH,
   },
   {
     area: 'worldC', map: 'beerus_grounds', chapter: '4', from: { script: 'c04_fieldWhis_talk' }, mix: 'chapters 4-6', why: 'Beerus\'s planet unlocked in Chapter 4; Vegeta L15',
-    spawns: { fc_lakeCrab: 2, fc_mossBeast: 2, fc_puffbird: 2 },
+    spawns: { fc_lakeCrab: 3, fc_mossBeast: 3, fc_puffbird: 4 },
   },
   {
     area: 'worldC', map: 'beerus_grounds', chapter: '7', from: { script: 'c07_b_vegeta_talk' }, mix: 'chapter>=7', why: 'Chapter 7 training, Goku L22',
-    spawns: { fc_hornBeast: 2, fc_lakeCrab: 1, fc_starWasp: 2 },
+    spawns: { fc_hornBeast: 3, fc_lakeCrab: 3, fc_starWasp: 4 },
   },
   {
     area: 'worldC', map: 'top_arena_a', chapter: '14', from: C14_A, mix: 'stage A', why: 'Tournament of Power stage A, Goku L41',
@@ -318,15 +354,15 @@ const ZONE_STAGES: ZoneStage[] = [
   },
   {
     area: 'worldC', map: 'top_arena_a', chapter: '14', from: C14_B, flags: ['c14_stageB'], mix: 'stage B', why: 'Tournament of Power stage B, Goku L43',
-    spawns: { c14_pride: 3, c14_prideLancer: 2, fc_topGunner: 3 },
+    spawns: { c14_pride: 4, c14_prideLancer: 2, fc_topGunner: 4 },
   },
   {
     area: 'worldC', map: 'top_arena_b', chapter: '14', from: C14_B, flags: ['c14_stageB'], mix: 'stage B', why: 'Tournament of Power stage B, Goku L43',
-    spawns: { c14_pride: 4, c14_prideLancer: 2, fc_topGunner: 3 },
+    spawns: { c14_pride: 4, c14_prideLancer: 3, fc_topGunner: 3 },
   },
   {
     area: 'worldC', map: 'top_arena_c', chapter: '14', from: { script: 'c14_stageC' }, flags: ['c14_stageB'], mix: 'stage B', why: 'Tournament of Power stage C ring, Goku L44',
-    spawns: { c14_pride: 1, c14_prideLancer: 1, fc_topGunner: 1 },
+    spawns: { c14_pride: 2, c14_prideLancer: 2, fc_topGunner: 1 },
   },
   {
     area: 'worldC', map: 'top_arena_a', chapter: 'post', from: 'post', mix: 'post-game', why: 'post-game arena, credits save',
@@ -354,12 +390,12 @@ const ZONE_STAGES: ZoneStage[] = [
 const NOT_ZONES = new Set(['dev_sandbox']);
 
 /** The arrival save of each story gate's character: the recorded script that opens the gate's chapter there. */
-const GATE_FROM: Record<string, { script: string; chapter?: number }> = {
+const GATE_FROM: Record<string, RootRef> = {
   c03_g_castle: C03,
   c07_g_stadium: { script: 'c07_b_vegeta_talk' },
   c09_g_shaft: { script: 'c09_vegeta_talk' },
   c10_g_courtyard: C10,
-  c13_g_north: { script: 'c13_gohanL_talk' },
+  c13_g_north: C13_TRAINED,
 };
 
 /** LoG2's own story gates on its reference maps: the hero's level where LoG2 opens the gate's zone, and the gate's. */
@@ -404,11 +440,20 @@ function storyRoots(): RecordedRoot[] {
   return rootsCache;
 }
 
-/** The save a recorded story script started from. */
-function rootSave(roots: RecordedRoot[], from: { script: string; chapter?: number }): string {
-  const r = roots.find((x) => x.script === from.script && (from.chapter === undefined || (JSON.parse(x.save) as { chapter: number }).chapter === from.chapter));
-  if (!r) throw new Error(`no recorded root ${from.script}${from.chapter !== undefined ? ` in chapter ${from.chapter}` : ''}`);
-  return r.save;
+/** A recorded story script's starting save: the script, optionally the chapter it ran in. */
+interface RootRef {
+  script: string;
+  chapter?: number;
+}
+
+/** The save a recorded story script started from (the first of `from` the recording has, when it lists several). */
+function rootSave(roots: RecordedRoot[], from: RootRef | RootRef[]): string {
+  const refs = Array.isArray(from) ? from : [from];
+  for (const ref of refs) {
+    const r = roots.find((x) => x.script === ref.script && (ref.chapter === undefined || (JSON.parse(x.save) as { chapter: number }).chapter === ref.chapter));
+    if (r) return r.save;
+  }
+  throw new Error(`no recorded root ${refs.map((ref) => `${ref.script}${ref.chapter !== undefined ? ` in chapter ${ref.chapter}` : ''}`).join(' or ')}`);
 }
 
 /**
@@ -440,13 +485,16 @@ function postGameSave(roots: RecordedRoot[]): Promise<string> {
 
 /** The save a stage is cleared with. */
 function stageSave(stage: ZoneStage, base: string): string {
-  const st = pinned(JSON.parse(base), stage.map.length * 131 + Number(stage.chapter === 'post' ? 15 : stage.chapter));
+  const st = pinned(JSON.parse(base), stage.map.length * 131 + chapterOf(stage));
   if (stage.hero) {
     if (!st.char(stage.hero).joined) throw new Error(`${stage.map}: ${stage.hero} is not in the party`);
     st.data.active = stage.hero;
   }
   if (stage.level !== undefined) setLevel(st, st.data.active, stage.level);
-  for (const f of stage.flags ?? []) st.set(f);
+  for (const f of stage.flags ?? []) {
+    if (f.startsWith('!')) st.clear(f.slice(1));
+    else st.set(f);
+  }
   const c = st.hero;
   c.hp = c.hpMax;
   c.ep = c.epMax;
@@ -459,6 +507,8 @@ async function saveFor(stage: ZoneStage): Promise<string> {
   return stageSave(stage, stage.from === 'post' ? await postGameSave(roots) : rootSave(roots, stage.from));
 }
 
+/** A stage's chapter as a number (the post-game counts as 15). */
+const chapterOf = (s: ZoneStage): number => (s.chapter === 'post' ? 15 : Number(s.chapter));
 /** Label of a stage in test names and the report. */
 const stageName = (s: ZoneStage): string => (s.mix ? `${s.map} [${s.mix}]` : s.map);
 
@@ -657,6 +707,8 @@ function gateSave(g: StoryGate): string {
   const from = GATE_FROM[g.id];
   if (!from) throw new Error(`story gate ${g.id} has no arrival save in GATE_FROM`);
   const st = pinned(JSON.parse(rootSave(storyRoots(), from)), g.level * 17 + g.chapter);
+  // A save from past the gate (the first one with the gate's character as the story leaves them) has it broken.
+  st.clear(storyGateFlag(g));
   st.data.active = g.character;
   setLevel(st, g.character, g.arrive);
   const c = st.hero;
@@ -835,21 +887,45 @@ describe('grind harness', () => {
  * extremes), the tuned spawn mix in reach, cleared, and a levelling pace no slower than LoG2's slowest zone. The
  * report (LOS_ZONE_REPORT) prints the same numbers next to LoG2's zones.
  */
+/** Minutes per level of every stage the sweep cleared (the pace check reads them once the sweep is through). */
+const PACE: Array<{ stage: string; chapter: number; level: number; minutes: number }> = [];
+
 describe('grind zones: every hostile zone at its opening stage (fair bot)', () => {
   for (const stage of ZONE_STAGES) {
     it(`${stageName(stage)} (chapter ${stage.chapter}): ${stage.why}`, async () => {
       const { save, runs } = await clearStage(stage);
-      expect(judge(stage, runs, heroOf(save))).toEqual([]);
+      const hero = heroOf(save);
+      PACE.push({ stage: stageName(stage), chapter: chapterOf(stage), level: hero.level, minutes: zoneLine(runs, hero).minutesPerLevel });
+      expect(judge(stage, runs, hero)).toEqual([]);
     }, CLEAR_TIMEOUT);
   }
+});
+
+/**
+ * LoG2's pace, range by range: the median minutes per level of the swept stages in each level range sits in LoG2's
+ * band for that range (`PACE_BANDS`). Runs on the sweep's clears, so only when the whole sweep ran.
+ */
+describe('grind pace: minutes per level by level range, against LoG2\'s own zones', () => {
+  it('the median stage of every level range levels at LoG2\'s pace', (ctx) => {
+    if (PACE.length < ZONE_STAGES.length) ctx.skip();
+    for (const b of PACE_BANDS) {
+      const inRange = PACE.filter((p) => p.level >= b.from && p.level <= b.to && p.chapter >= b.fromChapter);
+      expect(inRange.length, `L${b.from}-${b.to}: stages`).toBeGreaterThanOrEqual(5);
+      const m = median(inRange.map((p) => p.minutes));
+      const lines = inRange.map((p) => `${p.stage} L${p.level} ${p.minutes}`).join(', ');
+      expect(m, `L${b.from}-${b.to}: median minutes per level (LoG2: ${b.log2}; ours: ${lines})`).toBeGreaterThanOrEqual(round(b.lo * (1 - PACE_SLACK), 2));
+      expect(m, `L${b.from}-${b.to}: median minutes per level (LoG2: ${b.log2}; ours: ${lines})`).toBeLessThanOrEqual(round(b.hi * (1 + PACE_SLACK), 2));
+    }
+  });
 });
 
 /**
  * The coloured gates on the story path (src/content/chapters/common.ts STORY_GATES), ground the way a player grinds
  * them: the gate's character at the level `arrive` names (what the full-game run brings), clearing the gate's zones in
  * turn with the fair bot (HP, EXP and Senzu carried from visit to visit, REENTRY_SECONDS per return) until the gate's
- * level. Each must cost GATE_MINUTES of fair-bot play on average, with no knock-out and at most one Senzu per zone
- * visit (the zone rule; LoG2's own gates cost this bot about two Beans over six to eight visits).
+ * level. Each must cost GATE_MINUTES of fair-bot play on average, at most one knock-out on average, about LoG2's
+ * Trunks 30 gate (GATE_KOS), and at most one Senzu per zone visit (the zone rule; LoG2's own gates cost this bot about two Beans over
+ * six to eight visits).
  */
 describe('story gates: the fair bot grinds each one from its arrival level', () => {
   for (const g of STORY_GATES) {
@@ -861,9 +937,9 @@ describe('story gates: the fair bot grinds each one from its arrival level', () 
       console.log(`[story gate] ${g.id} (${g.character} L${g.arrive} -> L${g.level}): ${line.minutes} fair-bot min, ${line.kills} kills over ${line.visits} visits, `
         + `${line.kos} KOs, ${line.senzu} Senzu, reached ${line.reached}/${line.seeds}`);
       expect(line.reached, `${g.id}: seeds that reach L${g.level}`).toBe(runs.length);
-      expect(line.kos, `${g.id}: knock-outs`).toBe(0);
+      expect(line.kos, `${g.id}: knock-outs`).toBeLessThanOrEqual(GATE_KOS);
       expect(line.senzu / line.visits, `${g.id}: Senzu per zone visit`).toBeLessThanOrEqual(RULE.senzu);
-      expect(line.minutes, `${g.id}: fair-bot minutes${GATE_SHORT[g.id] ? ` (${GATE_SHORT[g.id].why})` : ''}`).toBeGreaterThanOrEqual(GATE_SHORT[g.id]?.min ?? GATE_MINUTES.min);
+      expect(line.minutes, `${g.id}: fair-bot minutes`).toBeGreaterThanOrEqual(GATE_MINUTES.min);
       expect(line.minutes, `${g.id}: fair-bot minutes`).toBeLessThanOrEqual(GATE_MINUTES.max);
     }, CLEAR_TIMEOUT);
   }
@@ -929,11 +1005,22 @@ describe.skipIf(!env.LOS_ZONE_REPORT)('zone report (LOS_ZONE_REPORT=<file>)', ()
     }
     const counts = { ok: 0, 'too hard': 0, 'too easy': 0 } as Record<string, number>;
     for (const z of zones) counts[z.verdict as string]++;
+    // Minutes per level by level range, ours (median and spread) next to LoG2's own zones.
+    const pace = PACE_BANDS.map((b) => {
+      const ours = zones.filter((z) => (z.level as number) >= b.from && (z.level as number) <= b.to && (z.chapter === 'post' ? 15 : Number(z.chapter)) >= b.fromChapter)
+        .map((z) => z.minutesPerLevel as number);
+      const theirs = log2.filter((l) => l.level >= b.from && l.level <= b.to).map((l) => l.minutesPerLevel);
+      return {
+        range: `L${b.from}-${b.to}${b.fromChapter ? ` (Chapter ${b.fromChapter} on)` : ''}`, band: [b.lo, b.hi], log2: theirs, log2Median: median(theirs),
+        stages: ours.length, median: median(ours), min: ours.length ? Math.min(...ours) : 0, max: ours.length ? Math.max(...ours) : 0,
+      };
+    });
+    for (const p of pace) console.log(`[pace] ${p.range}: ours median ${p.median} (${p.min}-${p.max}, ${p.stages} stages), LoG2 ${p.log2.join(' / ')} (band ${p.band.join('-')})`);
     writeFileSync(env.LOS_ZONE_REPORT, JSON.stringify({
       generated: new Date().toISOString(), recording: env.LOS_ZONE_FIGHTS ?? 'tests/fixtures/story_fights.json', seeds: SEEDS,
       rule: 'too hard: KOs > 0 on average, Senzu > 1 per clear, hits to kill > 10 or hits to KO < 12; too easy: hits to kill < 3 and hits to KO > 40; else ok',
-      sweepRule: RULE, gateMinutes: GATE_MINUTES, gateShort: GATE_SHORT, reentrySeconds: REENTRY_SECONDS,
-      counts, failing: zones.filter((z) => (z.failures as string[]).length).map((z) => z.map), zones, gates, log2,
+      sweepRule: RULE, gateMinutes: GATE_MINUTES, gateKos: GATE_KOS, reentrySeconds: REENTRY_SECONDS,
+      counts, failing: zones.filter((z) => (z.failures as string[]).length).map((z) => z.map), pace, zones, gates, log2,
     }, null, 1));
     expect(zones.length).toBeGreaterThan(0);
   }, 3600000);

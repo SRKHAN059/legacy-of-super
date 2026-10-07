@@ -11,7 +11,8 @@ import { registerMaps } from '../../registry';
  * Key coordinates used by the scripts are exported in `SPOTS` (see c07.ts / c08.ts).
  */
 
-const U7_TEAM = 'chapter==7&!c07_examDone';
+/** Both teams on the Nameless Planet from the arrival (Whis's cube) until the exam; before that they are on Earth. */
+const U7_TEAM = 'chapter==7&c07_departed&!c07_examDone';
 const ARENA = 'chapter==7&c07_examDone&!c07_done';
 
 /**
@@ -116,9 +117,11 @@ registerMaps([
       { id: 'c07_g_goku', sprite: 'goku', x: 10, y: 11, dir: 'left', talk: 'c07_teammate_talk', name: 'Goku', showIf: `${U7_TEAM}&!char:goku` },
       { id: 'c07_g_vegeta', sprite: 'vegeta', x: 9, y: 12, dir: 'up', talk: 'c07_teammate_talk', name: 'Vegeta', showIf: `${U7_TEAM}&!char:vegeta` },
       { id: 'c07_g_piccolo', sprite: 'piccolo', x: 3, y: 13, dir: 'right', talk: 'c07_teammate_talk', name: 'Piccolo', showIf: `${U7_TEAM}&!char:piccolo` },
-      { id: 'c07_g_whis', sprite: 'whis', x: 9, y: 9, dir: 'down', talk: 'c07_whis_grounds', name: 'Whis', showIf: 'chapter==7' },
-      // Whis comes back for the orange stones if that quest is still open after the tournament.
-      { id: 'c07_g_whis2', sprite: 'whis', x: 9, y: 9, dir: 'down', talk: 'c07_whis_grounds', name: 'Whis', showIf: 'chapter>=8&quest:c07_shards' },
+      // Whis studies the crater rim until the orange stones are in; then he joins Lord Beerus in the gods' box.
+      { id: 'c07_g_whis', sprite: 'whis', x: 9, y: 9, dir: 'down', talk: 'c07_whis_grounds', name: 'Whis', showIf: 'chapter==7&c07_departed&world:space', hideIf: 'c07_examDone&done:c07_shards' },
+      // Whis comes back for the orange stones if that quest is still open after the tournament (on Earth he is at
+      // Capsule Corp, the ride back out here; in Universe 10 with Lord Beerus while that case is open).
+      { id: 'c07_g_whis2', sprite: 'whis', x: 9, y: 9, dir: 'down', talk: 'c07_whis_grounds', name: 'Whis', showIf: 'chapter>=8&quest:c07_shards&world:space', hideIf: 'quest:c10_q_u10' },
       // Team Universe 6.
       { id: 'c07_g_champa', sprite: 'champa', x: 33, y: 11, dir: 'left', talk: 'c07_champa_talk', name: 'Champa', showIf: U7_TEAM },
       { id: 'c07_g_cabba', sprite: 'cabba', x: 30, y: 12, dir: 'left', talk: 'c07_cabba_talk', name: 'Cabba', showIf: U7_TEAM },
@@ -205,7 +208,8 @@ registerMaps([
       { id: 'c07_a_hit', sprite: 'hit', x: 30, y: 17, dir: 'left', talk: 'c07_hit_talk', name: 'Hit', showIf: ARENA },
       // Gods' box (north stands).
       { id: 'c07_a_beerus', sprite: 'beerus', x: 9, y: 3, dir: 'down', talk: 'c07_beerus_talk', name: 'Beerus', showIf: ARENA },
-      { id: 'c07_a_whis', sprite: 'whis', x: 11, y: 3, dir: 'down', talk: 'c07_whis_arena', name: 'Whis', showIf: ARENA },
+      // In space only: a player who flies home between matches finds him at Capsule Corp, the ride back out here.
+      { id: 'c07_a_whis', sprite: 'whis', x: 11, y: 3, dir: 'down', talk: 'c07_whis_arena', name: 'Whis', showIf: `${ARENA}&done:c07_shards&world:space` },
       { id: 'c07_a_champa', sprite: 'champa', x: 26, y: 3, dir: 'down', talk: 'c07_champa_talk', name: 'Champa', showIf: ARENA },
       { id: 'c07_a_vados', sprite: 'vados', x: 24, y: 3, dir: 'down', talk: 'c07_vados_arena', name: 'Vados', showIf: ARENA },
       { id: 'c07_a_kai', sprite: 'supremeKai', x: 5, y: 2, dir: 'down', talk: 'c07_kai_talk', name: 'Supreme Kai', showIf: ARENA },

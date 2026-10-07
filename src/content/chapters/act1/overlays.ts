@@ -1,4 +1,4 @@
-import type { PickupDef, PropPlacement } from '../../../game/mapdef';
+import type { NpcDef, PickupDef, PropPlacement } from '../../../game/mapdef';
 import { registerOverlay } from '../../registry';
 import { HUB } from './hubs';
 import { SEALED } from './util';
@@ -129,14 +129,44 @@ registerOverlay('wc_streets', {
   ],
 });
 
-const SPARRING = 'chapter>=2';
-const AT_PARTY = 'c02_boarded&!c02_rage';
+/** Yamcha, Krillin and Tien are Bulma's guests on the cruise for the whole of Chapter 2 (until Beerus's rampage). */
+const AT_PARTY = 'chapter==2&!c02_rage';
+/** Chapter 5: Krillin and Tien fight Frieza's soldiers with the team from the Wasteland muster on. */
+const AT_THE_BATTLE = 'c05_assembled';
+/** Chapter 7: in the Nameless Planet's stands for the matches. */
+const IN_THE_STANDS = 'c07_examDone&!c07_done';
+
+/** One stretch of a sparring partner's time at the dojo: on from `when` until beaten, away while `away` holds. */
+function partner(id: string, sprite: string, at: readonly [number, number], talk: string, name: string, beaten: string) {
+  return (when: string, away?: string): NpcDef => ({ id, sprite, ...xy(at), dir: 'up', talk, name, showIf: `${when}&!${beaten}`, hideIf: away });
+}
+const yamcha = partner('c02_spYamchaNpc', 'yamcha', HUB.satanDojo.yamcha, 'c02_spar_yamcha', 'Yamcha', 'c02_beatYamcha');
+const krillin = partner('c02_spKrillinNpc', 'krillinGi', HUB.satanDojo.krillin, 'c02_spar_krillin', 'Krillin', 'c02_beatKrillin');
+const tien = partner('c02_spTienNpc', 'tien', HUB.satanDojo.tien, 'c02_spar_tien', 'Tien', 'c02_beatTien');
+
+/**
+ * The Satan Dojo challenge (silver; LoG2's sparring arena): from Beerus's rampage on, each partner spars here until
+ * beaten, and is away for every stretch the story has him somewhere else (one place at a time): the cruise, Krillin's
+ * Chapter 4 beat on Kame Island, the Chapter 5 battle and the Chapter 6 mesa and party, the Chapter 7 stands, Krillin
+ * at the Chapter 8 party and at Kame House from Chapter 12 on, Tien at his own dojo from Chapter 13 on, and the
+ * Tournament of Power. After the credits a challenge already taken up comes first, so it can always be finished:
+ * Krillin and Tien spar here, not at home, until beaten (act5/overlays.ts, act5/maps_c13.ts).
+ */
 registerOverlay('satan_dojo', {
   npcs: [
-    // A sparring partner who has been beaten goes home (the story needs Krillin and Tien elsewhere later on).
-    { id: 'c02_spYamchaNpc', sprite: 'yamcha', ...xy(HUB.satanDojo.yamcha), dir: 'up', talk: 'c02_spar_yamcha', name: 'Yamcha', showIf: `${SPARRING}&!c02_beatYamcha`, hideIf: AT_PARTY },
-    { id: 'c02_spKrillinNpc', sprite: 'krillinGi', ...xy(HUB.satanDojo.krillin), dir: 'up', talk: 'c02_spar_krillin', name: 'Krillin', showIf: `${SPARRING}&!c02_beatKrillin`, hideIf: AT_PARTY },
-    { id: 'c02_spTienNpc', sprite: 'tien', ...xy(HUB.satanDojo.tien), dir: 'up', talk: 'c02_spar_tien', name: 'Tien', showIf: `${SPARRING}&!c02_beatTien`, hideIf: AT_PARTY },
+    yamcha('chapter>=2&chapter<=6', AT_PARTY),
+    yamcha('chapter==7', IN_THE_STANDS),
+    yamcha('chapter>=8'),
+    krillin('chapter>=2&chapter<=3', AT_PARTY),
+    krillin('chapter==5', AT_THE_BATTLE),
+    krillin('chapter==7', IN_THE_STANDS),
+    krillin('chapter==8&c08_departed'),
+    krillin('chapter>=9&chapter<=11'),
+    krillin('post_game&quest:c02_spar'),
+    tien('chapter>=2&chapter<=4', AT_PARTY),
+    tien('chapter==5', AT_THE_BATTLE),
+    tien('chapter>=7&chapter<=12'),
+    tien('post_game&quest:c02_spar'),
   ],
   onEnter: 'c02_dojo_enter',
 });

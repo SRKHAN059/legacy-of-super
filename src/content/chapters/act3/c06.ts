@@ -92,7 +92,8 @@ registerOverlay('cc_yard', {
     { id: 'c06_p_krillin', sprite: 'krillin', x: 17, y: 22, dir: 'right', talk: 'c06_party_krillin', name: 'Krillin', showIf: PARTY },
     { id: 'c06_p_18', sprite: 'android18', x: 18, y: 23, dir: 'left', talk: 'c06_party_18', name: 'Android 18', showIf: PARTY },
     { id: 'c06_p_tien', sprite: 'tien', x: 33, y: 22, dir: 'left', talk: 'c06_party_tien', name: 'Tien', showIf: PARTY },
-    { id: 'c06_p_roshi', sprite: 'roshi', x: 31, y: 23, dir: 'up', talk: 'c06_party_roshi', name: 'Master Roshi', showIf: PARTY },
+    // Roshi comes to the party once his students have learned his charged melee (until then he waits at Kame House).
+    { id: 'c06_p_roshi', sprite: 'roshi', x: 31, y: 23, dir: 'up', talk: 'c06_party_roshi', name: 'Master Roshi', showIf: `${PARTY}&done:c05_roshi` },
     { id: 'c06_p_jaco', sprite: 'jaco', x: 35, y: 19, dir: 'left', talk: 'c06_party_jaco', name: 'Jaco', showIf: PARTY },
     { id: 'c06_p_goten', sprite: 'goten', x: 24, y: 25, dir: 'up', talk: 'c06_party_kids', name: 'Goten', showIf: PARTY, wander: 2 },
     { id: 'c06_p_trunks', sprite: 'trunksKid', x: 26, y: 25, dir: 'up', talk: 'c06_party_kids', name: 'Trunks', showIf: PARTY, wander: 2 },

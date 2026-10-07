@@ -31,10 +31,10 @@ registerQuests([
  * (tests/balance.test.ts, at L37 and at the L35 floor).
  */
 const CORE: EnemyDef[] = [
-  { id: 'c12_magmaSlime', name: 'Magma Slime', sprite: 'c12_magmaSlime', hp: 1150, str: 38, pow: 38, end: 40, exp: 26000, ai: 'exploder', speed: 1.0, drops: 'rich', desc: 'A blob of living lava. It bursts when beaten, so do not stand next to it.' },
-  { id: 'c12_cinderBat', name: 'Cinder Bat', sprite: 'c12_cinderBat', hp: 1100, str: 38, pow: 1, end: 38, exp: 24000, ai: 'flyer', speed: 1.5, flying: true, desc: 'Roosts over the lava rivers and dives at anything that glows. Goku glows.' },
-  { id: 'c12_crustCrab', name: 'Crust Crab', sprite: 'c12_crustCrab', hp: 1200, str: 38, pow: 1, end: 44, exp: 30000, ai: 'charger', speed: 1.1, box: { w: 20, h: 10 }, desc: 'Its shell is cooled basalt. It charges sideways, which is somehow worse.' },
-  { id: 'c12_lavaSerpent', name: 'Lava Serpent', sprite: 'c12_lavaSerpent', hp: 1250, str: 36, pow: 38, end: 40, exp: 28000, ai: 'shooter', speed: 0.9, shot: { color: '#f88020', cooldown: 90, speed: 2.4, mult: 0.7 }, desc: 'Spits globs of magma from the riverbanks.' },
+  { id: 'c12_magmaSlime', name: 'Magma Slime', sprite: 'c12_magmaSlime', hp: 1150, str: 38, pow: 38, end: 40, exp: 21300, ai: 'exploder', speed: 1.0, drops: 'rich', desc: 'A blob of living lava. It bursts when beaten, so do not stand next to it.' },
+  { id: 'c12_cinderBat', name: 'Cinder Bat', sprite: 'c12_cinderBat', hp: 1100, str: 38, pow: 1, end: 38, exp: 19700, ai: 'flyer', speed: 1.5, flying: true, desc: 'Roosts over the lava rivers and dives at anything that glows. Goku glows.' },
+  { id: 'c12_crustCrab', name: 'Crust Crab', sprite: 'c12_crustCrab', hp: 1200, str: 38, pow: 1, end: 44, exp: 24600, ai: 'charger', speed: 1.1, box: { w: 20, h: 10 }, desc: 'Its shell is cooled basalt. It charges sideways, which is somehow worse.' },
+  { id: 'c12_lavaSerpent', name: 'Lava Serpent', sprite: 'c12_lavaSerpent', hp: 1250, str: 36, pow: 38, end: 40, exp: 23000, ai: 'shooter', speed: 0.9, shot: { color: '#f88020', cooldown: 90, speed: 2.4, mult: 0.7 }, desc: 'Spits globs of magma from the riverbanks.' },
   {
     // The heart's guardian. Tuned like Hit on the hotel roof (fair-play balance: Goku L37 in Super Saiyan Blue wins
     // with about one Senzu, hits ratio near 3) but must be beaten outright: nothing scripted ends it early.

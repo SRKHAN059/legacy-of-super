@@ -162,18 +162,19 @@ registerEnemies([
   // L20 (unweighted: STR 32 / END 35, 293 HP). Tuned to LoG2's Northern Mountains at that stage (Piccolo L22: kill 5
   // / KO 18.5): 7-8 melee hits to kill and 15-17 hits to knock him out, so the fair bot clears the rim without a
   // knock-out (tests/balance.test.ts 'grind zones: act 3'). The rim's own three creatures fill its ten spawns (the
-  // desert's Jade Scarabs no longer stand in), and a clear still pays the 43,100 EXP the gate's grind was costed at
-  // (about 17 kills from L20 to L24); Vegeta (L27 gate) and Goku (L28 gate) come back here well above it.
+  // desert's Jade Scarabs no longer stand in), and a clear pays about 13,000 EXP: a level costs Piccolo about a fair-bot
+  // minute of the rim, LoG2's Northern Mountains pace, and the gate about eight (some 65 kills from L20 to L25).
+  // Vegeta (L27 gate) and Goku (L28 gate) come back here well above it.
   {
-    id: 'c07_debrisCrawler', name: 'Debris Crawler', sprite: 'c07_debrisCrawler', hp: 420, str: 18, pow: 1, end: 18, exp: 3950, ai: 'rusher', speed: 0.9,
+    id: 'c07_debrisCrawler', name: 'Debris Crawler', sprite: 'c07_debrisCrawler', hp: 420, str: 18, pow: 1, end: 18, exp: 1250, ai: 'rusher', speed: 0.9,
     resKi: 0.6, desc: 'A crab that wears a shell of space junk. Ki skids off it; fists do not.',
   },
   {
-    id: 'c07_rockWisp', name: 'Ember Wisp', sprite: 'c07_rockWisp', hp: 340, str: 1, pow: 16, end: 14, exp: 3300, ai: 'shooter', speed: 1.0, flying: true,
+    id: 'c07_rockWisp', name: 'Ember Wisp', sprite: 'c07_rockWisp', hp: 340, str: 1, pow: 16, end: 14, exp: 1000, ai: 'shooter', speed: 1.0, flying: true,
     shot: { color: '#f8a040', cooldown: 80, speed: 2.4, mult: 0.8 }, desc: 'A drifting cinder of meteor rock that spits sparks at anything warm.',
   },
   {
-    id: 'c07_debrisGolem', name: 'Debris Golem', sprite: 'c07_debrisGolem', hp: 460, str: 18, pow: 15, end: 22, exp: 5800, ai: 'heavy', speed: 0.75,
+    id: 'c07_debrisGolem', name: 'Debris Golem', sprite: 'c07_debrisGolem', hp: 460, str: 18, pow: 15, end: 22, exp: 1800, ai: 'heavy', speed: 0.75,
     desc: 'Centuries of wreckage fused into a walking scrap heap. Its core glows orange.',
   },
 
@@ -216,15 +217,16 @@ registerEnemies([
   // Mushroom-forest regulars (the henchmen and goo also come in the boys' wave and Copy Gryll's summons): tuned to
   // Vegeta at L26 in Super Saiyan Blue (STR 55 / END 57, 447 HP), the hero who opens Potaufeu, against LoG2's Outside
   // Gingertown (Trunks L27 SSJ: kill 5 / KO 16): 7-8 melee hits to kill, 15-17 hits to knock him out (T4 sheets), so
-  // the fair bot clears the forest without a knock-out (tests/balance.test.ts 'grind zones: act 3'). EXP stays at T5.
+  // the fair bot clears the forest without a knock-out (tests/balance.test.ts 'grind zones: act 3'). EXP is about a
+  // third of the T4 row: a level costs Vegeta a fair-bot minute here, LoG2's pace at L26.
   // Potaufeu's own creatures fill the forest: the Stalk Serpent and a fourth beetle took the shared Giant Snake's and
   // Red Raptor's spawns (late-game sheets, 21 hits to kill).
   {
-    id: 'c08_gooHench', name: 'Copy Henchman', sprite: 'c08_gooHench', hp: 875, str: 30, pow: 28, end: 28, exp: 10000, ai: 'rusher', speed: 1.1,
+    id: 'c08_gooHench', name: 'Copy Henchman', sprite: 'c08_gooHench', hp: 875, str: 30, pow: 28, end: 28, exp: 3100, ai: 'rusher', speed: 1.1,
     desc: 'One of Gryll\'s thugs, copied by the Commeson. The original is a puddle somewhere.',
   },
   {
-    id: 'c08_gooBlob', name: 'Goo Spawn', sprite: 'c08_gooBlob', hp: 800, str: 28, pow: 30, end: 26, exp: 9000, ai: 'exploder', speed: 1.0,
+    id: 'c08_gooBlob', name: 'Goo Spawn', sprite: 'c08_gooBlob', hp: 800, str: 28, pow: 30, end: 26, exp: 2800, ai: 'exploder', speed: 1.0,
     desc: 'A blob of Commeson goo looking for something to copy. Pops when struck.',
   },
   // The copies open the vault beat that Copy Vegeta closes (no save point between): kid-sized T5 stats, and the
@@ -238,11 +240,11 @@ registerEnemies([
     shot: { color: '#c070f0', cooldown: 95, speed: 2.6, mult: 0.75 }, desc: 'A purple copy of Trunks. Fires ki blasts and snickers about it.',
   },
   {
-    id: 'c08_sporeBeetle', name: 'Spore Beetle', sprite: 'c08_sporeBeetle', hp: 950, str: 29, pow: 1, end: 30, exp: 11000, ai: 'charger', speed: 1.1,
+    id: 'c08_sporeBeetle', name: 'Spore Beetle', sprite: 'c08_sporeBeetle', hp: 950, str: 29, pow: 1, end: 30, exp: 3400, ai: 'charger', speed: 1.1,
     desc: 'A Potaufeu beetle that grazes on giant mushrooms and charges anything that is not a mushroom.',
   },
   {
-    id: 'c08_stalkSerpent', name: 'Stalk Serpent', sprite: 'c08_stalkSerpent', hp: 900, str: 30, pow: 1, end: 28, exp: 12000, ai: 'reach', speed: 0.9,
+    id: 'c08_stalkSerpent', name: 'Stalk Serpent', sprite: 'c08_stalkSerpent', hp: 900, str: 30, pow: 1, end: 28, exp: 3700, ai: 'reach', speed: 0.9,
     desc: 'A pale serpent that coils up inside hollow mushroom stalks. Strikes from farther away than its hiding place suggests.',
   },
 ]);

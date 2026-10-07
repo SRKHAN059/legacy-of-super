@@ -50,7 +50,8 @@ registerMaps([
       { type: 'c04_critter', x: 14, y: 6, id: 'c04_critter', onDefeat: 'c04_critter_caught', showIf: 'quest:c04_training' },
       { type: 'c04_puffChick', x: 6, y: 12 }, { type: 'c04_puffChick', x: 18, y: 11 }, { type: 'c04_mossCalf', x: 15, y: 9 },
     ],
-    npcs: [{ id: 'c04_fieldWhis', sprite: 'whis', x: 26, y: 12, dir: 'left', talk: 'c04_fieldWhis_talk', name: 'Whis', showIf: 'chapter==4' }],
+    // Whis teaches here from the end of the ramen scene; a player who flies home mid-lesson finds him at Capsule Corp.
+    npcs: [{ id: 'c04_fieldWhis', sprite: 'whis', x: 26, y: 12, dir: 'left', talk: 'c04_fieldWhis_talk', name: 'Whis', showIf: 'chapter==4&done:c04_whis&world:space' }],
     barriers: [{ id: 'c04_v17', x: 30, y: 4, w: 1, h: 2, level: 17, character: 'vegeta' }],
     objects: [
       { type: 'save', x: 6, y: 3 },

@@ -222,7 +222,8 @@ registerMaps([
       ['tv', 14.6, 2.4], ['rug', 13.6, 5.2], ['table', 13.6, 7.4], ['chair', 12.4, 7.6], ['chair', 16.4, 7.6], ['bed', 17.6, 3.2], ['plant', 18, 10.6],
     ],
     npcs: [
-      { id: 'ea_smi_buu', sprite: 'majinBuu', x: 15, y: 5, dir: 'up', talk: 'ea_smi_buu', name: 'Majin Buu', hideIf: 'ea_buuAway' },
+      // Buu is Mr. Satan's plus-one on Bulma's cruise (all of Chapter 2) and away with Team Universe 7 (ea_buuAway).
+      { id: 'ea_smi_buu', sprite: 'majinBuu', x: 15, y: 5, dir: 'up', talk: 'ea_smi_buu', name: 'Majin Buu', showIf: '!chapter==2', hideIf: 'ea_buuAway' },
       { id: 'ea_smi_bee', sprite: 'ea_dog', x: 15, y: 10, talk: 'ea_smi_bee', name: 'Bee', wander: 2, hideIf: 'ea_beeAway' },
       { id: 'ea_smi_butler', sprite: 'ea_butler', x: 12, y: 11, talk: 'ea_smi_butler', name: 'Butler' },
     ],

@@ -296,7 +296,8 @@ export class Player extends Actor {
       if (!keep) this.dir = v.x !== 0 ? (v.x < 0 ? 'left' : 'right') : v.y < 0 ? 'up' : 'down';
       const diag = v.x !== 0 && v.y !== 0 ? Math.SQRT1_2 : 1;
       const sp = this.def.walk * (this.form?.speed ?? 1) * (this.running ? 1.75 : 1) * diag;
-      const r = f.col.move(this.box(), v.x * sp, v.y * sp);
+      // The d-pad assist: a held direction slides round a corner into the nearest opening (CornerSlide).
+      const r = f.col.move(this.box(), v.x * sp, v.y * sp, false, 'assist');
       this.x += r.dx;
       this.y += r.dy;
       if (this.running && f.tick % 10 === 0) f.fx.dust(this.x, this.y);

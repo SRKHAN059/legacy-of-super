@@ -1108,7 +1108,12 @@ export class FairBot {
     if (this.rng.chance(0.02)) { this.failedDir = null; this.plan = null; }
   }
 
-  /** Facing to strike from: toward the void on ring-out stages, else the side the hero is already on. */
+  /**
+   * Facing to strike from: toward the void on ring-out stages, else the side the hero is already on. Only void on the
+   * map counts: `voidAt` is true past the map's edge as well, but nothing is knocked off the map there (out of bounds
+   * is solid), and striking toward it kept the hero walking round a U3 robot that pinned it against the central ring's
+   * east exit with its flamethrower until the clear stalled (top_arena_b, stage A, seed 3).
+   */
   private attackDir(f: Field, target: Enemy): Dir {
     const p = f.player;
     if (f.def.ringOut && f.canRingOut(target)) {
@@ -1117,7 +1122,10 @@ export class FairBot {
       for (const d of ['left', 'right', 'up', 'down'] as Dir[]) {
         const v = dirVec(d);
         for (let k = 8; k < bd; k += 4) {
-          if (f.voidAt(target.x + v.x * k, target.y - 4 + v.y * k)) { if (k < bd) { bd = k; best = d; } break; }
+          const x = target.x + v.x * k;
+          const y = target.y - 4 + v.y * k;
+          if (x < 0 || y < 0 || x >= f.map.pw || y >= f.map.ph) break;
+          if (f.voidAt(x, y)) { if (k < bd) { bd = k; best = d; } break; }
         }
       }
       if (best) return best;
@@ -1261,8 +1269,23 @@ export class FairBot {
     const key = (x: number, y: number) => y * W + x;
     const q: Array<[number, number]> = [[sx, sy]];
     prev.set(key(sx, sy), -1);
-    let best = key(sx, sy);
-    let bd = Math.hypot(sx - ex, sy - ey);
+    // Feet in the top few pixels of a tile below a cliff are counted in the cliff tile above (6 px up), from which no
+    // step slides: start instead from the free tiles around the hero that the feet box slides to (the bot pressed into
+    // the cliff under the eastern spore beetle's ledge in Potaufeu's mushroom forest with an empty path).
+    if (!free(sx, sy)) {
+      q.length = 0;
+      prev.clear();
+      for (const [dx, dy] of [[0, 1], [-1, 0], [1, 0], [0, -1], [-1, 1], [1, 1], [-1, -1], [1, -1]] as Array<[number, number]>) {
+        const x = sx + dx;
+        const y = sy + dy;
+        if (!free(x, y) || !this.lineFree(f, p.x, p.y, x * TILE + 8, y * TILE + 14)) continue;
+        prev.set(key(x, y), -1);
+        q.push([x, y]);
+      }
+      if (!q.length) { q.push([sx, sy]); prev.set(key(sx, sy), -1); }
+    }
+    let best = key(q[0][0], q[0][1]);
+    let bd = Math.hypot(q[0][0] - ex, q[0][1] - ey);
     while (q.length) {
       const [x, y] = q.shift() as [number, number];
       const d = Math.hypot(x - ex, y - ey);

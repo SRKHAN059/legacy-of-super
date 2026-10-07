@@ -380,8 +380,9 @@ describe('world earthB: Mrs. Briefs\'s endless cookies (LoG2 §9.1)', () => {
   });
 
   it('is never home while a chapter has her out on the cc_yard lawn', async () => {
+    // Chapter 2: she is a guest on Bulma's birthday cruise (c02_deck) for the whole chapter.
     const cases: Array<[number, string[], boolean]> = [
-      [0, [], true], [1, [], true], [2, [], true], [3, [], false], [4, [], true], [6, [], true],
+      [0, [], true], [1, [], true], [2, [], false], [3, [], false], [4, [], true], [6, [], true],
       [7, [], true], [7, ['c07_champaDone'], false], [7, ['c07_champaDone', 'c07_departed'], true],
       [9, [], true], [12, [], true], [14, [], true], [15, [], true],
     ];
@@ -724,8 +725,10 @@ describe('world ecology: wildlife homes, gated collectibles and grinding grounds
     expect(await soldiers(7)).toEqual([]);
     expect(await soldiers(8)).toEqual(['soldierB', 'soldierC', 'soldierC', 'soldierElite']);
     // T4 troopers for the Chapter 8 party (Vegeta L26 SSB, tests/balance.test.ts 'grind zones: world B'): LoG2's
-    // Warlord's Henchman tiers (3,200 / 16,200 EXP), each kill worth well under half a level from L29 on.
-    expect(ENEMIES.soldierC.exp).toBe(16200);
+    // Warlord's Henchman tiers, the heavy paced below its ROM 16,200 EXP (LoG2 meets it at L40) so the camp costs
+    // LoG2's minutes per level at L26 (tests/grind.test.ts), each kill worth well under half a level from L29 on.
+    expect(ENEMIES.soldierC.exp).toBeLessThan(16200);
+    expect(ENEMIES.soldierC.exp).toBeGreaterThan(ENEMIES.soldierB.exp);
     const span29 = EXP_TABLE[30] - EXP_TABLE[29];
     for (const t of ['soldierB', 'soldierC', 'soldierElite']) expect(killExp(ENEMIES[t].exp, 29), t).toBeLessThan(span29 / 2);
     const m = def('waste_mesa');
@@ -825,6 +828,12 @@ describe('world ecology: wildlife homes, gated collectibles and grinding grounds
 
 describe('world ecology: wildlife homed this round keeps its LoG2 ROM stat row (research/rom/enemy_stats.csv)', () => {
   it('HP and EXP (and the stat block where the role is the same) match the ROM entry each one stands in for', () => {
+    // Paced: wildlife living far below the level LoG2 meets it at keeps the ROM HP and stat block, but its EXP follows
+    // LoG2's minutes per level at the level it lives at (tests/grind.test.ts; critic round 3): the king crab and the
+    // swamp viper come to the Vegeta L12 and Goku L11 of Chapter 3, where LoG2's Alligator and Snake 83 pay their
+    // Tropical Islands (L30) and Northern Mountains (L22) EXP, and the Frieza Heavy to the Vegeta L26 of Chapter 8,
+    // where LoG2's Henchman 51 pays its Northern Wastelands (L40) EXP.
+    const PACED = new Set(['kingCrab', 'viper', 'soldierC']);
     // [our id, ROM stat_idx and name, HP, EXP, STR/POW/END when the stat block is carried over unchanged]
     const rows: Array<[string, string, number, number, [number, number, number]?]> = [
       ['kingCrab', '1 Alligator', 600, 5400, [29, 1, 20]],
@@ -840,7 +849,12 @@ describe('world ecology: wildlife homed this round keeps its LoG2 ROM stat row (
     for (const [id, rom, hp, exp, stats] of rows) {
       const e = ENEMIES[id];
       expect(e, id).toBeTruthy();
-      expect([e.hp, e.exp], `${id} = ROM ${rom}`).toEqual([hp, exp]);
+      if (PACED.has(id)) {
+        expect(e.hp, `${id} = ROM ${rom}`).toBe(hp);
+        expect(e.exp, `${id}: paced below ROM ${rom}`).toBeLessThan(exp);
+      } else {
+        expect([e.hp, e.exp], `${id} = ROM ${rom}`).toEqual([hp, exp]);
+      }
       if (stats) expect([e.str, e.pow, e.end], `${id} = ROM ${rom}`).toEqual(stats);
     }
   });

@@ -40,8 +40,8 @@ export const DEV_MAPS: MapDef[] = [
       '#....~~~~~~ss.====...........=',
       '#.....~~~~sss.====...........=',
       '#.............====...........#',
-      '#=============================',
-      '#=============================',
+      '#============================#',
+      '#============================#',
       '#.............====...........#',
       '#.............====...........#',
       '#.............====...........#',
@@ -67,8 +67,10 @@ export const DEV_MAPS: MapDef[] = [
       { type: 'worldSign', x: 3, y: 7 },
       { type: 'bag', x: 10, y: 3 },
     ],
-    barriers: [{ id: 'g1', x: 29, y: 4, w: 1, h: 4, level: 3, character: 'goku' }],
-    exits: { east: { to: 'dev_arena' } },
+    // Two columns in from the edge: walking back from the arena lands (1.2 tiles in) on the far side of it.
+    barriers: [{ id: 'g1', x: 27, y: 4, w: 1, h: 4, level: 3, character: 'goku' }],
+    // The east road (rows 4-7) meets the arena's west opening (rows 3-6).
+    exits: { east: { to: 'dev_arena', offset: -1 } },
     triggers: [{ id: 'devIntro', x: 13, y: 9, w: 4, h: 2, script: 'dev_intro', once: true }],
   },
   {
@@ -87,7 +89,7 @@ export const DEV_MAPS: MapDef[] = [
       'v..................v',
       'vvvvvvvvvvvvvvvvvvvv',
     ],
-    exits: { west: { to: 'dev_sandbox', offset: 0 } },
+    exits: { west: { to: 'dev_sandbox', offset: 1 } },
     triggers: [{ id: 'devBossT', x: 8, y: 3, w: 2, h: 4, script: 'dev_boss', once: true }],
     backdrop: '#100820',
   },

@@ -299,6 +299,9 @@ registerMaps([
     enemies: [
       { type: 'c10_mutantHound', x: 16, y: 15 }, { type: 'c10_mutantHound', x: 5, y: 14 }, { type: 'c10_mutantHound', x: 24, y: 12 },
       { type: 'c10_scrapMech', x: 17, y: 11, hideIf: 'chapter>=12' }, { type: 'c10_scrapMech', x: 28, y: 17 }, { type: 'c10_mutantHound', x: 10, y: 14 },
+      // The rest of the pack (the Goku 36 gate's grind, LoG2 density): up the avenue, in the pharmacy alley, by the den.
+      { type: 'c10_mutantHound', x: 21, y: 13 }, { type: 'c10_mutantHound', x: 13, y: 14 }, { type: 'c10_mutantHound', x: 4, y: 11 },
+      { type: 'c10_mutantHound', x: 29, y: 13 },
     ],
     objects: [
       { type: 'save', x: 13, y: 21 },
@@ -363,6 +366,14 @@ registerMaps([
       { type: 'c11_blackClone', x: 21, y: 14, showIf: 'chapter==11', hideIf: 'c11_roseBeaten' },
       { type: 'c11_roseClone', x: 6, y: 8, showIf: 'chapter==11', hideIf: 'c11_roseBeaten' },
       { type: 'c11_roseClone', x: 23, y: 8, showIf: 'chapter==11', hideIf: 'c11_roseBeaten' },
+      // Zamasu's spreading army holds the whole plaza (LoG2 density, ten a visit): Black clones by the barricades and
+      // around the crater. Only the two Roses shoot; their volleys were most of a clear's damage to the Trunks L34 here.
+      { type: 'c11_blackClone', x: 14, y: 15, showIf: 'chapter==11', hideIf: 'c11_roseBeaten' },
+      { type: 'c11_blackClone', x: 7, y: 19, showIf: 'chapter==11', hideIf: 'c11_roseBeaten' },
+      { type: 'c11_blackClone', x: 18, y: 19, showIf: 'chapter==11', hideIf: 'c11_roseBeaten' },
+      { type: 'c11_blackClone', x: 13, y: 8, showIf: 'chapter==11', hideIf: 'c11_roseBeaten' },
+      { type: 'c11_blackClone', x: 18, y: 9, showIf: 'chapter==11', hideIf: 'c11_roseBeaten' },
+      { type: 'c11_blackClone', x: 9, y: 10, showIf: 'chapter==11', hideIf: 'c11_roseBeaten' },
     ],
     objects: [
       { type: 'save', x: 13, y: 19 },

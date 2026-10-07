@@ -1,22 +1,40 @@
+import type { NpcDef } from '../../../game/mapdef';
 import { registerScripts, type ScriptApi } from '../../../game/script';
 import { registerOverlay } from '../../registry';
 import { addProp, removeIf, removeProp, respawn } from './shared';
 
 /**
- * Chapter 4 hub overlays, Whis's 25-Delicacies quest (Whis at Capsule Corp from chapter 4 on, and on Beerus's
- * planet), Hell / Frieza's revival cutscene, and progress-tracking chatter.
+ * Chapter 4 hub overlays, Whis's 25-Delicacies quest (Whis at Capsule Corp or on Beerus's planet from chapter 4 on,
+ * whichever side of the trip the player is on), Hell / Frieza's revival cutscene, and progress-tracking chatter.
  */
 
 const CH4 = 'chapter==4';
-/** Whis is "unreachable" during the Frieza attack (chapter 5). */
-const WHIS_AROUND = 'chapter>=4';
-const WHIS_AWAY = 'chapter==5';
+/** Chapter 6 from Frieza's landing on the mesa until he is beaten (Whis watches it with Lord Beerus). */
+const MESA_FIGHT = 'c06_arrived&!c06_won';
+
+/**
+ * Whis is the player's ride between Earth and space, so from Chapter 4 on he is on the player's side of the trip: at
+ * the Capsule Corp garden table while the player is on Earth, on Beerus's planet while the player is in space (one
+ * Angel, never both). He is away wherever the story puts him instead: unreachable during the Frieza attack (Chapter
+ * 5), at the mesa until Frieza is beaten (Chapter 6), on his training field once the lessons start (Chapter 4), on
+ * the Nameless Planet once Team Universe 7 has left (Chapter 7, and later while the orange stones are still owed), in
+ * Universe 10 with Lord Beerus (Chapter 10) and in the World of Void's stands during the tournament (Chapter 14).
+ * One NPC per stretch (a condition is a single conjunction), all with the id the scripts look for.
+ */
+function whisAt(id: 'c04_whis' | 'c04_whisB', world: 'earth' | 'space', when: string, hideIf?: string): NpcDef {
+  const [x, y, talk] = id === 'c04_whis' ? [23, 17, 'c04_whis_talk'] : [25, 13, 'c04_whisB_talk'];
+  return { id, sprite: 'whis', x, y, dir: 'down', talk, name: 'Whis', showIf: `${when}&world:${world}`, hideIf };
+}
 
 // ---------------------------------------------------------------- Capsule Corp
 registerOverlay('cc_yard', {
   props: [{ kind: 'table', x: 22.5, y: 15.4, flag: 'chapter>=4' }, { kind: 'chair', x: 21.4, y: 15.6, flag: 'chapter>=4' }],
   npcs: [
-    { id: 'c04_whis', sprite: 'whis', x: 23, y: 17, dir: 'down', talk: 'c04_whis_talk', name: 'Whis', showIf: WHIS_AROUND, hideIf: WHIS_AWAY },
+    // Chapter 4: the ramen scene, then waiting for a player who flies home from the training field mid-lesson.
+    whisAt('c04_whis', 'earth', CH4),
+    // Chapter 6: with Lord Beerus on the mesa until Frieza is beaten, then at the victory party.
+    whisAt('c04_whis', 'earth', 'chapter==6', MESA_FIGHT),
+    whisAt('c04_whis', 'earth', 'chapter>=7'),
     { id: 'c04_bulma', sprite: 'bulma', x: 21, y: 18, dir: 'right', talk: 'c04_bulma_talk', name: 'Bulma', showIf: CH4 },
   ],
 });
@@ -27,7 +45,12 @@ registerOverlay('cc_inside', {
 
 // ---------------------------------------------------------------- Beerus's planet
 registerOverlay('beerus_grounds', {
-  npcs: [{ id: 'c04_whisB', sprite: 'whis', x: 25, y: 13, dir: 'down', talk: 'c04_whisB_talk', name: 'Whis', showIf: WHIS_AROUND, hideIf: WHIS_AWAY }],
+  npcs: [
+    whisAt('c04_whisB', 'space', 'chapter==6', MESA_FIGHT),
+    whisAt('c04_whisB', 'space', 'chapter==7', 'c07_departed'),
+    whisAt('c04_whisB', 'space', 'chapter>=8&chapter<=13&!quest:c07_shards', 'quest:c10_q_u10'),
+    whisAt('c04_whisB', 'space', 'chapter>=14&!quest:c07_shards', 'c14_departed&!c14_won'),
+  ],
   objects: [{ type: 'flight', x: 33, y: 13, to: 'c04_whis_field', tx: 4, ty: 5, showIf: 'chapter>=4', label: 'Whis\'s Training Field' }],
 });
 

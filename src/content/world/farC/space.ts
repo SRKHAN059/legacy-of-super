@@ -127,6 +127,11 @@ registerMaps([
       spawn('fc_mossBeast', 27, 23, BEERUS_EARLY), spawn('fc_lakeCrab', 21, 23, BEERUS_EARLY), spawn('fc_lakeCrab', 5, 18, BEERUS_EARLY),
       spawn('fc_starWasp', 10, 9, BEERUS_LATE), spawn('fc_starWasp', 37, 21, BEERUS_LATE), spawn('fc_hornBeast', 9, 16, BEERUS_LATE),
       spawn('fc_hornBeast', 26, 22, BEERUS_LATE), spawn('fc_lakeCrab', 21, 23, BEERUS_LATE),
+      // The rest of each herd (LoG2 density, ten a visit): the meadow below the palace steps, the stream, the far woods.
+      spawn('fc_mossBeast', 23, 16, BEERUS_EARLY), spawn('fc_lakeCrab', 16, 14, BEERUS_EARLY), spawn('fc_puffbird', 16, 3, BEERUS_EARLY),
+      spawn('fc_puffbird', 30, 2, BEERUS_EARLY),
+      spawn('fc_hornBeast', 23, 16, BEERUS_LATE), spawn('fc_lakeCrab', 16, 14, BEERUS_LATE), spawn('fc_starWasp', 16, 3, BEERUS_LATE),
+      spawn('fc_starWasp', 30, 2, BEERUS_LATE), spawn('fc_lakeCrab', 4, 26, BEERUS_LATE),
     ],
     objects: [
       { type: 'save', x: 32, y: 26 },

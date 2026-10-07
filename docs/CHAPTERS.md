@@ -38,17 +38,20 @@ past the gates is stronger than this, never weaker.
 
 | Ch | Heroes played (story fights) | Ch | Heroes played (story fights) |
 |---|---|---|---|
-| P | Trunks 6–7 | 8 | Goku 26–27, Vegeta 26–28 |
-| 1 | Goku 1–10 | 9 | Trunks 30–33 (Trunks 33 gate), Goku 28 |
-| 2 | Vegeta 8–12 (Goku 10 waits) | 10 | Goku 29–35 (Goku 35 gate before Black), Vegeta 29 |
-| 3 | Goku 10–14, Vegeta 12–15 (Vegeta 15 gate) | 11 | Trunks 34–35, Goku 35, Vegeta 29 |
-| 4 | Vegeta 15, Goku 16 | 12 | Goku 35–37 (Chapter 12 floor 35) |
-| 5 | Gohan 16–18, Piccolo 18–19 | 13 | Goku 39–41, Gohan 39–41 (Gohan 41 gate), Vegeta 39 |
+| P | Trunks 6–7 | 8 | Goku 26–27, Vegeta 26–27 |
+| 1 | Goku 1–9 (10 at the hand-over) | 9 | Trunks 30–33 (Trunks 33 gate), Goku 28 |
+| 2 | Vegeta 8–12 (Goku 10 waits) | 10 | Goku 29–35 (Goku 35 gate before Black, arriving at 32), Vegeta 27 |
+| 3 | Goku 10–13, Vegeta 12–15 (Vegeta 15 gate) | 11 | Trunks 34–35, Goku 35, Vegeta 27 |
+| 4 | Vegeta 15, Goku 15 | 12 | Goku 35–37 (Chapter 12 floor 35) |
+| 5 | Gohan 16–18, Piccolo 18–19 | 13 | Goku 39–41, Gohan 39–42 (Gohan 42 gate), Vegeta 39 |
 | 6 | Goku 19–20, Vegeta 19 | 14 | Goku 41–44, Gohan 42–43, Vegeta and Piccolo 42 (forced floor), guests at their own levels |
 | 7 | Goku 22–24, Vegeta 22–24, Piccolo 20–25 (Piccolo 25 gate) | post | Goku 44 at the credits; the L50 trophy gates and superbosses |
 
 Free-roam zones are tuned at the same levels: `tests/grind.test.ts` clears every hostile zone with the fair bot at
-the level its hero walks in with, and grinds every story gate from its arrival level.
+the level its hero walks in with, and grinds every story gate from its arrival level. Regular enemies pay LoG2's pace
+(critic round 3): a level costs the fair bot about as many minutes of clearing as in LoG2's own zones at that level,
+so the bands above, which come from bosses and the story gates, sit a level or two lower in Chapters 3–11 than when
+the zones paid two to four times more (Goku 10–14 in Chapter 3 then, Vegeta 29 from Chapter 9).
 
 **Levels come from EXP, as in LoG2.** Characters join at their story level (LoG2's SetMinLevel). Nothing raises a
 character to a band in a playthrough that started with the prologue: the bands above are what normal play plus the
@@ -68,23 +71,44 @@ LoG2 put coloured level gates on the critical path (Piccolo 10 and 25, Vegeta 30
 `STORY_GATES` in `chapters/common.ts`: the table places each barrier and its once-only hint trigger by overlay,
 so act and world map files stay untouched. Each gate's level is the level its character arrives with by normal play
 (`arrive`, what the full-game run measures) plus a real grind of the hostile zone beside it. What that grind costs is
-measured in play: `tests/grind.test.ts` has the fair bot grind each gate from its arrival level, visit after visit,
-and asserts 2–12 minutes (LoG2's own gates cost that bot 7–15: Piccolo 25 about 7, Trunks 30 about 7, Goku 40
-about 15). `tests/full_game.test.ts` adds the EXP-table view (0.5–4 clears, at least 10 kills) and grinds every gate
-on real enemies in the full run.
+measured in play: `tests/grind.test.ts` has the fair bot grind each gate from its arrival level, visit after visit
+(HP, EXP and Senzu carried over, 20 s per return to a zone), and asserts 5–15 minutes, at most one knock-out on
+average (LoG2's Trunks 30 gate costs that bot 0.33–0.67) and at most one Senzu a visit. LoG2's own gates cost that bot, on the ROM stats and placements:
+Piccolo 25 7.1 minutes and 72 kills over 6 visits, Trunks 30 6.6 minutes and 70 kills over 6, Goku 40 15.2 minutes
+and 87 kills over 8 (with 7.7 knock-outs). `tests/full_game.test.ts` adds the EXP-table view (0.5–8 clears, at least
+10 kills) and grinds every gate on real enemies in the full run.
 
 | Ch | Gate | Where | Save point (switch) | Grind zone | Arrives | Fair-bot grind | LoG2 parallel |
 |---|---|---|---|---|---|---|---|
-| 3 | Vegeta 15 | Pilaf Castle courtyard gate (`pilaf_castle_out`), Dragon Balls 2–3 behind it | outside the gate | Diablo Desert | 12 | 1.2 min, 13 kills | Piccolo 10 (first rotation; free in LoG2) |
-| 7 | Piccolo 25 | walkway to the stadium (`c07_nameless_grounds`) | landing site | crater rim | 20 | 2.5 min, 20 kills | Piccolo 25 |
-| 9 | Trunks 33 | deep shaft of the mine (`c09_mine`): Excavator, third crystal | beside the shaft | the mine | 30 | 3.6 min, 24 kills | Trunks 30 |
-| 10 | Goku 35 | Black's courtyard (`c10_lair`), stands after the raid | below the courtyard (Goku is forced) | ruins + future city | 33 | 3.6 min, 24 kills | Vegeta 30 (forced) |
-| 13 | Gohan 41 | north trail to the poacher camp (`c13_monster_jungle`) | south end of the jungle | the jungle | 39 (Lookout training) | 4.0 min, 28 kills | Goku 40 |
+| 3 | Vegeta 15 | Pilaf Castle courtyard gate (`pilaf_castle_out`), Dragon Balls 2–3 behind it | outside the gate | castle grounds + Diablo Desert | 12 | 5.9 min, 54 kills, 6 visits | Piccolo 10 (first rotation; free in LoG2) |
+| 7 | Piccolo 25 | walkway to the stadium (`c07_nameless_grounds`) | landing site | crater rim | 20 | 8.2 min, 65 kills, 7 visits | Piccolo 25 |
+| 9 | Trunks 33 | deep shaft of the mine (`c09_mine`): Excavator, third crystal | beside the shaft | the mine | 30 | 5.4 min, 43 kills, 4 visits | Trunks 30 |
+| 10 | Goku 35 | Black's courtyard (`c10_lair`), stands after the raid | below the courtyard (Goku is forced) | ruins + future city | 32 | 5.6 min, 44 kills, 6 visits | Vegeta 30 (forced) |
+| 13 | Gohan 42 | north trail to the poacher camp (`c13_monster_jungle`) | south end of the jungle | the jungle | 39 (Lookout training, Ultimate form) | 6.9 min, 64 kills, 6 visits | Goku 40 |
 
-The Chapter 3 gate is the one short grind on purpose: it teaches switching heroes at a save point, as LoG2's
-Piccolo 10 did (Piccolo joins at L10, so it costs nothing there), and it cannot ask for more than L15, the band start
-Vegeta plays Chapter 4 at. The other four were raised a level or two in the zone retune, when the gentler zones made
-one level a minute or two of play.
+Before critic round 3 these cost 1.2–4.0 minutes and 13–28 kills: the zones paid two to four times LoG2's EXP per
+minute. With the zones paced to LoG2 (each level range's median zone inside LoG2's band, `tests/grind.test.ts`
+'grind pace') the gates cost what LoG2's do. Three levels rather than two over the arrival: Gohan's (two were under
+five minutes in the jungle). The Chapter 3 gate is the switching tutorial, as LoG2's Piccolo 10 was (free there,
+since Piccolo joins at L10); it cannot ask for more than L15, the band start Vegeta plays Chapter 4 at, and at
+LoG2's early pace three levels of the desert and the castle grounds cost six minutes.
+
+Minutes of fair-bot clearing per level by the hero's level (median zone stage, range), against LoG2's zones:
+
+| Levels | Before (round 3 critic) | Now | LoG2 (ROM, same bot) |
+|---|---|---|---|
+| 1–15, Chapter 3 on | 0.23 (0.11–0.48) | 0.68 (0.16–1.43) | 0.29–1.62 |
+| 16–29 | 0.30 (0.21–0.72) | 0.98 (0.77–1.24) | 0.68–1.34 |
+| 30–39 | 0.93 (0.56–2.20) | 1.26 (0.90–1.49) | 0.95–1.50 |
+| 40–50 | 2.22 (1.16–4.28) | 2.98 (1.73–4.32) | 2.68–3.42 |
+
+The tutorial's zones (Prologue, Chapters 1–2: 0.07–0.25 minutes a level at L2–9) stay faster than LoG2's opening
+zones on purpose: the levels Chapters 1–2's story fights are tuned at come from them.
+
+Regular enemies in reach per zone stage: median 10 (was 7; LoG2's reference zones hold 12). The thin zones the
+critic named now hold ten each (Baba's lake, the rift plaza, Gohan's plateau) or seven to eight (the Capsule Corp
+ruins, the highway); the stage C ring's pre-finale strip holds five. The Prologue and Chapter 1-2 dungeons (4-6) and
+Whis's training field are unchanged: they are story rooms, not grind zones.
 
 Rules every story gate keeps (tested): the required character is in the party and switchable at a save point on
 the near side (or is the hero the story is forcing); the far side is unreachable on foot until the gate breaks; the
@@ -94,9 +118,12 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
 
 ---
 
+Each chapter heading gives the levels its heroes play its story fights at in the measured run (the band table above),
+first fight to last.
+
 ## ACT 1 (folder `chapters/act1`) — Prologue, Chapter 1, Chapter 2
 
-### Prologue — "A Future Without Hope" (Trunks L6) — LoG2 parallel: the Future Trunks tutorial prologue
+### Prologue — "A Future Without Hope" (Trunks L6→7) — LoG2 parallel: the Future Trunks tutorial prologue
 - `newGame` → `c00_start`: title card, narrator crawl (another timeline, Age 796; Earth ravaged by a man with Goku's
   face). Trunks wakes in `future_hideout_in`; Future Bulma (lab, time machine) and Future Mai give the
   **talk/save tutorials**. `join('trunks', 6)`, techs kiBlast + burningAttack, form `ssj`.
@@ -108,7 +135,7 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
   silence), Mai shoves Trunks into the time machine. Trunks departs. Set `s.state.char('trunks').joined = false`.
   Narrator: "Meanwhile, in the past…" → `c01_start`.
 
-### Chapter 1 — "A Peaceful World" (Goku L1→8) — LoG2 parallel: Gohan's opening chapter
+### Chapter 1 — "A Peaceful World" (Goku L1→10) — LoG2 parallel: Gohan's opening chapter
 - Narrator: months after Majin Buu. **Nightmare boss**: Goku dreams of fighting Frieza (tinted `paozu_home`, Dream
   Frieza ≈140 HP tutorial boss, healing rocks) → wakes in `paozu_house`.
 - Chi-Chi: Goku must farm (pick up 5 radishes = **pickup tutorial**; radish item `c01_radish`), Goten tags along.
@@ -123,7 +150,7 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
 - Mini-boss: e.g. a giant sabertooth/T-rex in `paozu_peaks` (≈400 HP). Side quests: Goten's fishing/dino, an
   autograph fetch for a Satan City kid, a farmer's lost goat… (bronze).
 
-### Chapter 2 — "The Destroyer's Feast" (Vegeta joins L8, forced) — LoG2 parallel: Piccolo's join + Hercule parade chain + Mayor's problem
+### Chapter 2 — "The Destroyer's Feast" (Vegeta joins L8, forced; L8→12) — LoG2 parallel: Piccolo's join + Hercule parade chain + Mayor's problem
 - Vegeta trains in `cc_gravity`; `join('vegeta', 8)`, `force(s,'vegeta')`. Bulma's birthday party (`cc_yard` overlay
   or your own cruise-ship maps `c02_cruise_*`). Bulma gives the **Scouter** (Select = scan, R = regional map tutorial).
 - Beerus and Whis crash the party. Vegeta must keep the god happy: a **fetch chain** (pudding — Buu ate it!,
@@ -137,7 +164,7 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
 
 ## ACT 2 (folder `chapters/act2`) — Chapters 3, 4, 5
 
-### Chapter 3 — "Battle of Gods" (Goku L12→15) — LoG2 parallel: the Dragon Ball hunt with radar and puzzle dungeons
+### Chapter 3 — "Battle of Gods" (Goku L10→14, Vegeta L12→15) — LoG2 parallel: the Dragon Ball hunt with radar and puzzle dungeons
 - Bulma gives the **Dragon Radar**. The Pilaf Gang scattered/stole the balls: radar hunt across Diablo Desert
   (`desert_*`, `pilaf_castle_in` vault dungeon with a switch/door puzzle and mini-boss **Pilaf Machine Mk-II**),
   Satan City (Mr. Satan keeps one as a trophy — talk him out of it), Kame House (Roshi), Korin (Yajirobe), the
@@ -147,17 +174,20 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
 - Boss **Beerus** (3 phases: chase/teleport → volley/rain → nova/beam), `endAt` ≈0.5 → cutscene clash into space,
   sphere of destruction, god ki absorbed, Beerus yawns and spares Earth. Unlocks `spot_desert`, `spot_lookout`.
 
-### Chapter 4 — "Student of the Angel" (Vegeta → Goku, L15→18) — LoG2 parallel: the "three years later" training interlude
+### Chapter 4 — "Student of the Angel" (Vegeta L15 → Goku L16) — LoG2 parallel: the "three years later" training interlude
 - Vegeta asks Whis to train him on Beerus's planet (`beerus_grounds`, `beerus_palace_in`); Whis wants Earth food:
   bring dishes → introduces the **25 Earth Delicacies** quest (bronze; reward `whisStaff` at 25, given by Whis; Whis
-  is available at `cc_yard` from chapter 4 on and offers travel to Beerus's planet via `s.worldMap('space')`).
+  is available at `cc_yard` from chapter 4 on and offers travel to Beerus's planet via `s.worldMap('space')`; he is
+  the ride, so he stands on the player's side of the trip, `cc_yard` on Earth or `beerus_grounds` in space, and is
+  away wherever the story puts him: the training field, the Ch5 attack, the Ch6 mesa, the Nameless Planet, U10, the
+  tournament; see `c04_world.ts`).
 - Training: chores and drills (carry heavy water jars with `carry()`, break boulders, chase a creature), then
   "land one hit on Whis" (scripted Whis fight: teleport/guard, `endAt` 0.98 = one clean hit ends it).
 - Goku joins (switch); Goku vs Vegeta spar (boss using vegeta sprite, `endAt` 0.5).
 - Cutscene in Hell (`hell_lake`): Sorbet and Tagoma use Earth's Dragon Balls to revive Frieza; Frieza vows revenge
   and trains. → `c05_start`. Unlocks `spot_beerus`, `spot_space_earth`.
 
-### Chapter 5 — "Resurrection 'F'" (Gohan joins L16 forced, then Piccolo L18) — LoG2 parallel: Android-saga forced segments
+### Chapter 5 — "Resurrection 'F'" (Gohan joins L16 forced, L16→18; then Piccolo L18→19) — LoG2 parallel: Android-saga forced segments
 - Jaco crash-lands at `cc_yard`: Frieza's 1,000 soldiers arrive in an hour; Goku and Vegeta can't be reached.
   Gohan (outfit `gohanSuit` → `gohan` gi) and Piccolo answer Bulma's call; Krillin, Tien, Roshi, Jaco fight as NPCs.
 - `waste_entry` → `waste_canyon` → `waste_mesa`: waves of Frieza Force soldiers (`soldier`, `soldierB`, `soldierC`,
@@ -169,7 +199,7 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
 
 ## ACT 3 (folder `chapters/act3`) — Chapters 6, 7, 8
 
-### Chapter 6 — "Golden Frieza" (Goku → Vegeta, SSB; L22→25) — LoG2 parallel: the Semi-Perfect / Perfect Cell forced relays
+### Chapter 6 — "Golden Frieza" (Goku → Vegeta, SSB; L19→20) — LoG2 parallel: the Semi-Perfect / Perfect Cell forced relays
 - `setForm('goku','ssb')`/`('vegeta','ssb')` with narrator. Goku vs **Frieza (final form)** → Frieza turns Golden →
   **Golden Frieza** (`boss.stamina` drain: stalling works), `endAt` ≈0.3 → Sorbet's ray gun downs Goku (cutscene) →
   Vegeta (forced) vs **Golden Frieza** again → Frieza destroys the Earth (white-out) → in the void Whis rewinds time
@@ -177,7 +207,7 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
   Piccolo died shielding Gohan (end of Ch5); Goten and Trunks carry him to the Lookout and Porunga revives him after
   the rewind. Epilogue party at `cc_yard`. → `c07_start`.
 
-### Chapter 7 — "Tournament of Destroyers" (Goku/Vegeta/Piccolo; L25→29) — LoG2 parallel: Cell Games-style match card
+### Chapter 7 — "Tournament of Destroyers" (Goku/Vegeta L22→24, Piccolo L20→25) — LoG2 parallel: Cell Games-style match card
 - Champa and Vados visit `beerus_grounds` (cutscene); the Super Dragon Ball bet; recruit Team U7 (Goku, Vegeta,
   Piccolo, Buu, "Monaka"). Buu fails the written exam (comedy quiz using `ask`).
 - Your maps: `c07_nameless_grounds`, `c07_nameless_arena` (`ringOut: true`, arena tiles over void). Matches as boss
@@ -187,7 +217,7 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
   **Cabba** (Vegeta awakens Cabba's SSJ mid-fight), **Hit** (`timeSkip` moves) — Vegeta loses, then Goku uses Blue
   Kaio-ken (`transformNow('ssbkk')`) and wins by forfeit. Zeno appears; Super Shenron cameo. Unlock `spot_nameless`.
 
-### Chapter 8 — "The Copy" (L29→31) — short interlude
+### Chapter 8 — "The Copy" (Goku L26→27, Vegeta L26→28) — short interlude
 - Goku demands a match with "Monaka", the "strongest fighter in Universe 7"; Beerus fights him himself inside the
   Monaka costume (comedy boss with `endAt` 0.9). Galactic Patrol job on
   planet Potaufeu (your maps `c08_potaufeu_*`): the Commeson creates **Copy-Vegeta** (boss mirroring Vegeta's
@@ -196,7 +226,7 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
 
 ## ACT 4 (folder `chapters/act4`) — Chapters 9, 10, 11
 
-### Chapter 9 — "SOS from the Future" (Trunks rejoins L30, forced) — LoG2 parallel: Trunks returns at L27 with prologue stats
+### Chapter 9 — "SOS from the Future" (Trunks rejoins L30, forced; L30→33) — LoG2 parallel: Trunks returns at L27 with prologue stats
 - Trunks escapes Black again (short future scene), arrives at `cc_yard` (crash). `join('trunks', 30)` — stats roll on
   top of the prologue character; `learn('trunks','swordBlast')`, `learnCharged('trunks')`.
 - Trust-building spar vs **Vegeta** (boss with vegeta sprite, `endAt` 0.5). Trunks's story told in flashback.
@@ -204,14 +234,14 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
 - Bulma repairs the time machine (fuel quest; Cell's old machine idea) → Goku, Vegeta, Trunks go to the future
   (`s.set('world','future')`), Resistance hideout (`future_hideout_in`), Mai. → `c10_start`.
 
-### Chapter 10 — "Gods of Universe 10" (Goku/Vegeta; L34→37)
+### Chapter 10 — "Gods of Universe 10" (Goku L29→35, Vegeta L29)
 - Back in the present: the Kais visit Universe 10 (`u10_sacred`): Gowasu, Zamasu; Goku spars **Zamasu** (`endAt`
   0.5); flashback/investigation via the Time Rings; Beerus erases Zamasu. Visit `zeno_palace`: Zeno befriends Goku
   and gives the **Zeno Button** (key item). Optional: Babarian planet mooks (your map).
 - Future: **Goku Black (Rosé)** vs Vegeta (scripted loss `loseOk`), Future Zamasu is immortal (fight with
   `vulnerableIf` never set → survive). Retreat. → `c11_start`.
 
-### Chapter 11 — "Project Zero Mortals" (Trunks lead, SSJ Rage; L37→40) — LoG2 parallel: the Cell Games relay finale
+### Chapter 11 — "Project Zero Mortals" (Trunks lead, SSJ Rage; Trunks L34→35, Goku L35) — LoG2 parallel: the Cell Games relay finale
 - `setForm('trunks','rage')` (narrator). Goku learns the **Mafuba** from Roshi (`kame_island`); fetch the urn and
   the sealing charm (forgotten charm gag). Black clones ravage `future_city`.
 - Boss **Goku Black Rosé** (Trunks), sealing attempt on Zamasu (puzzle with `vulnerableIf`), fusion →
@@ -222,7 +252,7 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
 
 ## ACT 5 (folder `chapters/act5`) — Chapters 12, 13, 14, Epilogue, Post-game
 
-### Chapter 12 — "Days of Peace" (hub; L40→42) — LoG2 parallel: free roam before the finale
+### Chapter 12 — "Days of Peace" (hub; Goku L35→37) — LoG2 parallel: free roam before the finale
 - Gold quest `c12_days`: complete any 2 of 6 episodes (`EPISODES` / `EPISODES_NEEDED` in `c12.ts`) to continue:
   **Hit's contract** (Goku vs Hit, rooftop at night in `satan_plaza` overlay, `endAt`), **Pan's first flight**
   (babysitting chase), **Great Saiyaman** movie shoot (Gohan, comedy fights vs costumed "Watagash"), **Krillin's
@@ -273,7 +303,7 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
   "tuned fights: Chapter 12, the Earth's core" (the Mantle Wyrm at Goku L37 in Blue, and the mantle tunnels cleared as
   a grind zone with the heat running: no knock-out, at most one Senzu).
 
-### Chapter 13 — "Universe Survival" (L42→45) — LoG2 parallel: the pre-Cell-Games collection chapter
+### Chapter 13 — "Universe Survival" (Goku and Gohan L39→41, Vegeta L39) — LoG2 parallel: the pre-Cell-Games collection chapter
 - **Zeno Expo** (eps 78-82, `c13_expo.ts` + `c13_expo_data.ts`, gold `c13_expo` with its star on Zeno's palace): the
   Grand Priest's one-hour deadline (Gohan and Buu join Goku), Universe 9 met at `zeno_palace`, then the bouts in the
   World of Void (`c13_expo`) before both Zenos and every god (Universe 9's Sidra, Roh and Mojito; the hooded Toppo in
@@ -353,7 +383,7 @@ them first (the Chapter 10 raid) only stand once their `standsIf` flag is set.
   (`c13_spot_sadala`); Caulifla (SSJ2) and Kale tag-team rematch in her yard; Sadala townsfolk, Renso and the gang
   react; the crags become a T7 hunting ground.
 
-### Chapter 14 — "The Tournament of Power" (L45→48 + god-mode finale) — LoG2 parallel: the Cell Games gauntlet
+### Chapter 14 — "The Tournament of Power" (Goku L41→44, Gohan L42→43, + god-mode finale) — LoG2 parallel: the Cell Games gauntlet
 - Files: `c14.ts` (start, departure, the three stage relays, epilogue hand-off), `c14_setpieces.ts` (the set pieces
   with their own mechanics), `c14_obni.ts` (ep 103), `c14_veterans.ts` (eps 105-107: Master Roshi, Tien, Frost's
   trap), `c14_guests.ts` (guest costumes), `c14_assist.ts` (fighting partner, invisibility cues, twin boss),

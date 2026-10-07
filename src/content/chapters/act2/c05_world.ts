@@ -10,15 +10,32 @@ import { registerOverlay } from '../../registry';
 const CH5 = 'chapter==5';
 const ROSHI_STUDENTS: CharId[] = ['goku', 'vegeta', 'gohan', 'piccolo'];
 
+/**
+ * Master Roshi teaches on his beach from Chapter 5 on, except where the story has him: fighting Frieza's soldiers
+ * with the team from the Wasteland muster until the battle is over (Chapter 5), on the mesa until Frieza is beaten
+ * (Chapter 6), at Bulma's victory party once his four students have learned the move (Chapter 6; until then he waits
+ * for them at home), in the Nameless Planet's stands during the tournament (Chapter 7) and on the Tournament of
+ * Power's stage (Chapter 14). One NPC per stretch.
+ */
+const ROSHI_HOME = (showIf: string, hideIf?: string) => ({
+  id: 'c05_roshi', sprite: 'roshi', x: 26, y: 14, dir: 'left' as const, talk: 'c05_roshi_talk', name: 'Master Roshi', showIf, hideIf,
+});
+
 registerOverlay('kame_island', {
-  npcs: [{ id: 'c05_roshi', sprite: 'roshi', x: 26, y: 14, dir: 'left', talk: 'c05_roshi_talk', name: 'Master Roshi', showIf: 'chapter>=5' }],
+  npcs: [
+    ROSHI_HOME(CH5, 'c05_assembled&!c05_done'),
+    ROSHI_HOME('chapter==6&c06_won', 'done:c05_roshi'),
+    ROSHI_HOME('chapter>=7&chapter<=13', 'chapter==7&c07_examDone&!c07_done'),
+    ROSHI_HOME('chapter>=14', 'c14_departed&!c14_won'),
+  ],
 });
 
 registerOverlay('cc_yard', {
   props: [{ kind: 'c05_jacoShip', x: 28.5, y: 22, flag: CH5 }],
   npcs: [
     { id: 'c05_bulma', sprite: 'bulma', x: 24, y: 20, dir: 'down', talk: 'c05_bulma_talk', name: 'Bulma', showIf: `${CH5}&c05_called` },
-    { id: 'c05_jacoNpc', sprite: 'jaco', x: 31, y: 25, dir: 'left', talk: 'c05_jaco_talk', name: 'Jaco', showIf: `${CH5}&c05_called` },
+    // Jaco minds his ship until the team musters in the Wasteland, then fights at their side (c05_story.ts WAVE_ALLIES).
+    { id: 'c05_jacoNpc', sprite: 'jaco', x: 31, y: 25, dir: 'left', talk: 'c05_jaco_talk', name: 'Jaco', showIf: `${CH5}&c05_called`, hideIf: 'c05_assembled' },
     { id: 'c05_goten', sprite: 'goten', x: 22, y: 21, talk: 'c05_kids_talk', name: 'Goten', showIf: `${CH5}&c05_called`, wander: 1 },
     { id: 'c05_trunks', sprite: 'trunksKid', x: 26, y: 21, talk: 'c05_kids_talk', name: 'Trunks', showIf: `${CH5}&c05_called`, wander: 1 },
   ],

@@ -48,6 +48,7 @@ registerMaps([
       { type: 'raptor', x: 30, y: 20 }, { type: 'raptor', x: 33, y: 22 },
       { type: 'boar', x: 13, y: 21 }, { type: 'boar', x: 15, y: 23 },
       { type: 'hawk', x: 27, y: 15 }, { type: 'hawk', x: 35, y: 9 },
+      { type: 'raptor', x: 19, y: 15 },
     ],
     exits: { east: { to: 'waste_canyon' } },
     pickups: [
@@ -84,6 +85,7 @@ registerMaps([
       { type: 'boar', x: 22, y: 22 }, { type: 'boar', x: 26, y: 24 },
       { type: 'sabertooth', x: 24, y: 20 },
       { type: 'pterodactyl', x: 20, y: 4 }, { type: 'pterodactyl', x: 30, y: 3 }, { type: 'pterodactyl', x: 40, y: 24 },
+      { type: 'boar', x: 21, y: 11 },
       // The side cave's guardian (behind the Vegeta 25 gate).
       { type: 'tRex', x: 6, y: 6 },
     ],
@@ -128,6 +130,7 @@ registerMaps([
       { type: 'pterodactyl', x: 30, y: 6 }, { type: 'pterodactyl', x: 16, y: 6 },
       { type: 'greyBear', x: 40, y: 28 },
       { type: 'raptor', x: 12, y: 28 }, { type: 'raptor', x: 34, y: 29 }, { type: 'raptor', x: 44, y: 14 },
+      { type: 'sabertooth', x: 27, y: 13 }, { type: 'raptor', x: 30, y: 20 },
       // Frieza Force remnants (T4): they never got the news.
       { type: 'soldierElite', x: 41, y: 13, showIf: REMNANTS }, { type: 'soldierB', x: 39, y: 12, showIf: REMNANTS },
       { type: 'soldierC', x: 37, y: 19, showIf: REMNANTS }, { type: 'soldierC', x: 43, y: 17, showIf: REMNANTS },

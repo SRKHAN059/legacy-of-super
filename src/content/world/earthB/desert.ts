@@ -42,6 +42,9 @@ registerMaps([
       { type: 'banditBrute', x: 19, y: 23 }, { type: 'banditBrute', x: 36, y: 19 },
       { type: 'sandSnake', x: 9, y: 23 }, { type: 'sandSnake', x: 34, y: 25 },
       { type: 'scarab', x: 29, y: 5 },
+      // The Vegeta 15 gate's grind (LoG2 density: ten or more a visit): a lookout among the ruins' approach, a brute
+      // on the dunes north of them, a snake in the southern sand.
+      { type: 'bandit', x: 21, y: 13 }, { type: 'banditBrute', x: 18, y: 4 }, { type: 'sandSnake', x: 26, y: 24 },
     ],
     exits: { east: { to: 'desert_oasis' } },
     triggers: [{ id: 'eb_desert_cave', x: 13, y: 6, w: 2, h: 1, script: 'eb_desert_cave', onAction: true }],
@@ -115,6 +118,9 @@ registerMaps([
       { type: 'pilafRobot', x: 14, y: 13 }, { type: 'pilafRobot', x: 25, y: 13 },
       { type: 'greenDrone', x: 12, y: 6 }, { type: 'greenDrone', x: 27, y: 6 },
       { type: 'bandit', x: 8, y: 24 }, { type: 'banditBrute', x: 31, y: 24 },
+      // Outside the walls (the Vegeta 15 gate's own map): Pilaf's spare machines patrol the flanks.
+      { type: 'pilafRobot', x: 34, y: 7 }, { type: 'pilafRobot', x: 6, y: 4 }, { type: 'bandit', x: 33, y: 14 },
+      { type: 'banditBrute', x: 4, y: 13 },
     ],
     warps: [{ x: 19, y: 9, w: 1, h: 1, to: 'pilaf_castle_in', tx: 15, ty: 20, dir: 'up', door: true }],
     exits: { south: { to: 'desert_oasis' } },

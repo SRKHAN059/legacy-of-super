@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveMap } from '../../src/content/registry';
+import { MAPS, resolveMap } from '../../src/content/registry';
 import { ENEMIES } from '../../src/content/enemies';
 import { damage, ENEMY_POWER, MAX_LEVEL } from '../../src/game/leveling';
 import { SCRIPTS } from '../../src/game/script';
@@ -641,6 +641,91 @@ describe('act 2: chapter 5 waves are not the hardest regular fights in the game'
     expect(await playOut(sim, 'c05_shisami'), 'c05_shisami finished').toBe(true);
     expect(st.flag('c05_shisamiDone')).toBe(true);
     expect(gohan.hp).toBe(gohan.hpMax);
+    expect(sim.errors).toEqual([]);
+  });
+});
+
+describe('Whis, one place at a time (he is the ride between Earth and space)', () => {
+  type World = 'earth' | 'future' | 'space';
+  /** A story point: chapter, flags raised, Journal entries, and the world the player is in. */
+  interface Point { label: string; chapter: number; flags?: string[]; quests?: Record<string, 'active' | 'done'>; world: World; want: string[] }
+
+  function save(p: Point): GameState {
+    const st = new GameState(newGame());
+    st.data.chapter = p.chapter;
+    for (const f of p.flags ?? []) st.set(f);
+    for (const [id, v] of Object.entries(p.quests ?? {})) st.data.journal[id] = v;
+    st.set('world', p.world);
+    return st;
+  }
+
+  /** Every map Whis stands on for this save, read off the map definitions (what each map spawns on arrival). */
+  function whisMaps(st: GameState): string[] {
+    const out: string[] = [];
+    for (const id of Object.keys(MAPS)) {
+      if (/^dev_/.test(id)) continue;
+      for (const n of resolveMap(id)?.npcs ?? []) {
+        if (n.sprite === 'whis' && st.check(n.showIf) && !(n.hideIf && st.check(n.hideIf))) out.push(`${id}/${n.id}`);
+      }
+    }
+    return out.sort();
+  }
+
+  it('`world:` reads the world the player is in (Earth for a save that never left it)', () => {
+    const st = new GameState(newGame());
+    expect(st.check('world:earth')).toBe(true);
+    expect(st.check('world:space')).toBe(false);
+    st.set('world', 'space');
+    expect(st.check('world:space&!world:earth')).toBe(true);
+    st.set('world', 'future');
+    expect(st.check('world:future')).toBe(true);
+  });
+
+  it('stands on one map per story point: wherever the story has him, else on the player\'s side of the trip', () => {
+    const points: Point[] = [
+      { label: 'Chapter 3, the Capsule Corp party', chapter: 3, world: 'earth', want: ['cc_yard/c03_whis'] },
+      { label: 'Chapter 4, waiting for something new to eat', chapter: 4, quests: { c04_whis: 'active' }, world: 'earth', want: ['cc_yard/c04_whis'] },
+      { label: 'Chapter 4, the lessons', chapter: 4, quests: { c04_whis: 'done' }, world: 'space', want: ['c04_whis_field/c04_fieldWhis'] },
+      { label: 'Chapter 4, flown home mid-lesson', chapter: 4, quests: { c04_whis: 'done' }, world: 'earth', want: ['cc_yard/c04_whis'] },
+      { label: 'Chapter 5 on Earth, unreachable', chapter: 5, world: 'earth', want: [] },
+      { label: 'Chapter 5 in space, unreachable', chapter: 5, world: 'space', want: [] },
+      { label: 'Chapter 6, the mesa', chapter: 6, flags: ['c06_arrived'], world: 'earth', want: ['waste_mesa/c06_m_whis'] },
+      { label: 'Chapter 6, the party', chapter: 6, flags: ['c06_arrived', 'c06_won'], world: 'earth', want: ['cc_yard/c04_whis'] },
+      { label: 'Chapter 6, flown to space', chapter: 6, flags: ['c06_arrived', 'c06_won'], world: 'space', want: ['beerus_grounds/c04_whisB'] },
+      { label: 'Chapter 7, the weighted-clothes training', chapter: 7, world: 'space', want: ['beerus_grounds/c04_whisB'] },
+      { label: 'Chapter 7, recruiting at Capsule Corp', chapter: 7, flags: ['c07_champaDone'], world: 'earth', want: ['cc_yard/c04_whis'] },
+      { label: 'Chapter 7, the Nameless Planet', chapter: 7, flags: ['c07_champaDone', 'c07_departed'], quests: { c07_shards: 'active' }, world: 'space', want: ['c07_nameless_grounds/c07_g_whis'] },
+      { label: 'Chapter 7, the orange stones owed during the matches', chapter: 7, flags: ['c07_champaDone', 'c07_departed', 'c07_examDone'], quests: { c07_shards: 'active' }, world: 'space', want: ['c07_nameless_grounds/c07_g_whis'] },
+      { label: 'Chapter 7, the gods\' box', chapter: 7, flags: ['c07_champaDone', 'c07_departed', 'c07_examDone'], quests: { c07_shards: 'done' }, world: 'space', want: ['c07_nameless_arena/c07_a_whis'] },
+      { label: 'Chapter 8, the stones still owed (space)', chapter: 8, quests: { c07_shards: 'active' }, world: 'space', want: ['c07_nameless_grounds/c07_g_whis2'] },
+      { label: 'Chapter 8, the stones still owed (Earth)', chapter: 8, quests: { c07_shards: 'active' }, world: 'earth', want: ['cc_yard/c04_whis'] },
+      { label: 'Chapter 10, Universe 10', chapter: 10, quests: { c10_q_u10: 'active' }, world: 'space', want: ['u10_sacred/c10_whisU'] },
+      { label: 'Chapter 11, in the future', chapter: 11, world: 'future', want: [] },
+      { label: 'Chapter 12 at home', chapter: 12, world: 'earth', want: ['cc_yard/c04_whis'] },
+      { label: 'Chapter 12 in space', chapter: 12, world: 'space', want: ['beerus_grounds/c04_whisB'] },
+      { label: 'Chapter 14, the World of Void', chapter: 14, flags: ['c14_departed'], world: 'space', want: [] },
+      { label: 'after the credits', chapter: 15, flags: ['c14_departed', 'c14_won', 'post_game'], world: 'earth', want: ['cc_yard/c04_whis'] },
+    ];
+    for (const p of points) expect(whisMaps(save(p)), p.label).toEqual(p.want);
+  });
+
+  it('a story warp across worlds spawns him on the side it lands on (the world is set before the map fills)', async () => {
+    const sim = new Sim();
+    const st = sim.game.state;
+    st.data.chapter = 8;
+    st.join('goku', 30);
+    st.data.active = 'goku';
+    sim.start('cc_yard', 22, 20);
+    await settle(sim);
+    expect(st.get('world')).toBe('earth');
+    expect(sim.game.field?.npcs.some((n) => n.def.id === 'c04_whis' && !n.hidden)).toBe(true);
+    sim.start('beerus_grounds', 20, 20);
+    await settle(sim);
+    expect(st.get('world')).toBe('space');
+    expect(sim.game.field?.npcs.some((n) => n.def.id === 'c04_whisB' && !n.hidden)).toBe(true);
+    sim.start('cc_yard', 22, 20);
+    await settle(sim);
+    expect(sim.game.field?.npcs.some((n) => n.def.id === 'c04_whis' && !n.hidden)).toBe(true);
     expect(sim.errors).toEqual([]);
   });
 });

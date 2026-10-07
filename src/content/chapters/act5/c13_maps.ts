@@ -138,7 +138,8 @@ registerMaps([
       // A stash behind the collapsed block (open it during the gang brawl or any later visit).
       { type: 'chest', x: 26, y: 30, id: 'c13_sadalaStash', item: 'pow3' },
     ],
-    exits: { east: { to: 'c13_sadala_crags', showIf: 'post_game&!act5_busy' } },
+    // The quarter's east gap (rows 14-17) opens onto the crags' west pass (rows 13-16).
+    exits: { east: { to: 'c13_sadala_crags', offset: -1, showIf: 'post_game&!act5_busy' } },
     onEnter: 'act5_map_enter',
   },
   {
@@ -157,6 +158,9 @@ registerMaps([
       { type: 'c13_sadalaPtero', x: 30, y: 5, showIf: 'post_game' }, { type: 'c13_sadalaPtero', x: 8, y: 20, showIf: 'post_game' },
       { type: 'c13_cragHound', x: 33, y: 21, showIf: 'post_game' }, { type: 'c13_cragHound', x: 18, y: 6, showIf: 'post_game' },
       { type: 'c13_cragHound', x: 24, y: 19, showIf: 'post_game' },
+      { type: 'c13_cragHound', x: 22, y: 12, showIf: 'post_game' }, { type: 'c13_cragHound', x: 14, y: 15, showIf: 'post_game' },
+      { type: 'c13_cragHound', x: 17, y: 23, showIf: 'post_game' }, { type: 'c13_cragHound', x: 34, y: 11, showIf: 'post_game' },
+      { type: 'c13_cragHound', x: 11, y: 8, showIf: 'post_game' },
     ],
     objects: [
       { type: 'breakable', x: 6, y: 6, size: 3, item: 'end3', id: 'c13_cragRock' }, { type: 'breakable', x: 33, y: 22, size: 2 },
@@ -165,7 +169,7 @@ registerMaps([
     ],
     // Kale's set piece: press A beside Caulifla to make her step in (the rest of the fight is the survive timer).
     triggers: [{ id: 'c13_u6ShoutT', x: 30, y: 12, w: 3, h: 3, script: 'c13_u6_shout', onAction: true, showIf: 'c13_u6Rampage' }],
-    exits: { west: { to: 'c13_sadala_quarter', showIf: 'post_game&!act5_busy' } },
+    exits: { west: { to: 'c13_sadala_quarter', offset: 1, showIf: 'post_game&!act5_busy' } },
     onEnter: 'act5_map_enter',
   },
 ]);

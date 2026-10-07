@@ -21,7 +21,15 @@ import { ScouterScene } from '../src/ui/scouter';
 import { ScouterDbScene } from '../src/ui/scouterdb';
 import { DEV_QUESTS } from '../src/content/dev/quests';
 import { DEV_ENEMIES, DEV_MAPS, DEV_SCRIPTS, DEV_SPOTS } from '../src/content/dev/sandbox';
-import { Sim } from './sim';
+import { CollisionMap, type CornerSlide } from '../src/game/collision';
+import type { MapDef } from '../src/game/mapdef';
+import { GameState } from '../src/game/state';
+import { setGroundCacheLimit } from '../src/game/world';
+import type { Rect } from '../src/engine/math';
+import { clearZone, mainRoots } from './fairbot';
+import storyFights from './fixtures/story_fights.json';
+import { type RecordedRoot, Sim } from './sim';
+import { arrivals, gridCache, scanGrid, scanMap, scanStory, VARIANTS, WalkGrid } from './walkscan';
 
 const sprite = (id: string) => !!(CAST[id] || CREATURES[id]);
 
@@ -424,4 +432,142 @@ describe('scouter scan counts (pause screen, database and Bulma\'s errand agree)
     expect(st.count('pow1')).toBe(1);
     expect(sim.errors).toEqual([]);
   }, 120000);
+});
+
+describe('wedges: nowhere a player can get to holds the hero for good (critic round 3, gap 5)', () => {
+  /** A box walked with a held direction for `frames` frames (CollisionMap.move, 1 px a frame; the player's assist). */
+  const hold = (col: CollisionMap, from: Rect, dx: number, dy: number, frames: number, slide: CornerSlide = 'assist'): Rect => {
+    const b = { ...from };
+    for (let i = 0; i < frames; i++) {
+      const r = col.move(b, dx, dy, false, slide);
+      b.x += r.dx;
+      b.y += r.dy;
+    }
+    return b;
+  };
+
+  it('holding right slides past the Crater Rim rock into the lane beside the cliff (the fair bot stood there for good)', () => {
+    const g = new WalkGrid('c07_nameless_rim', 'start');
+    // Feet half a pixel up into the rock's footprint on row 5; the cliff is 8 px below it, so a fixed 4 px probe
+    // under the rock never found the lane and the step east stalled.
+    const at = { x: 246.54524687013253, y: 87.50394104199006, w: 10, h: 6 };
+    expect(g.col.blocked(at)).toBe(false);
+    const end = hold(g.col, at, 1, 0, 40);
+    expect(end.x).toBeGreaterThan(at.x + 20);
+    expect(g.col.blocked(end)).toBe(false);
+    // Enemies and NPCs keep the probe slide their steering was tuned with: it stalls there, as the hero used to.
+    expect(hold(g.col, at, 1, 0, 40, 'probe')).toEqual(at);
+  });
+
+  it('the corner assist never slides flush into a gap exactly the feet box\'s size, and keeps clear of walls', () => {
+    const col = new CollisionMap(8, 8);
+    // Two posts 10 px apart (x 32-42 open): a 10-wide box fits only exactly; one pixel more and the nudge takes it.
+    col.addRect({ x: 22, y: 40, w: 10, h: 16 });
+    col.addRect({ x: 42, y: 40, w: 10, h: 16 });
+    const above = { x: 33.5, y: 30, w: 10, h: 6 };
+    const stuck = hold(col, above, 0, 1, 30);
+    expect(stuck.y).toBeLessThanOrEqual(34);
+    expect(col.blocked(stuck)).toBe(false);
+    const wide = new CollisionMap(8, 8);
+    wide.addRect({ x: 22, y: 40, w: 10, h: 16 });
+    wide.addRect({ x: 43, y: 40, w: 10, h: 16 });
+    const through = hold(wide, above, 0, 1, 40);
+    expect(through.y).toBeGreaterThan(56);
+    expect(wide.blocked(through)).toBe(false);
+  });
+
+  it('the fair bot walks round the cliff when its feet sit at the very top of a tile below it (Potaufeu, seed 3)', async () => {
+    const st = new GameState();
+    st.data.chapter = 8;
+    st.join('vegeta', 26);
+    st.data.active = 'vegeta';
+    let placed = false;
+    const res = await clearZone(JSON.stringify(st.data), 'c08_potaufeu_mushrooms', 3, {
+      stallFrames: 45 * 60,
+      watch: (bot) => {
+        const f = bot.game.field;
+        if (!f) return;
+        const beetle = f.enemies.find((e) => e.def.id === 'c08_sporeBeetle');
+        if (!placed) {
+          placed = true;
+          // Where the round-3 clear stalled: the hero under the cliff south of the eastern ledge, the last beetle on it.
+          for (const e of f.enemies) if (e !== beetle) e.dead = true;
+          f.player.x = 548.3671177705085;
+          f.player.y = 294.286881112341;
+        }
+        // The beetle stayed on its ledge, charging the hero straight into the cliff, until the hero came round.
+        if (beetle && f.player.y > 200) { beetle.x = 549; beetle.y = 143; }
+      },
+    });
+    expect(placed).toBe(true);
+    expect(res.stopped).toBe('cleared');
+  }, 120000);
+
+  it('the scan finds the traps it is for (fixture maps)', () => {
+    setGroundCacheLimit(200);
+    // West room with a warp out, a wall at column 5 with a gap on row 3, and a chest in the east room.
+    const base = (rows: string[], props: MapDef['props'] = []): MapDef => ({
+      id: `walkscan_fixture_${rows.join('').length}_${props.length}`, name: 'Fixture', music: 'peaceful',
+      legend: { '.': 'grass', '#': 'cliff' }, grid: rows, props,
+      warps: [{ x: 1, y: 6, w: 1, h: 1, to: 'paozu_valley', tx: 10, ty: 10 }],
+      objects: [{ type: 'chest', x: 9, y: 5, id: 'walkscan_fixture', item: 'senzu' }],
+    });
+    const open = ['############', '#....#.....#', '#....#.....#', '#..........#', '#....#.....#', '#....#.....#', '#....#.....#', '############'];
+    const shut = open.map((r, y) => (y === 3 ? '#....#.....#' : r));
+    const west = [{ px: 2 * TILE + 8, py: 3 * TILE + 14, src: null, from: 'fixture arrival' }];
+    const east = [{ px: 8 * TILE + 8, py: 3 * TILE + 14, src: null, from: 'east arrival' }];
+    const scan = (def: MapDef, arr = west) => scanGrid(new WalkGrid(def, 'open'), 'open', arr).problems;
+    expect(scan(base(open))).toEqual([]);
+    // Rubble above and below the gap: 6 px (the feet box exactly) or 7 px between their footprints.
+    const narrow = (gap: number): MapDef['props'] => [['rubble', 79 / TILE, 42 / TILE], ['rubble', 79 / TILE, (49 + gap) / TILE]];
+    expect(scan(base(open, narrow(6)))).toEqual(['tight gap: chest at 9,5 is reached only through a gap exactly as wide as the feet box']);
+    expect(scan(base(open, narrow(7)))).toEqual([]);
+    expect(scan(base(shut))).toEqual(['unreachable: chest at 9,5']);
+    expect(scan(base(shut), east)).toEqual(['pocket: east arrival lands where no warp, edge exit, flight circle or world sign can be reached']);
+    expect(scan(base(open), [{ px: 5 * TILE + 8, py: 2 * TILE + 14, src: null, from: 'wall arrival' }])[0]).toMatch(/^arrival inside a wall: wall arrival/);
+  });
+
+  for (const variant of VARIANTS) {
+    it(`every map (${variant === 'start' ? 'as a new game finds it' : 'every gate open, every rock broken'}): arrivals land free, nothing is out of reach, no snag or knock-back pocket`, () => {
+      setGroundCacheLimit(200);
+      const grids = gridCache(variant);
+      const problems: string[] = [];
+      let reached = 0;
+      for (const id of Object.keys(MAPS)) {
+        const r = scanMap(id, variant, grids);
+        reached += r.reachable;
+        for (const p of r.problems) problems.push(`${id}: ${p}`);
+      }
+      // Sanity: the scan walked the maps (hundreds of thousands of feet-box positions each).
+      expect(reached).toBeGreaterThan(Object.keys(MAPS).length * 20000);
+      expect(problems).toEqual([]);
+    }, 120000);
+  }
+});
+
+describe('wedges in the story\'s own layouts, and the checks that guard them (critic round 3, gap 5)', () => {
+  /** The recorded story run's states, one per story script it starts (chapter by chapter, Prologue to post-game). */
+  const storyStates = (): Array<{ label: string; save: string }> => mainRoots(storyFights as unknown as RecordedRoot[])
+    .map((r) => ({ label: `${r.script} (chapter ${(JSON.parse(r.save) as { chapter: number }).chapter})`, save: r.save }));
+
+  it('every map in every layout the story run gives it: props, barriers and flight circles that stand only part of the game', () => {
+    setGroundCacheLimit(200);
+    const states = storyStates();
+    expect(states.length).toBeGreaterThan(40);
+    const reports = scanStory(states);
+    // Capsule Corp's yard alone changes with nearly every chapter (party tables, the crashed time machine, the lab).
+    expect(reports.filter((r) => r.map === 'cc_yard').length).toBeGreaterThanOrEqual(5);
+    expect(reports.length).toBeGreaterThanOrEqual(20);
+    const problems = reports.flatMap((r) => r.problems.map((p) => `${r.map} (${r.label}): ${p}`));
+    expect(problems).toEqual([]);
+  }, 120000);
+
+  it('the snag check catches the stall the probe slide left at the Crater Rim rock (the scan is not vacuous)', () => {
+    setGroundCacheLimit(200);
+    const grids = gridCache('start');
+    const arr = arrivals('c07_nameless_rim', grids);
+    expect(scanGrid(grids('c07_nameless_rim'), 'start', arr).problems).toEqual([]);
+    const probe = scanGrid(grids('c07_nameless_rim'), 'start', arr, 'probe').problems;
+    expect(probe.some((p) => /^snag \(tile 1[56],5\): .*heading east/.test(p)), probe.join('\n')).toBe(true);
+  });
 });

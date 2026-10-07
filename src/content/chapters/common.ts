@@ -177,9 +177,9 @@ export interface StoryGate {
   zone: Array<[string, number, number]>;
   /**
    * The level `character` has when a player who fights what the story puts in front of them reaches the gate (the
-   * full-game run measures the same). The gate asks for half a clear to four clears of `zone` on top of it, at least
-   * ten kills, and two to twelve minutes of fair-bot grinding (tests/grind.test.ts; LoG2's own story gates cost that
-   * bot 7 to 15).
+   * full-game run measures the same). The gate asks for half a clear to eight clears of `zone` on top of it, at least
+   * ten kills, and five to fifteen minutes of fair-bot grinding (tests/grind.test.ts; LoG2's own story gates cost that
+   * bot 7 to 15 over six to eight visits).
    */
   arrive: number;
   /** The hero's first words at the gate: when the hero is `character`, and when it is somebody else. */
@@ -214,7 +214,7 @@ export const STORY_GATES: readonly StoryGate[] = [
   },
   {
     // LoG2's Piccolo 25 into Gingertown, at LoG2's own level: Piccolo, benched since Chapter 5, must catch up before
-    // the tournament (five levels from his L20 arrival, about three minutes of fair-bot grinding on the rim).
+    // the tournament (five levels from his L20 arrival, about eight minutes of fair-bot grinding on the rim).
     id: 'c07_g_stadium', map: 'c07_nameless_grounds', chapter: 7, character: 'piccolo', level: 25,
     rect: [18, 4, 4, 1], hint: [16, 5, 8, 1],
     far: ['c07_nameless_arena', ['c07_nameless_grounds', 18, 0, 4, 4]],
@@ -242,8 +242,9 @@ export const STORY_GATES: readonly StoryGate[] = [
   },
   {
     // LoG2's Vegeta 30 on the Tropical Islands: a gate for the character the story is forcing, so Black is fought a
-    // level past the chapter's band start rather than at the forced floor (34 - 3). Two levels over the arrival: one
-    // was under two minutes of fair-bot grinding (tests/grind.test.ts), where LoG2's gates cost that bot 7 to 15.
+    // level past the chapter's band start rather than at the forced floor (34 - 3). Three levels over the arrival,
+    // about six minutes of fair-bot grinding at LoG2's L30-39 pace in these ruins (tests/grind.test.ts), where LoG2's
+    // gates cost that bot 7 to 15.
     id: 'c10_g_courtyard', map: 'c10_lair', chapter: 10, character: 'goku', level: 35,
     rect: [14, 8, 6, 1], hint: [14, 9, 6, 1],
     // The chapter's first trip (the raid) plays in the courtyard; Black seals it behind them as they retreat.
@@ -252,7 +253,7 @@ export const STORY_GATES: readonly StoryGate[] = [
     rescue: [],
     save: ['c10_lair', 18, 9], saveAt: 'the save point below the courtyard',
     zone: [['c10_lair', 16, 20], ['future_city', 41, 4]],
-    arrive: 33,
+    arrive: 32,
     self: [['hero', 'Black sealed the courtyard with his ki. MY ki! I have to get stronger than my own body to break through...', 'angry']],
     other: [['hero', 'A barrier made of Black\'s ki - which is Goku\'s ki. Only Goku himself could tear through it.', 'angry']],
     train: 'The mutant hounds and scrap mechs in these ruins, and the machines prowling the future city, make good training.',
@@ -260,9 +261,9 @@ export const STORY_GATES: readonly StoryGate[] = [
   {
     // LoG2's Goku 40 before the Cell Games, given to the hero the finale leans on most besides Goku: Gohan leads
     // Universe 7's relays in Chapter 14, so Chapter 13 makes the player bring him back up (his Lookout training
-    // lifts him to the band start - 3; the gate asks for two levels of jungle grinding on top, about three minutes of
-    // fair-bot play in tests/grind.test.ts: one level was under two).
-    id: 'c13_g_north', map: 'c13_monster_jungle', chapter: 13, character: 'gohan', level: 41,
+    // lifts him to the band start - 3; the gate asks for three levels of jungle grinding on top, about eight minutes
+    // of fair-bot play in tests/grind.test.ts at the jungle's L39-41 pace: two were under five).
+    id: 'c13_g_north', map: 'c13_monster_jungle', chapter: 13, character: 'gohan', level: 42,
     rect: [20, 0, 4, 2], hint: [17, 1, 10, 3],
     far: ['c13_monster_camp', ['c13_monster_jungle', 20, 0, 4, 2]],
     rescue: ['c13_monster_camp', ['c13_monster_jungle', 20, 0, 4, 2]],

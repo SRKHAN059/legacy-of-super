@@ -15,7 +15,7 @@ registerCreatures({
 
 registerEnemies([
   {
-    id: 'ea_tideSlime', name: 'Tide Slime', sprite: 'ea_tideSlime', hp: 170, str: 11, pow: 12, end: 10, exp: 875, ai: 'exploder', speed: 0.9,
+    id: 'ea_tideSlime', name: 'Tide Slime', sprite: 'ea_tideSlime', hp: 170, str: 11, pow: 12, end: 10, exp: 150, ai: 'exploder', speed: 0.9,
     desc: 'Sea foam and kelp that came alive at low tide. Bursts like a soap bubble when beaten. Step back.',
   },
 ]);

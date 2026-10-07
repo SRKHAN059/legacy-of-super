@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CAST } from '../src/content/cast';
+import { EP, WISH_BALLS } from '../src/content/chapters/act5/c12_eps_maps';
 import type { CharId } from '../src/content/characters';
 import {
   CHAPTER_MIN_LEVEL, ensureChapterState, FORCED_LEVEL_GAP, HANDOVER_LEVEL_GAP, STORY_GATES, storyGateFlag, storyGateHint,
@@ -10,6 +11,7 @@ import { MAPS, resolveMap } from '../src/content/registry';
 import { SPOTS, type WorldId } from '../src/content/world';
 import { TILE } from '../src/engine/constants';
 import type { Dir } from '../src/engine/math';
+import type { NpcDef } from '../src/game/mapdef';
 import type { Line } from '../src/ui/dialogue';
 import { EXP_TABLE, killExp, levelForExp } from '../src/game/leveling';
 import { Shot } from '../src/game/projectiles';
@@ -28,7 +30,13 @@ import { type GrindLog, Sim } from './sim';
  * `ensureChapterState` what it would still have to grant; anything but a level floor is a cross-act seam.
  * After every beat it also checks the world-map flag against the map, duplicate story characters on screen and
  * NPCs standing on doors or arrival tiles, then walks into every shared hub map with a copy of the save (as each
- * hero the player could be playing) and runs the same checks there.
+ * hero the player could be playing) and runs the same checks there. At the same points it lists every named
+ * character standing on more than one map (hubs walked into, every other map read off its NPC conditions): each
+ * must be in one place per story point.
+ *
+ * The optional episodes are played where a player meets them: the ramen chef's broth capsule (taken up in Chapter 3,
+ * found in Chapter 6), the ball game and "Whose Wish?" as Chapter 12's two episodes, Hit's contract and Pan's flight
+ * after the credits, and the Sadala rematch. Every quest in the game is offered somewhere on the save.
  */
 
 const BIG = 400000;
@@ -127,6 +135,8 @@ const SCRIPTED_WORLDS: Record<string, WorldId> = {
 };
 
 const WORLD_OF = mapWorlds();
+/** Maps a player can travel to (from a landing spot through doors, edges and flight circles); the rest are story-only. */
+const TRAVEL = new Set(WORLD_OF.keys());
 for (const [id, w] of Object.entries(SCRIPTED_WORLDS)) if (MAPS[id] && !WORLD_OF.has(id)) WORLD_OF.set(id, w);
 
 /** Every tile some warp, flight circle or landing spot drops the player on, per map. */
@@ -175,8 +185,10 @@ function identity(sprite: string): string | null {
 
 /** Everything the run notices along the way (asserted empty at the end). */
 interface Watch {
-  /** Story characters standing on two hub maps at once (reported, not asserted). */
+  /** Named characters standing on two maps at once (see `auditHubs`). */
   elsewhere: Set<string>;
+  /** Saves that break the story's shape or a STORY_ORDER fact (see `storyShape`). */
+  shape: Set<string>;
   worldFlag: Set<string>;
   doubles: Set<string>;
   blockers: Set<string>;
@@ -407,6 +419,194 @@ const HUBS = [
   'future_hideout_out', 'future_hideout_in', 'future_cc_ruins', 'kingkai_planet', 'beerus_grounds', 'beerus_palace_in', 'u10_sacred',
   'zeno_palace', 'hell_lake',
 ];
+const HUB_SET = new Set(HUBS);
+
+/**
+ * People who live in both timelines and share a sprite: on a Future Earth map that sprite is the future person, a
+ * different character from the present one at home. (Future Bulma, Mai and Trunks have sprites of their own; the
+ * `bulma` sprite in the Resistance hideout is present Bulma, who rides along on Chapter 11's third trip.)
+ */
+const TWO_TIMELINES: Record<string, string> = {
+  yajirobe: 'the future Yajirobe survived Black with the Resistance; the present one lives at Korin\'s tower',
+};
+
+/**
+ * Story-only maps one character takes the player to: no door, edge, flight circle or landing spot leads there, only
+ * that character's own script, and he or she goes along. The copy standing there is the companion who came with the
+ * player, not a second place: reaching the map means leaving the usual spot together, and leaving it brings both
+ * back. (Checked in "cross-act rules": each of these maps really is unreachable by travel.)
+ */
+const COMPANION_MAPS: Record<string, { who: string; reason: string }> = {
+  c12_pan_meadow: { who: 'videl', reason: 'Videl flies up to the Paozu Highlands with the babysitter (c12_videl_talk) and waits at the trail' },
+  c12_forest: { who: 'krillin', reason: 'Krillin sails to the Forest of Terror with the player on Master Roshi\'s boat (c12_krillin_kame, c12_forest_boat)' },
+  top_arena_a: { who: 'grandPriest', reason: 'after the credits the Grand Priest sends trainees to the stage and waits there to send them back (c14_gp_talk)' },
+};
+
+/**
+ * Named characters in a borrowed costume (Krillin on police duty wears the generic `police` sprite): an NPC with a
+ * generic sprite whose display name some story NPC with that character's own sprite also carries.
+ */
+const BY_NAME: Map<string, string> = (() => {
+  const seen = new Map<string, Set<string>>();
+  for (const id of Object.keys(MAPS)) {
+    for (const n of resolveMap(id)?.npcs ?? []) {
+      const who = identity(n.sprite);
+      if (who && n.name) (seen.get(n.name) ?? seen.set(n.name, new Set()).get(n.name))?.add(who);
+    }
+  }
+  return new Map([...seen].filter(([, w]) => w.size === 1).map(([name, w]) => [name, [...w][0]]));
+})();
+
+/** Who an NPC is: by sprite, or by name when a named character wears a generic sprite (null for extras). */
+function person(sprite: string, name?: string): string | null {
+  return identity(sprite) ?? (GENERIC.test(sprite) && name ? BY_NAME.get(name) ?? null : null);
+}
+
+/** Who an NPC on `map` is for the one-place rule: null for extras, creatures and a companion on its own map. */
+function whoIs(n: { sprite: string; name?: string }, map: string): string | null {
+  const base = person(n.sprite, n.name);
+  if (!base || COMPANION_MAPS[map]?.who === base) return null;
+  return WORLD_OF.get(map) === 'future' && TWO_TIMELINES[base] ? `future ${base}` : base;
+}
+
+/** Record that a named character stands on `map` (as NPC `id`); extras, creatures and companions are skipped. */
+function placeAt(where: Map<string, Set<string>>, n: { sprite: string; name?: string }, map: string, id: string): void {
+  const who = whoIs(n, map);
+  if (who) (where.get(who) ?? where.set(who, new Set()).get(who))?.add(`${map}/${id}`);
+}
+
+/** Every character standing on more than one map: "who on map/npc, map/npc". */
+function elsewhere(where: Map<string, Set<string>>): string[] {
+  const out: string[] = [];
+  for (const [who, at] of where) {
+    const maps = new Set([...at].map((x) => x.split('/')[0]));
+    if (maps.size > 1) out.push(`${who} on ${[...at].sort().join(', ')}`);
+  }
+  return out.sort();
+}
+
+// ------------------------------------------------------------------------------------------------ story order
+
+/**
+ * The order the story sets things in, as facts the path-independent continuity check may assume: on every save the
+ * story can produce, whenever the first condition holds so does the second. Each is a gold chain's own sequence or a
+ * chapter hand-over, never optional content; the full run checks every one on its save at every story point.
+ */
+const STORY_ORDER: Array<[string, string, string]> = [
+  ['chapter>=3', 'c02_rage', 'Beerus\'s rampage on the cruise ends Chapter 2'],
+  ['chapter>=4', 'c03_beerusDone', 'the battle over the sea ends Chapter 3'],
+  ['c06_round1', 'c06_arrived', 'Goku fights Frieza on the mesa he landed on'],
+  ['c06_round2', 'c06_round1', 'Vegeta takes over from Goku'],
+  ['c06_won', 'c06_round2', 'Frieza is beaten in the second round'],
+  ['c07_departed', 'c07_champaDone', 'Team Universe 7 is recruited before it leaves'],
+  ['c07_examDone', 'c07_departed', 'the written exam is on the Nameless Planet'],
+  ['chapter==7&c07_champaDone', 'ea_buuAway', 'Buu is on Team Universe 7 from the recruiting until Chapter 8'],
+  ['c08_landed', 'c08_departed', 'Jaco\'s ship leaves Earth before it lands on Potaufeu'],
+  ['c08_boysFound', 'c08_monakaDone', 'the boys are found on Potaufeu, after the victory party'],
+  ['c09_cellOut', 'done:c09_q_spar', 'Vegeta\'s test comes before Cell\'s old machine is rolled out'],
+  ['quest:c10_q_u10', 'done:c10_q_ask', 'Beerus and Whis take Goku to Universe 10 once he has asked them'],
+  ['chapter>=12', 'c11_finaleDone', 'the Zamasu finale ends Chapter 11'],
+  ...(['c13_krillin', 'c13_tien', 'c13_gohan', 'c13_17'].map((id): [string, string, string] => (
+    ['chapter>=14', `done:${id}`, 'all four recruits sign up before the tenth warrior (c13_check)']))),
+];
+
+/** The chapter a flag, Journal entry or `defeated:`-style id belongs to by its name (cNN_..., post_... = 15), else null. */
+function chapterOf(id: string): number | null {
+  const name = id.replace(/^[a-z]+:/i, '');
+  const m = /^c(\d\d)_/.exec(name);
+  return m ? Number(m[1]) : /^post_/.test(name) ? 15 : null;
+}
+
+/**
+ * How a save departs from the story's shape: a chapter's flags or quests before that chapter, a gold quest still open
+ * after its chapter, `post_game` off Chapter 15, or a STORY_ORDER fact broken. Empty on every save the run makes.
+ */
+function storyShape(st: GameState): string[] {
+  const out: string[] = [];
+  const ch = st.data.chapter;
+  for (const id of Object.keys(st.data.flags)) {
+    const c = chapterOf(id);
+    if (c !== null && c > ch && st.flag(id)) out.push(`flag ${id} set in chapter ${ch}`);
+  }
+  for (const [id, v] of Object.entries(st.data.journal)) {
+    const c = chapterOf(id);
+    if (c !== null && c > ch) out.push(`quest ${id} ${v} in chapter ${ch}`);
+    if (c !== null && c < ch && QUESTS[id]?.star === 'gold' && v !== 'done') out.push(`gold quest ${id} ${v} in chapter ${ch}`);
+  }
+  if (st.flag('post_game') !== (ch === 15)) out.push(`post_game ${st.flag('post_game')} in chapter ${ch}`);
+  for (const [a, b, why] of STORY_ORDER) if (st.check(a) && !st.check(b)) out.push(`${a} without ${b} (${why})`);
+  return out;
+}
+
+/** The literals of a condition string, without their `!`. */
+function literals(cond: string | undefined): string[] {
+  return (cond ?? '').split('&').map((x) => x.trim().replace(/^!+/, '')).filter(Boolean);
+}
+
+/**
+ * Can these two NPC definitions stand at once on some save the story allows? Every chapter, and every value of the
+ * flags, quests, active hero, world and items their conditions read (with the STORY_ORDER facts touching them), is
+ * tried under `storyShape`'s rules; returns one such save, described, or null when the two never meet.
+ */
+function canMeet(a: { showIf?: string; hideIf?: string }, b: { showIf?: string; hideIf?: string }): string | null {
+  const lits = new Set([a.showIf, a.hideIf, b.showIf, b.hideIf].flatMap(literals).filter((l) => !/^chapter/.test(l)));
+  /** The variable a literal reads (`quest:x` and `done:x` both read Journal entry x). */
+  const variable = (l: string): string => l.replace(/^(quest|done):/, 'journal:');
+  const facts: Array<[string, string]> = [];
+  for (let grew = true; grew;) {
+    grew = false;
+    const vars = new Set([...lits].map(variable));
+    for (const [x, y] of STORY_ORDER) {
+      if (facts.some(([p, q]) => p === x && q === y)) continue;
+      const own = [x, y].flatMap(literals).filter((l) => !/^chapter/.test(l));
+      if (!own.some((l) => vars.has(variable(l)))) continue;
+      facts.push([x, y]);
+      for (const l of own) lits.add(l);
+      grew = true;
+    }
+  }
+  const flags = [...lits].filter((l) => !/^(has|char|quest|done|world):/.test(l));
+  const quests = [...new Set([...lits].filter((l) => /^(quest|done):/.test(l)).map((l) => l.replace(/^(quest|done):/, '')))];
+  const heroes = [...new Set([...lits].filter((l) => l.startsWith('char:')).map((l) => l.slice(5))), ''];
+  const worlds = [...lits].some((l) => l.startsWith('world:')) ? ['earth', 'future', 'space'] : ['earth'];
+  const items = [...lits].filter((l) => l.startsWith('has:')).map((l) => l.slice(4));
+  const st = new GameState();
+  const stands = (n: { showIf?: string; hideIf?: string }): boolean => st.check(n.showIf) && !(n.hideIf && st.check(n.hideIf));
+  for (let ch = 0; ch <= 15; ch++) {
+    const dims: unknown[][] = [
+      // `post_game` is Chapter 15 exactly; it is set below with the chapter.
+      ...flags.map((f) => (f === 'post_game' || (chapterOf(f) ?? 0) > ch ? [false] : [false, true])),
+      ...quests.map((q) => {
+        const c = chapterOf(q);
+        if (c !== null && c > ch) return [undefined];
+        return c !== null && c < ch && QUESTS[q]?.star === 'gold' ? ['done'] : [undefined, 'active', 'done'];
+      }),
+      heroes, worlds, ...items.map(() => [false, true]),
+    ];
+    const pick = dims.map(() => 0);
+    for (;;) {
+      st.data.chapter = ch;
+      st.data.flags = {};
+      st.data.journal = {};
+      st.data.inv = {};
+      let k = 0;
+      for (const f of flags) if (dims[k][pick[k++]]) st.data.flags[f] = true;
+      for (const q of quests) { const v = dims[k][pick[k++]]; if (v) st.data.journal[q] = v as 'active' | 'done'; }
+      st.data.active = dims[k][pick[k++]] as CharId;
+      st.data.flags.world = dims[k][pick[k++]] as string;
+      for (const it of items) if (dims[k][pick[k++]]) st.data.inv[it] = 1;
+      if (ch === 15) st.data.flags.post_game = true;
+      if (facts.every(([x, y]) => !st.check(x) || st.check(y)) && stands(a) && stands(b)) {
+        const on = [...flags.filter((f) => st.flag(f)), ...quests.map((q) => `${q}=${st.data.journal[q] ?? 'none'}`)];
+        return `chapter ${ch}${on.length ? `, ${on.join(', ')}` : ''}${st.data.active ? `, playing ${st.data.active}` : ''}, in ${String(st.get('world'))}`;
+      }
+      let d = 0;
+      while (d < dims.length && ++pick[d] >= dims[d].length) pick[d++] = 0;
+      if (d === dims.length) break;
+    }
+  }
+  return null;
+}
 
 /** Where a player walks into a hub: its landing spot, else the first door/flight that leads there, else the centre. */
 function hubEntry(map: string): [number, number] | undefined {
@@ -427,6 +627,19 @@ async function auditHubs(live: Sim, label: string, watch: Watch, errors: string[
     const st0 = live.game.state;
     const heroes = st0.flag('noSwitch') ? [st0.data.active] : st0.party.map((c) => c.id);
     const where = new Map<string, Set<string>>();
+    // The save as it stands decides who stands where: walking into a hub moves the player (and the `world:` they are
+    // in), so an NPC counts only if its conditions hold on the save left behind.
+    const st = new GameState(JSON.parse(data) as SaveData);
+    st.data.active = heroes[0];
+    const stands = (n: { showIf?: string; hideIf?: string }): boolean => st.check(n.showIf) && !(n.hideIf && st.check(n.hideIf));
+    // Where the player is: everyone on screen, cutscene actors a beat left standing included. A map NPC whose
+    // conditions no longer hold is on the way out (a beaten sparring partner, a student-less Roshi): the map drops it
+    // the moment the player leaves, so it is never seen next to its next post.
+    const here = live.game.field;
+    const hereDefs = new Set(here ? resolveMap(here.def.id)?.npcs ?? [] : []);
+    for (const n of here?.npcs ?? []) {
+      if (!n.hidden && (!hereDefs.has(n.def) || stands(n.def))) placeAt(where, { sprite: n.spriteId, name: n.def.name }, here?.def.id ?? '', n.def.id);
+    }
     for (const map of HUBS) {
       for (const hero of heroes) {
         const sim = new Sim();
@@ -440,17 +653,33 @@ async function auditHubs(live: Sim, label: string, watch: Watch, errors: string[
         for (const e of sim.errors) errors.push(`${label} ${map} as ${hero}: ${e.split('\n')[0]}`);
         if (hero !== heroes[0] || !sim.game.field) continue;
         const defs = new Set(resolveMap(map)?.npcs ?? []);
-        for (const n of sim.game.field.npcs) {
-          const who = identity(n.spriteId);
-          if (!who || n.hidden || !defs.has(n.def)) continue;
-          (where.get(who) ?? where.set(who, new Set()).get(who))?.add(`${map}/${n.def.id}`);
-        }
+        for (const n of sim.game.field.npcs) if (!n.hidden && defs.has(n.def) && stands(n.def)) placeAt(where, { sprite: n.spriteId, name: n.def.name }, map, n.def.id);
       }
     }
-    for (const [who, at] of where) {
-      const maps = new Set([...at].map((x) => x.split('/')[0]));
-      if (maps.size > 1) watch.elsewhere.add(`${label}: ${who} on ${[...at].join(', ')}`);
+    // Every other map (chapter maps, story-only maps, the tournament stage) is read off its definition: an NPC stands
+    // there exactly when its showIf/hideIf pass on this save, which is what the map spawns when the player walks in.
+    for (const map of Object.keys(MAPS)) {
+      if (HUB_SET.has(map) || map === here?.def.id || /^dev_/.test(map)) continue;
+      for (const n of resolveMap(map)?.npcs ?? []) if (stands(n)) placeAt(where, n, map, n.id);
     }
+    for (const line of elsewhere(where)) watch.elsewhere.add(`${label}: ${line}`);
+    // The same story point seen from every other world the player has landing spots in (a world sign, Whis or the time
+    // machine takes them there): everyone, this map's people included, read off their definitions, since the player
+    // has left this map too. Whis is gated by `world:` as the ride between Earth and space.
+    const now = String(st.get('world') ?? 'earth');
+    for (const w of new Set(st.data.regions.map((id) => SPOTS[id]?.world).filter((x): x is WorldId => !!x && x !== now))) {
+      const away = new GameState(JSON.parse(data) as SaveData);
+      away.data.active = heroes[0];
+      away.set('world', w);
+      const there = new Map<string, Set<string>>();
+      for (const map of Object.keys(MAPS)) {
+        if (/^dev_/.test(map)) continue;
+        for (const n of resolveMap(map)?.npcs ?? []) if (away.check(n.showIf) && !(n.hideIf && away.check(n.hideIf))) placeAt(there, n, map, n.id);
+      }
+      for (const line of elsewhere(there)) watch.elsewhere.add(`${label} (from ${w}): ${line}`);
+    }
+    // The save keeps the story's shape the path-independent check assumes (cross-act rules: 'one place at a time').
+    for (const v of storyShape(st)) watch.shape.add(`${label}: ${v}`);
   } finally {
     console.error = keepErr;
   }
@@ -465,7 +694,7 @@ describe('full game: one save from newGame to the post-game', () => {
     const sim = new Sim();
     const st = sim.game.state;
     const q = (id: string) => st.data.journal[id];
-    const watch: Watch = { elsewhere: new Set(), worldFlag: new Set(), doubles: new Set(), blockers: new Set() };
+    const watch: Watch = { elsewhere: new Set(), shape: new Set(), worldFlag: new Set(), doubles: new Set(), blockers: new Set() };
     const auditErrors: string[] = [];
     /** Walk into every hub with a copy of the save as it is now (after every beat, at every chapter start). */
     const audit = async (label: string): Promise<void> => { await auditHubs(sim, label, watch, auditErrors); };
@@ -749,6 +978,10 @@ describe('full game: one save from newGame to the post-game', () => {
       await talk('c03_panchy', 'cc_yard');
       expect(st.count('c03_bento')).toBe(1);
       await talk('c03_bulma', 'cc_yard');
+      // Next door, Ramen Ichiban's chef has lost his broth capsule in the Rocky Wasteland (bronze, taken up now and
+      // finished once the Wasteland opens).
+      await talk('eb_shop_chef', 'wc_shops');
+      expect(q('eb_delivery')).toBe('active');
 
       await collect('desert_oasis', 'c03_db1');
       await passGate('c03_g_castle');
@@ -856,6 +1089,15 @@ describe('full game: one save from newGame to the post-game', () => {
       await enter('waste_canyon', 20, 4);
       for (let i = 0; i < 3; i++) await run('c06_deserter_down');
       expect(q('c06_deserters')).toBe('done');
+
+      // The broth capsule from Chapter 3's errand lies by the Wasteland landing site; the chef pays with a capsule.
+      const pow3 = st.count('pow3');
+      await collect('waste_entry', 'eb_broth');
+      expect(st.count('eb_brothCapsule')).toBe(1);
+      await talk('eb_shop_chef', 'wc_shops');
+      expect(q('eb_delivery')).toBe('done');
+      expect(st.count('eb_brothCapsule')).toBe(0);
+      expect(st.count('pow3')).toBe(pow3 + 1);
 
       // Master Roshi's charged melee: each of the four students talks to him once.
       for (const id of ['goku', 'vegeta', 'gohan', 'piccolo'] as CharId[]) {
@@ -1044,22 +1286,57 @@ describe('full game: one save from newGame to the post-game', () => {
       boundary(12, 'goku', ['goku', 'vegeta', 'gohan', 'piccolo', 'trunks'], false);
       expect(st.get('world')).toBe('earth');
       expect(q('c12_days')).toBe('active');
+      // Capsule Corp first, where Goten's news points: Beerus's tip about the assassin (Hit's contract waits for after
+      // the credits, with Pan's flight), then the two episodes that find the player there, which finish Days of Peace.
       await beat('cc_yard', 'act5_beerus_talk', 25, 17);
       expect(st.flag('c12_hitHinted')).toBe(true);
-      await beat('satan_plaza', 'c12_porter_talk', 31, 6);
-      expect(q('c12_hit')).toBe('done');
-      await beat('paozu_valley', 'c12_videl_talk', 8, 8);
-      expect(sim.game.field?.def.id).toBe('c12_pan_meadow');
-      for (const e of sim.game.field?.enemies ?? []) if (!e.uid && !e.dead) e.dead = true;
-      for (let i = 0; i < 4; i++) await beat(null, 'c12_pan_talk');
-      expect(st.flag('c12_panCaught')).toBe(true);
-      await beat(null, 'c12_videl_meadow');
-      expect(q('c12_pan')).toBe('done');
+      // The Universe 6 vs. Universe 7 ball game (ep 70), played as Yamcha with nobody at the controls.
+      expect(q('c12_ball')).toBeUndefined();
+      await beat('cc_yard', 'c12_champa_talk', 22, 20);
+      expect(q('c12_ball')).toBe('done');
+      expect(st.flag('c12_ballDone')).toBe(true);
+      expect(st.data.chapter).toBe(12);
+      expect(st.data.active).toBe('goku');
+      expect(st.flag('noSwitch')).toBe(false);
+      expect(st.flag('act5_busy')).toBe(false);
+      for (const c of st.party) expect(c.outfit, `${c.id} out of Yamcha's uniform`).toBeUndefined();
+      // "Whose Wish?" (ep 68): the tarp, the seven balls across the Earth, the drill pod, the Mantle Wyrm, Shenron.
+      await beat('cc_yard', 'c12_project_look', 33, 7);
+      expect(q('c12_wish')).toBe('active');
+      expect(st.count('dragonRadar')).toBe(1);
+      for (const [id, item, map] of WISH_BALLS) {
+        expect(st.count(item), `${item} before the hunt`).toBe(0);
+        await collect(map, id);
+        expect(st.count(item), item).toBe(1);
+      }
+      await beat('cc_yard', 'c12_project_look', 33, 7);
+      await enter('cc_yard', ...EP.pad.podFront);
+      sim.choice = 0;
+      await beat(null, 'c12_pod_down');
+      expect(sim.game.field?.def.id).toBe('c12_core_mantle');
+      expect(st.data.active).toBe('goku');
+      expect(st.char('goku').outfit).toBe('c12_heatSuit');
+      await enter('c12_core_heart', EP.heart.arrive[0], 9);
+      await beat(null, 'c12_wyrm_fight');
+      expect(st.flag('c12_wyrmDown')).toBe(true);
+      // Cutting the alloy reels Goku up; with all seven balls in hand Shenron is called (backing King Kai's wish).
+      sim.choice = 2;
+      await beat('c12_core_heart', 'c12_cut_alloy', 16, 18);
+      expect(q('c12_wish')).toBe('done');
       expect(q('c12_days')).toBe('done');
+      for (const id of ['c12_alloyDelivered', 'c12_summoned', 'c12_wishDone', 'c12_labGone']) expect(st.flag(id), id).toBe(true);
 
       // ============================================================================================ CHAPTER 13
       boundary(13, 'goku', ['goku', 'vegeta', 'gohan', 'piccolo', 'trunks'], false);
       expect(q('c13_team')).toBe('active');
+      // What the two late episodes leave on the save: the balls spent, the alloy with Bulma, Goku out of the heat suit,
+      // the other four episodes still open for later, and Capsule Corp's crater cleared now the story has moved on.
+      for (const [, item] of WISH_BALLS) expect(st.count(item), `${item} after the wish`).toBe(0);
+      expect(st.count('c12_coreAlloy')).toBe(0);
+      expect(st.count('dragonRadar')).toBe(1);
+      for (const id of ['c12_hit', 'c12_pan', 'c12_saiyaman', 'c12_krillin']) expect(q(id), id).toBe('active');
+      await enter('cc_yard', 22, 20);
+      expect(sim.game.field?.map.props.some((p) => p.id === 'c12_crater')).toBe(false);
       await beat('satan_plaza', 'c13_krillin_talk', 21, 23);
       expect(q('c13_krillin')).toBe('done');
       await beat('kame_island', 'c13_chiaotzu_talk', 16, 14);
@@ -1125,6 +1402,33 @@ describe('full game: one save from newGame to the post-game', () => {
       await beat('cc_yard', 'act5_beerus_talk', 25, 17);
       expect(q('post_trueEnd')).toBe('done');
       await audit('post-game');
+
+      // The Days-of-Peace episodes left open, played after the credits on the same save: Hit's contract (Beerus's tip
+      // from Chapter 12 still stands, so the night on the roof plays at once) and Pan's first flight.
+      expect(q('c12_hit')).toBe('active');
+      await beat('satan_plaza', 'c12_porter_talk', 31, 6);
+      expect(q('c12_hit')).toBe('done');
+      expect(q('post_hit')).toBe('active');
+      await beat('paozu_valley', 'c12_videl_talk', 8, 8);
+      expect(sim.game.field?.def.id).toBe('c12_pan_meadow');
+      for (const e of sim.game.field?.enemies ?? []) if (!e.uid && !e.dead) e.dead = true;
+      for (let i = 0; i < 4; i++) await beat(null, 'c12_pan_talk');
+      expect(st.flag('c12_panCaught')).toBe(true);
+      await beat(null, 'c12_videl_meadow');
+      expect(q('c12_pan')).toBe('done');
+      expect(st.data.chapter).toBe(15);
+      // Cabba's visit opens Sadala; Caulifla and Kale's tag-team rematch in her yard (bronze).
+      await beat('cc_yard', 'c13_cabba_cc', 29, 18);
+      expect(st.data.regions).toContain('c13_spot_sadala');
+      expect(q('c13_sadala')).toBe('active');
+      const sadala = SPOTS.c13_spot_sadala;
+      const pow3Post = st.count('pow3');
+      await beat(sadala.map, 'c13_sadala_caulifla', sadala.tx, sadala.ty);
+      expect(q('c13_sadala')).toBe('done');
+      expect(st.count('pow3')).toBe(pow3Post + 1);
+      expect(st.flag('act5_busy')).toBe(false);
+      expect(st.flag('noSwitch')).toBe(false);
+      expect(st.data.active).toBe('goku');
 
       // The 25 Earth Delicacies, picked up where the world builders hid them, then Whis's charm (exactly once).
       const delicacies: Array<{ map: string; id: string; kind: 'pickup' | 'chest' | 'jar' }> = [];
@@ -1220,6 +1524,10 @@ describe('full game: one save from newGame to the post-game', () => {
       }
       expect.soft([...watch.worldFlag], 'world flag vs. map').toEqual([]);
       expect.soft([...watch.doubles], 'story characters shown twice').toEqual([]);
+      expect.soft([...watch.elsewhere], 'story characters on two maps at once').toEqual([]);
+      expect.soft([...watch.shape], 'saves off the story\'s shape (STORY_ORDER)').toEqual([]);
+      // Every quest in the game was offered somewhere on this one save (the dev sandbox's quest is not in the game).
+      expect.soft(Object.keys(QUESTS).filter((id) => !st.data.journal[id] && !/^dev_/.test(id)), 'quests never offered').toEqual([]);
       expect.soft([...watch.blockers], 'NPCs on doors / arrival tiles').toEqual([]);
       expect.soft(auditErrors, 'errors walking into hubs').toEqual([]);
       expect.soft(TRANSIENT.filter((x) => st.flag(x)), 'fight flags left raised after the post-game').toEqual([]);
@@ -1232,16 +1540,62 @@ describe('full game: one save from newGame to the post-game', () => {
       const effort = grinds.map(({ gate: g, log: l }) => `c${String(g.chapter).padStart(2, '0')} ${g.id} (${g.character} ${g.level}): L${l.from} -> L${l.to}, `
         + `${l.exp.toLocaleString('en-US')} EXP from ${l.kills} kills over ${l.visits} map visit${l.visits === 1 ? '' : 's'} (${l.maps.join(', ')})`);
       console.log(`[full game] story-gate grinding\n${effort.join('\n')}`);
-      const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {};
-      if (env.FULL_GAME_REPORT) {
-        console.log(`[full game] in two places at once\n${[...watch.elsewhere].join('\n')}`);
-        console.log(`[full game] quests never offered\n${Object.keys(QUESTS).filter((id) => !st.data.journal[id]).join(' ')}`);
-      }
     }
   }, 1800000);
 });
 
 describe('cross-act rules the full run relies on', () => {
+  it('a companion map is story-only (no landing spot, door, edge or flight circle leads there) and its companion stands on it', () => {
+    for (const [map, c] of Object.entries(COMPANION_MAPS)) {
+      expect(MAPS[map], map).toBeTruthy();
+      expect(TRAVEL.has(map), `${map} can be travelled to, so ${c.who} there is a second place`).toBe(false);
+      expect(resolveMap(map)?.npcs?.some((n) => identity(n.sprite) === c.who), `${c.who} on ${map}`).toBe(true);
+      expect(c.reason.length, map).toBeGreaterThan(20);
+    }
+  });
+
+  it('one place at a time on every path: no two NPCs of one named character on different maps can stand together', () => {
+    // The run checks the saves it makes; this checks every save the story allows (side content skipped or left for
+    // later, any hero, any world), read off the NPC conditions under the story's shape (`storyShape`, held by the run).
+    const defs = new Map<string, Array<{ map: string; n: NpcDef }>>();
+    for (const map of Object.keys(MAPS)) {
+      if (/^dev_/.test(map)) continue;
+      for (const n of resolveMap(map)?.npcs ?? []) {
+        const who = whoIs(n, map);
+        if (who) (defs.get(who) ?? defs.set(who, []).get(who))?.push({ map, n });
+      }
+    }
+    expect(defs.get('whis')?.length, 'Whis has a post for every stretch').toBeGreaterThan(10);
+    const meet: string[] = [];
+    for (const [who, list] of defs) {
+      for (const [i, a] of list.entries()) {
+        for (const b of list.slice(i + 1)) {
+          if (a.map === b.map) continue;
+          const when = canMeet(a.n, b.n);
+          if (when) meet.push(`${who}: ${a.map}/${a.n.id} and ${b.map}/${b.n.id} (${when})`);
+        }
+      }
+    }
+    expect(meet).toEqual([]);
+  });
+
+  it('the path-independent check catches a double no run meets, applies the story order and reads `world:`', () => {
+    const dojo = resolveMap('satan_dojo')?.npcs?.filter((n) => n.id === 'c02_spKrillinNpc') ?? [];
+    const kame = resolveMap('kame_island')?.npcs?.find((n) => n.id === 'c04_krillin');
+    expect(dojo.length).toBeGreaterThan(1);
+    expect(kame?.showIf).toBe('chapter==4');
+    if (!kame) return;
+    // An unbeaten sparring partner is away from the dojo while the story has him on Kame Island in Chapter 4; a dojo
+    // post that ignored that (the one-save run beats him in Chapter 3, so it never sees this) is caught.
+    for (const d of dojo) expect(canMeet(d, kame), `${d.showIf} | ${d.hideIf}`).toBeNull();
+    expect(canMeet({ showIf: 'chapter>=2&!c02_beatKrillin' }, kame)).toBe('chapter 4, in earth');
+    // STORY_ORDER: the cruise is over by Chapter 3, so its guests are never also at the Chapter 3 party.
+    expect(canMeet({ showIf: 'c02_beerusArrived', hideIf: 'c02_rage' }, { showIf: 'chapter==3' })).toBeNull();
+    // `world:`: the ride home at Capsule Corp and Whis in Universe 10 are one Whis only when both are world-gated.
+    expect(canMeet({ showIf: 'chapter>=7&world:earth' }, { showIf: 'quest:c10_q_u10&world:space' })).toBeNull();
+    expect(canMeet({ showIf: 'chapter>=7&world:earth' }, { showIf: 'quest:c10_q_u10' })).toBe('chapter 10, c10_q_u10=active, c10_q_ask=done, in earth');
+  });
+
   it('every map start keeps the world-map flag in step with the map (story warps between worlds included)', () => {
     const sim = new Sim();
     const st = sim.game.state;
@@ -1264,7 +1618,7 @@ describe('cross-act rules the full run relies on', () => {
     st.data.chapter = 13;
     st.join('goku', 45);
     st.data.active = 'goku';
-    const R = makeRun(sim, { elsewhere: new Set(), worldFlag: new Set(), doubles: new Set(), blockers: new Set() });
+    const R = makeRun(sim, { elsewhere: new Set(), shape: new Set(), worldFlag: new Set(), doubles: new Set(), blockers: new Set() });
     await R.enter('satan_dojo');
     R.smash('del_satan_dojo_1');
     const drop = () => sim.game.field?.pickups.filter((p) => p.item === 'delicacy') ?? [];
@@ -1409,18 +1763,18 @@ describe('story gates (LoG2 §6.6: coloured level gates on the critical path)', 
         expect(shut.errors).toEqual([]);
       });
 
-      it('costs a real grind of its zone from the level a player arrives with, up to four clears (EXP table + ROM kill clamp)', async () => {
+      it('costs a real grind of its zone from the level a player arrives with, up to eight clears (EXP table + ROM kill clamp)', async () => {
         const visits = await zoneVisits(g);
         for (const [i, v] of visits.entries()) expect(v.length, `regular enemies within reach on ${g.zone[i][0]}`).toBeGreaterThan(0);
         const { kills, clears } = effort(g, visits);
         console.log(`[story gate] ${g.id}: ${g.character} L${g.arrive} -> L${g.level} = ${kills} kills, ${clears.toFixed(2)} clears of `
           + `${g.zone.map((z) => z[0]).join(' + ')} (${visits.map((v) => v.length).join('+')} enemies in reach)`);
-        // A real grind (LoG2's gates were never free), but at most four passes through the zone: LoG2's own story gates
+        // A real grind (LoG2's gates were never free), but at most eight passes through the zone: LoG2's own story gates
         // cost six to eight visits of their zones. What a gate costs in play is measured with the fair bot in
         // tests/grind.test.ts ('story gates'), in minutes from the arrival level.
         expect(kills).toBeGreaterThanOrEqual(10);
         expect(clears).toBeGreaterThanOrEqual(0.5);
-        expect(clears).toBeLessThanOrEqual(4);
+        expect(clears).toBeLessThanOrEqual(8);
       });
 
       it('explains itself the first time: who, what level, where to switch and where to train', async () => {

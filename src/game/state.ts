@@ -127,7 +127,10 @@ export class GameState {
     delete this.data.flags[name];
   }
 
-  /** Evaluate a condition string: "flag", "!flag", "a&b", "chapter>=3", "has:item". */
+  /**
+   * Evaluate a condition string: "flag", "!flag", "a&b", "chapter>=3", "has:item", "world:space" (the world the player
+   * is in, earth when never set).
+   */
   check(cond: string | undefined): boolean {
     if (!cond) return true;
     return cond.split('&').every((raw) => {
@@ -149,6 +152,7 @@ export class GameState {
       if (c.startsWith('char:')) return this.data.active === c.slice(5);
       if (c.startsWith('quest:')) return this.data.journal[c.slice(6)] === 'active';
       if (c.startsWith('done:')) return this.data.journal[c.slice(5)] === 'done';
+      if (c.startsWith('world:')) return (this.get('world') || 'earth') === c.slice(6);
       return this.flag(c);
     });
   }

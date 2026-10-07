@@ -94,11 +94,13 @@ registerMaps([
     props: [...meadTrees, ['flowers', 5, 21], ['flowers', 7, 22], ['flowers', 9, 6], ['flowers', 27, 4], ['grassTuft', 17, 21], ['grassTuft', 23, 17], ['flowers', 32, 21]],
     npcs: [
       { id: 'c12_pan', sprite: 'pan', x: 8, y: 7, talk: 'c12_pan_talk', name: 'Pan', showIf: 'quest:c12_pan', hideIf: 'c12_panCaught' },
-      { id: 'c12_videlM', sprite: 'videl', x: 21, y: 25, talk: 'c12_videl_meadow', name: 'Videl', showIf: 'quest:c12_pan' },
+      { id: 'c12_videlM', sprite: 'videl', x: 21, y: 25, talk: 'c12_videl_meadow', name: 'Videl', showIf: 'quest:c12_pan&c12_panStage' },
     ],
     enemies: [
       { type: 'direWolf', x: 12, y: 22 }, { type: 'direWolf', x: 26, y: 25 }, { type: 'c12_ironBoar', x: 31, y: 10 },
       { type: 'c12_ironBoar', x: 5, y: 15 }, { type: 'stormPtero', x: 17, y: 5 }, { type: 'stormPtero', x: 33, y: 21 },
+      { type: 'direWolf', x: 12, y: 13 }, { type: 'direWolf', x: 20, y: 17 }, { type: 'c12_ironBoar', x: 24, y: 7 },
+      { type: 'stormPtero', x: 10, y: 3 },
     ],
     objects: [
       { type: 'save', x: 17, y: 25 }, { type: 'worldSign', x: 23, y: 26 },
@@ -155,6 +157,9 @@ registerMaps([
     enemies: [
       { type: 'c12_shadeWolf', x: 9, y: 25 }, { type: 'c12_shadeWolf', x: 30, y: 14 }, { type: 'c12_shadeWolf', x: 22, y: 10 },
       { type: 'giantSnake', x: 34, y: 30 }, { type: 'c12_shadeWolf', x: 5, y: 18 },
+      // More of the pack (LoG2 density), clear of the beach Roshi's boat lands on (20,30).
+      { type: 'c12_shadeWolf', x: 11, y: 14 }, { type: 'c12_shadeWolf', x: 15, y: 8 }, { type: 'c12_shadeWolf', x: 3, y: 10 },
+      { type: 'c12_shadeWolf', x: 36, y: 18 }, { type: 'giantSnake', x: 26, y: 2 },
       { type: 'c12_illRaditz', x: 12, y: 22, id: 'c12_ill1', hideIf: 'c12_calm' },
       { type: 'c12_illGinyu', x: 20, y: 15, id: 'c12_ill2', hideIf: 'c12_calm' },
       { type: 'c12_illRaditz', x: 27, y: 9, id: 'c12_ill3', hideIf: 'c12_calm' },

@@ -6,8 +6,8 @@ import { registerEnemies, type EnemyDef } from '../../enemies';
  * rivals roaming the Tournament stage follow LoG2's grind band instead (critic round 2, gap 1; LoG2's Snowy Highlands,
  * Northern Mountains and Mushroom Cavern at the same hero levels): about 7 melee hits to kill and at least 15 hits to
  * knock out the hero who walks in, in form (Goku L35–37 in Super Saiyan Blue for Chapter 12, Gohan L39 in Super Saiyan
- * and Goku L40 for Chapter 13, Goku L40–44 on the stage). Lower HP and END buy that, not lower EXP, so a story gate
- * stays a short grind (tests/grind.test.ts measures every zone).
+ * and Goku L40 for Chapter 13, Goku L40–44 on the stage). Lower HP and END buy that. EXP is paced to LoG2's minutes
+ * per level at the hero's level (about 1.2 at L35-39, 3 from L40; tests/grind.test.ts 'grind pace', critic round 3).
  */
 
 const C12: EnemyDef[] = [
@@ -41,12 +41,12 @@ const C12: EnemyDef[] = [
       ],
     },
   },
-  { id: 'c12_ironBoar', name: 'Iron Boar', sprite: 'c12_ironBoar', hp: 1400, str: 42, pow: 1, end: 40, exp: 34000, ai: 'charger', speed: 1.1, box: { w: 20, h: 10 }, desc: 'A highland boar with tusks like crowbars. Charges anything that moves, including toddlers.' },
+  { id: 'c12_ironBoar', name: 'Iron Boar', sprite: 'c12_ironBoar', hp: 1400, str: 42, pow: 1, end: 40, exp: 28000, ai: 'charger', speed: 1.1, box: { w: 20, h: 10 }, desc: 'A highland boar with tusks like crowbars. Charges anything that moves, including toddlers.' },
   // Forest of Terror illusions: untouchable hazards that pace the paths until Krillin faces his fears. Their touch
   // hurts about as much as a dire wolf's bite, so the forest stays a grind zone around them.
   { id: 'c12_illRaditz', name: 'Illusion of Raditz', sprite: 'c12_raditz', hp: 1, str: 44, pow: 1, end: 40, exp: 0, ai: 'hazard', speed: 0.9, invulnerable: true, drops: 'none', desc: 'A memory given shape by the forest. Your fists pass straight through it.' },
   { id: 'c12_illGinyu', name: 'Illusion of Ginyu', sprite: 'ginyu', hp: 1, str: 44, pow: 1, end: 40, exp: 0, ai: 'hazard', speed: 1.0, invulnerable: true, drops: 'none', desc: 'A posing phantom. Untouchable while your ki is raised.' },
-  { id: 'c12_shadeWolf', name: 'Shade Wolf', sprite: 'direWolf', hp: 1300, str: 39, pow: 1, end: 36, exp: 30000, ai: 'rusher', speed: 1.4, desc: 'A wolf that feeds on fear in the Forest of Terror.' },
+  { id: 'c12_shadeWolf', name: 'Shade Wolf', sprite: 'direWolf', hp: 1300, str: 39, pow: 1, end: 36, exp: 14000, ai: 'rusher', speed: 1.4, desc: 'A wolf that feeds on fear in the Forest of Terror.' },
   {
     id: 'c12_illNappa', name: 'Giant Nappa', sprite: 'c12_nappa', hp: 5200, str: 54, pow: 50, end: 58, exp: 90000, ai: 'boss', speed: 1.0,
     desc: 'Krillin\'s memory of the Saiyan who nearly killed him. Larger than life.',
@@ -113,14 +113,14 @@ const C13: EnemyDef[] = [
   },
   // Up to five rifles and snare drones shoot at once in the camp, so their shots are slow and light for the stage (the
   // fair bot clears the camp and the jungle on at most one Senzu, tests/grind.test.ts).
-  { id: 'c13_poacher', name: 'Poacher', sprite: 'poacher', hp: 1400, str: 40, pow: 40, end: 38, exp: 32000, ai: 'shooter', speed: 1.0, shot: { color: '#f0a030', cooldown: 100, speed: 2.6, mult: 0.7 }, desc: 'A Galactic Poacher with a tranquilizer rifle. Hunts rare animals for alien collectors.' },
-  { id: 'c13_poacherBrute', name: 'Poacher Brute', sprite: 'babarian', hp: 1600, str: 42, pow: 1, end: 42, exp: 40000, ai: 'rusher', speed: 1.1, desc: 'Muscle hired by the Galactic Poachers. Carries the cages.' },
+  { id: 'c13_poacher', name: 'Poacher', sprite: 'poacher', hp: 1400, str: 40, pow: 40, end: 38, exp: 22000, ai: 'shooter', speed: 1.0, shot: { color: '#f0a030', cooldown: 100, speed: 2.6, mult: 0.7 }, desc: 'A Galactic Poacher with a tranquilizer rifle. Hunts rare animals for alien collectors.' },
+  { id: 'c13_poacherBrute', name: 'Poacher Brute', sprite: 'babarian', hp: 1600, str: 42, pow: 1, end: 42, exp: 26000, ai: 'rusher', speed: 1.1, desc: 'Muscle hired by the Galactic Poachers. Carries the cages.' },
   // The deckhands the Poacher Boss whistles up mid-fight carry stun pistols, far lighter than the poachers' rifles,
   // since up to three of them shoot at once while the boss himself attacks.
   { id: 'c13_poacherGrunt', name: 'Poacher Deckhand', sprite: 'poacher', hp: 1400, str: 44, pow: 46, end: 42, exp: 20000, ai: 'shooter', speed: 1.0, shot: { color: '#f0a030', cooldown: 120, speed: 2.4, mult: 0.4 }, desc: 'A deckhand off the poachers\' ship with a stun pistol. Paid to hold the line while the boss works.' },
-  { id: 'c13_poacherDrone', name: 'Snare Drone', sprite: 'c13_poacherDrone', hp: 1200, str: 1, pow: 40, end: 36, exp: 28000, ai: 'shooter', speed: 1.1, flying: true, shot: { color: '#e0a030', cooldown: 100, speed: 2.8, mult: 0.6 }, desc: 'A net-firing drone used to snare animals from the air.' },
-  { id: 'c13_jungleRaptor', name: 'Jungle Raptor', sprite: 'c13_jungleRaptor', hp: 1450, str: 42, pow: 1, end: 38, exp: 36000, ai: 'rusher', speed: 1.5, desc: 'A Monster Island raptor. Territorial, but no friend of poachers either.' },
-  { id: 'c13_mossBoar', name: 'Moss Boar', sprite: 'c13_mossBoar', hp: 1600, str: 42, pow: 1, end: 40, exp: 38000, ai: 'charger', speed: 1.1, desc: 'A boar so old moss grows on its back. Charges in straight lines.' },
+  { id: 'c13_poacherDrone', name: 'Snare Drone', sprite: 'c13_poacherDrone', hp: 1200, str: 1, pow: 40, end: 36, exp: 19000, ai: 'shooter', speed: 1.1, flying: true, shot: { color: '#e0a030', cooldown: 100, speed: 2.8, mult: 0.6 }, desc: 'A net-firing drone used to snare animals from the air.' },
+  { id: 'c13_jungleRaptor', name: 'Jungle Raptor', sprite: 'c13_jungleRaptor', hp: 1450, str: 42, pow: 1, end: 38, exp: 31500, ai: 'rusher', speed: 1.5, desc: 'A Monster Island raptor. Territorial, but no friend of poachers either.' },
+  { id: 'c13_mossBoar', name: 'Moss Boar', sprite: 'c13_mossBoar', hp: 1600, str: 42, pow: 1, end: 40, exp: 33000, ai: 'charger', speed: 1.1, desc: 'A boar so old moss grows on its back. Charges in straight lines.' },
   {
     id: 'c13_poacherBoss', name: 'Poacher Boss', sprite: 'c13_poacherBoss', hp: 7200, str: 52, pow: 50, end: 64, exp: 190000, ai: 'boss', speed: 1.05,
     desc: 'Captain of the Galactic Poachers. His ship\'s hold is full of stolen animals.',
@@ -166,17 +166,18 @@ const C13: EnemyDef[] = [
 /**
  * The rivals roaming the Tournament stage (and the opening relay's two small waves) are tuned like the fc_top*
  * fighters of src/content/world/farC/enemies.ts: LoG2's late grind band for the Goku L40-44 in Super Saiyan Blue who
- * crosses the rings, 7-9 strings to drop one and 15-24 of its hits to knock him out, EXP kept at the T7 row. The U4
+ * crosses the rings, 7-9 strings to drop one and 15-24 of its hits to knock him out, with EXP at about two thirds of
+ * the T7 row (LoG2's three fair-bot minutes a level from L40; the post-game's Universe 9 and 10 rivals pay more). The U4
  * fighter is the exception: the stage's big-bodied rival, with more HP than any Universe 4 set piece (Magetta's 4000
  * included) but a thin hide, it takes 12-15 strings, and each ring sends at most one at a time.
  */
 const C14: EnemyDef[] = [
   { id: 'c14_u9Wolf', name: 'U9 Fighter', sprite: 'c14_u9Wolf', hp: 1650, str: 46, pow: 1, end: 40, exp: 52000, ai: 'rusher', speed: 1.35, desc: 'A Universe 9 brawler. Universe 9 is already in trouble and knows it.' },
   { id: 'c14_u10Fighter', name: 'U10 Fighter', sprite: 'c14_u10Fighter', hp: 1650, str: 42, pow: 46, end: 40, exp: 55000, ai: 'shooter', speed: 1.05, shot: { color: '#60c0f0', cooldown: 100, speed: 2.8, mult: 0.5 }, desc: 'A Universe 10 warrior. Fires pressurised water-ki blasts.' },
-  { id: 'c14_u4Fighter', name: 'U4 Fighter', sprite: 'c14_u4Fighter', hp: 4100, str: 44, pow: 1, end: 10, exp: 58000, ai: 'charger', speed: 1.2, desc: 'A Universe 4 trickster. Charges in straight, unhidden lines for once.' },
-  { id: 'c14_u2Fighter', name: 'U2 Warrior', sprite: 'c14_u2Fighter', hp: 1650, str: 38, pow: 46, end: 40, exp: 54000, ai: 'shooter', speed: 1.1, shot: { color: '#f8a0d0', cooldown: 100, speed: 2.8, mult: 0.5 }, desc: 'A Universe 2 warrior of love. Her heart-shaped blasts hurt surprisingly much.' },
-  { id: 'c14_u3Robot', name: 'U3 Robot', sprite: 'c14_u3Robot', hp: 1700, str: 46, pow: 38, end: 44, exp: 64000, ai: 'heavy', speed: 0.9, desc: 'A Universe 3 combat robot. Flamethrower arms, no sense of humour.' },
-  { id: 'c14_pride', name: 'Pride Trooper', sprite: 'prideTrooper', hp: 1650, str: 46, pow: 40, end: 42, exp: 62000, ai: 'rusher', speed: 1.3, desc: 'A Universe 11 Pride Trooper. Disciplined, fast and very sure of justice.' },
+  { id: 'c14_u4Fighter', name: 'U4 Fighter', sprite: 'c14_u4Fighter', hp: 4100, str: 44, pow: 1, end: 10, exp: 40700, ai: 'charger', speed: 1.2, desc: 'A Universe 4 trickster. Charges in straight, unhidden lines for once.' },
+  { id: 'c14_u2Fighter', name: 'U2 Warrior', sprite: 'c14_u2Fighter', hp: 1650, str: 38, pow: 46, end: 40, exp: 37900, ai: 'shooter', speed: 1.1, shot: { color: '#f8a0d0', cooldown: 100, speed: 2.8, mult: 0.5 }, desc: 'A Universe 2 warrior of love. Her heart-shaped blasts hurt surprisingly much.' },
+  { id: 'c14_u3Robot', name: 'U3 Robot', sprite: 'c14_u3Robot', hp: 1700, str: 46, pow: 38, end: 44, exp: 44900, ai: 'heavy', speed: 0.9, desc: 'A Universe 3 combat robot. Flamethrower arms, no sense of humour.' },
+  { id: 'c14_pride', name: 'Pride Trooper', sprite: 'prideTrooper', hp: 1650, str: 46, pow: 40, end: 42, exp: 43500, ai: 'rusher', speed: 1.3, desc: 'A Universe 11 Pride Trooper. Disciplined, fast and very sure of justice.' },
   // Basil and Lavender back their big brother up in Bergamo's fight (U9 gangs up on the Saiyans, eps 97-98): Vegeta
   // fights all three at once, so the younger two hit like the brothers who lost the Zeno Expo, not like Bergamo.
   { id: 'c14_basil', name: 'Basil', sprite: 'basil', hp: 1800, str: 52, pow: 1, end: 54, exp: 60000, ai: 'rusher', speed: 1.5, desc: 'The kicking brother of the Trio de Dangers.' },

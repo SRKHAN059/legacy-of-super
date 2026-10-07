@@ -45,8 +45,8 @@ registerQuests([
 
 const CITY = { t: 'tile', a: 'asphalt', m: 'marble', '.': 'grass', ',': 'darkGrass', '=': 'path', '~': 'water', f: 'floor', '#': 'wall' } as const;
 
-/** Mrs. Briefs is home in the kitchen except while a chapter has her out on the cc_yard lawn (c03 party, c07 recruiting). */
-const PANCHY_HOME = '!chapter==3';
+/** Mrs. Briefs is home in the kitchen except while a chapter has her elsewhere (c02 cruise, c03 party, c07 recruiting). */
+const PANCHY_HOME = '!chapter==2&!chapter==3';
 const PANCHY_ON_LAWN = 'chapter==7&c07_champaDone&!c07_departed';
 
 registerMaps([

@@ -1288,12 +1288,14 @@ describe('world ecology (Earth A): the grind zones fit LoG2\'s band for the Goku
    * Chapter 3 Dragon Ball hunt at L11), with the fair bot's EXP per minute there before the retune (same saves, same
    * seeds), which a clear must still match so the grind stays as quick. Korin Forest was in band already; its brown
    * bear keeps LoG2's Kuma 69 row (9 hits to knock Goku out at L11), so only its zone medians are held.
+   * The Chapter 3 grounds are `paced` (critic round 3): their EXP makes a level cost LoG2's fair-bot minutes at L11
+   * (tests/grind.test.ts, 'grind pace'), so a clear there is worth part of a level and `before` is the paced rate.
    */
-  const STAGES: Array<{ map: string; chapter: number; level: number; techs: string[]; form: string | null; before: number; perType: boolean }> = [
+  const STAGES: Array<{ map: string; chapter: number; level: number; techs: string[]; form: string | null; before: number; perType: boolean; paced?: boolean }> = [
     { map: 'paozu_forest', chapter: 1, level: 2, techs: ['kiBlast'], form: null, before: 919, perType: true },
     { map: 'paozu_peaks', chapter: 1, level: 4, techs: ['kiBlast', 'kamehameha'], form: null, before: 2900, perType: true },
-    { map: 'kame_reef', chapter: 3, level: 11, techs: ['kiBlast', 'kamehameha'], form: 'ssj', before: 14942, perType: true },
-    { map: 'korin_base', chapter: 3, level: 11, techs: ['kiBlast', 'kamehameha'], form: 'ssj', before: 5950, perType: false },
+    { map: 'kame_reef', chapter: 3, level: 11, techs: ['kiBlast', 'kamehameha'], form: 'ssj', before: 4000, perType: true, paced: true },
+    { map: 'korin_base', chapter: 3, level: 11, techs: ['kiBlast', 'kamehameha'], form: 'ssj', before: 2600, perType: false, paced: true },
   ];
   const SEEDS = [1, 2, 3, 4, 5, 6];
 
@@ -1328,7 +1330,7 @@ describe('world ecology (Earth A): the grind zones fit LoG2\'s band for the Goku
         expect(r.kills, `${s.map} seed ${r.seed}: every foe in reach`).toBe(r.scoped);
         expect(r.kos, `${s.map} seed ${r.seed}: knock-outs`).toBe(0);
         expect(r.senzu, `${s.map} seed ${r.seed}: Senzu eaten`).toBe(0);
-        expect(r.levelEnd, `${s.map} seed ${r.seed}: one clear is worth a level`).toBeGreaterThan(r.level);
+        if (!s.paced) expect(r.levelEnd, `${s.map} seed ${r.seed}: one clear is worth a level`).toBeGreaterThan(r.level);
       }
       const perMinute = runs.reduce((a, r) => a + r.exp / (r.frames / 3600), 0) / runs.length;
       expect(perMinute, `${s.map}: EXP per minute`).toBeGreaterThanOrEqual(s.before);

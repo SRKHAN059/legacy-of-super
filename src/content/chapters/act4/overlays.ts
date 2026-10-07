@@ -18,7 +18,8 @@ registerOverlay('cc_yard', {
     { kind: 'table', x: 8, y: 17, flag: 'c09_hopeCrashed', hideFlag: 'chapter>=12' },
   ],
   npcs: [
-    { id: 'c09_bulmaPad', sprite: 'bulma', x: 31, y: 8, dir: 'up', talk: 'c09_bulma_pad', name: 'Bulma', showIf: 'c09_cellOut', hideIf: 'chapter>=12' },
+    // Bulma rides along on the third trip (c11_third_trip): from then on she is at the Resistance hideout (c11_bulmaF).
+    { id: 'c09_bulmaPad', sprite: 'bulma', x: 31, y: 8, dir: 'up', talk: 'c09_bulma_pad', name: 'Bulma', showIf: 'c09_cellOut&chapter<=11', hideIf: 'c11_inFuture' },
     { id: 'c09_pilafK', sprite: 'pilaf', x: 7, y: 18, dir: 'right', talk: 'c09_pilaf_talk', name: 'Pilaf', showIf: 'c09_hopeCrashed', hideIf: 'chapter>=12' },
     { id: 'c09_maiK', sprite: 'mai', x: 11, y: 18, dir: 'left', talk: 'c09_mai_kid_talk', name: 'Mai', showIf: 'c09_hopeCrashed', hideIf: 'chapter>=12' },
     { id: 'c09_shuK', sprite: 'shu', x: 9, y: 19, dir: 'up', talk: 'c09_shu_talk', name: 'Shu', showIf: 'c09_hopeCrashed', hideIf: 'chapter>=12' },
@@ -96,7 +97,9 @@ registerOverlay('u10_sacred', {
     { id: 'c10_gowasu', sprite: 'gowasu', x: 17, y: 13, dir: 'right', talk: 'c10_gowasu_talk', name: 'Gowasu', showIf: 'chapter>=10', hideIf: 'chapter>=12' },
     { id: 'c10_zamasu', sprite: 'zamasu', x: 22, y: 13, dir: 'left', talk: 'c10_zamasu_talk', name: 'Zamasu', showIf: 'chapter==10', hideIf: 'c10_zamasuErased' },
     { id: 'c10_beerusU', sprite: 'beerus', x: 25, y: 16, dir: 'left', talk: 'c10_beerusU_talk', name: 'Beerus', showIf: 'quest:c10_q_u10' },
-    { id: 'c10_whisU', sprite: 'whis', x: 26, y: 16, dir: 'left', talk: 'c10_whisU_talk', name: 'Whis', showIf: 'quest:c10_q_u10' },
+    // Whis is the ride between Earth and space (c04_world.ts): a player who flies home from the Sacred World mid-case
+    // finds him at Capsule Corp, and he is back at the tea table when they return.
+    { id: 'c10_whisU', sprite: 'whis', x: 26, y: 16, dir: 'left', talk: 'c10_whisU_talk', name: 'Whis', showIf: 'quest:c10_q_u10&world:space' },
   ],
   triggers: [{ id: 'c10_t_shrine', x: 32, y: 10, w: 3, h: 2, script: 'c10_ring_shrine', onAction: true, showIf: 'chapter>=10' }],
 });
@@ -112,8 +115,10 @@ registerOverlay('zeno_palace', {
 registerOverlay('kame_island', {
   npcs: [
     { id: 'c11_roshi', sprite: 'roshi', x: 21, y: 13, dir: 'down', talk: 'c11_roshi_talk', name: 'Master Roshi', showIf: 'chapter==11' },
-    // After the finale Roshi waits on the porch once more, for the charm/ramen-coupon payoff (until it is heard).
-    { id: 'c11_roshiP', sprite: 'roshi', x: 21, y: 13, dir: 'down', talk: 'c11_roshi_talk', name: 'Master Roshi', showIf: 'chapter>=12&c11_finaleDone', hideIf: 'c11_couponJoke' },
+    // After the finale Roshi waits on the porch once more, for the charm/ramen-coupon payoff (until it is heard), except
+    // while he fights in the Tournament of Power (one def per stretch, as for his beach post in c05_world.ts).
+    { id: 'c11_roshiP', sprite: 'roshi', x: 21, y: 13, dir: 'down', talk: 'c11_roshi_talk', name: 'Master Roshi', showIf: 'chapter>=12&chapter<=13&c11_finaleDone', hideIf: 'c11_couponJoke' },
+    { id: 'c11_roshiP', sprite: 'roshi', x: 21, y: 13, dir: 'down', talk: 'c11_roshi_talk', name: 'Master Roshi', showIf: 'chapter>=14&c11_finaleDone&!c11_couponJoke', hideIf: 'c14_departed&!c14_won' },
     // Goku practises the Mafuba on the beach from the lesson until Roshi hands him the charm.
     { id: 'c11_gokuK', sprite: 'goku', x: 24, y: 14, dir: 'left', talk: 'c11_goku_kame', name: 'Goku', showIf: 'chapter==11&done:c11_q_mafuba&!c11_inFuture', hideIf: 'has:c11_charm' },
   ],

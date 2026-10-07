@@ -214,7 +214,7 @@ registerScripts({
   // ---------------------------------------------------------------- Satan Dojo sparring arena
   c02_dojo_enter: async (s) => {
     s.clear('c02_sparToday');
-    if (!s.check('chapter>=2') || s.flag('c02_dojoIntro') || s.check('c02_boarded&!c02_rage')) return;
+    if (!s.check('chapter>=2') || s.flag('c02_dojoIntro') || s.check('chapter==2&!c02_rage')) return;
     s.set('c02_dojoIntro');
     await s.wait(16);
     await s.talk([

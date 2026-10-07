@@ -26,7 +26,8 @@ registerOverlay('cc_yard', {
     { id: 'c03_goten', sprite: 'goten', x: 9, y: 24, talk: 'c03_kids_talk', name: 'Goten', showIf: CH3, wander: 2 },
     { id: 'c03_trunks', sprite: 'trunksKid', x: 11, y: 24, talk: 'c03_kids_talk', name: 'Trunks', showIf: CH3, wander: 2 },
     { id: 'c03_chichi', sprite: 'chichi', x: 12, y: 19, dir: 'right', talk: 'c03_chichi_talk', name: 'Chi-Chi', showIf: CH3 },
-    { id: 'c03_krillin', sprite: 'krillin', x: 31, y: 22, dir: 'left', talk: 'c03_krillin_talk', name: 'Krillin', showIf: CH3 },
+    // Krillin spars at the Satan Dojo until the player has beaten him there, then joins 18 at the party.
+    { id: 'c03_krillin', sprite: 'krillin', x: 31, y: 22, dir: 'left', talk: 'c03_krillin_talk', name: 'Krillin', showIf: `${CH3}&c02_beatKrillin` },
     { id: 'c03_18', sprite: 'android18', x: 32, y: 22, dir: 'left', talk: 'c03_18_talk', name: 'Android 18', showIf: CH3 },
     { id: 'c03_piccolo', sprite: 'piccolo', x: 37, y: 20, dir: 'left', talk: 'c03_piccolo_talk', name: 'Piccolo', showIf: CH3 },
     { id: 'c03_panchy', sprite: 'panchy', x: 29, y: 19, dir: 'down', talk: 'c03_panchy_talk', name: 'Mrs. Briefs', showIf: CH3 },

@@ -75,6 +75,7 @@ registerMaps([
       mid('c14_pride', 17, 6), mid('c14_u3Robot', 39, 15), mid('fc_topGunner', 21, 24),
       late('c14_pride', 10, 11), late('fc_topGunner', 26, 14), late('c14_prideLancer', 36, 10), late('c14_pride', 24, 19),
       late('fc_topGunner', 9, 21), late('c14_prideLancer', 34, 24), late('c14_pride', 17, 6), late('fc_topGunner', 39, 15),
+      late('c14_pride', 15, 19), late('fc_topGunner', 31, 18),
       post('c14_u9Wolf', 10, 11), post('c14_u10Fighter', 17, 13), post('c14_u4Fighter', 26, 14), post('fc_topGunner', 36, 10),
       post('c14_u3Robot', 24, 19), post('c14_u2Fighter', 9, 21), post('c14_pride', 34, 24), post('c14_u9Wolf', 29, 8),
       post('c14_u10Fighter', 17, 6), post('c14_prideLancer', 39, 15), post('fc_topBrawler', 21, 24), post('c14_u2Fighter', 39, 7),
@@ -141,7 +142,7 @@ registerMaps([
       mid('fc_topBrawler', 38, 16), mid('c14_u3Robot', 35, 23), mid('fc_topGunner', 22, 7), mid('c14_pride', 27, 20),
       late('c14_pride', 8, 11), late('fc_topGunner', 16, 15), late('c14_prideLancer', 22, 12), late('c14_pride', 24, 17),
       late('fc_topGunner', 29, 15), late('c14_prideLancer', 37, 11), late('c14_pride', 38, 16), late('fc_topGunner', 35, 23),
-      late('c14_pride', 9, 23),
+      late('c14_pride', 9, 23), late('c14_prideLancer', 15, 8),
       post('c14_u10Fighter', 8, 11), post('c14_u9Wolf', 7, 20), post('c14_u4Fighter', 9, 23), post('c14_u3Robot', 16, 15),
       post('fc_topGunner', 22, 12), post('c14_u2Fighter', 24, 17), post('c14_prideLancer', 29, 15), post('c14_u9Wolf', 37, 11),
       post('fc_topBrawler', 38, 16), post('c14_u3Robot', 35, 23), post('c14_u10Fighter', 22, 7), post('c14_pride', 27, 20),
@@ -205,7 +206,8 @@ registerMaps([
     // Before the finale only the strip west of the stage C trigger band (x 8-9) is open: the last Pride Troopers
     // hold it. East of the band, rivals roam once the tournament is over.
     enemies: [
-      late('c14_pride', 5, 6), late('fc_topGunner', 6, 13), late('c14_prideLancer', 5, 22),
+      late('c14_pride', 5, 6), late('fc_topGunner', 6, 13), late('c14_prideLancer', 5, 22), late('c14_prideLancer', 4, 9),
+      late('c14_pride', 2, 4),
       post('fc_topBrawler', 12, 6), post('c14_u10Fighter', 15, 12), post('c14_u9Wolf', 13, 16), post('c14_u3Robot', 22, 9),
       post('fc_topGunner', 22, 17), post('c14_u2Fighter', 16, 23), post('c14_prideLancer', 35, 7), post('c14_u4Fighter', 36, 13),
       post('c14_pride', 35, 17), post('c14_u3Robot', 38, 23), post('c14_u9Wolf', 28, 15), post('fc_topGunner', 5, 22),

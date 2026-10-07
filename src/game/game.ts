@@ -150,6 +150,10 @@ export class Game {
     if (!def) throw new Error(`Unknown map "${mapId}"`);
     const old = this.field;
     const prev = old?.player;
+    // Story warps can cross worlds (Earth, Future Earth, space): keep the world map a sign opens in step. Set before the
+    // field spawns its NPCs, so `world:` conditions already see the world being entered.
+    const world = worldOfMap(mapId);
+    if (world) this.state.set('world', world);
     const f = new Field(this, def, tx * TILE + 8, ty * TILE + 14, dir);
     if (prev && prev.cs.id === f.player.cs.id) {
       f.player.formActive = prev.formActive;
@@ -160,9 +164,6 @@ export class Game {
     // A scripted fight still waiting on the old map can never finish there: abandon it (see ScriptApi.fight).
     if (old && old !== f) old.abandon();
     this.state.data.map = mapId;
-    // Story warps can cross worlds (Earth, Future Earth, space): keep the world map a sign opens in step.
-    const world = worldOfMap(mapId);
-    if (world) this.state.set('world', world);
     this.scenes.replace(f);
     this.playMusic(def.music);
     const prevName = this.state.get('_lastArea');

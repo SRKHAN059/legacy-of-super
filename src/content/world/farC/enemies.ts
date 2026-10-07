@@ -11,7 +11,8 @@ import { registerEnemies } from '../../enemies';
  * Goku L22 SSB (Beerus's planet, Ch7+), Goku L33 SSB and Trunks L34 Rage (Future Earth, Ch10-11), Goku L40-44 SSB
  * (Hell, the Tournament of Power); tests/balance.test.ts ('grind zones: world C') holds them there. That puts their
  * STR/POW and END below the tier table in CONTENT_GUIDE §6, which outpaces the hero's damage curve from Chapter 4 on;
- * EXP stays at the tier, so a clear pays as much a minute as before or more and the story gates stay a short grind.
+ * EXP is paced rather than tiered: at the level each zone is entered at, a level costs the fair bot about as many minutes
+ * as in LoG2's own zones (tests/grind.test.ts 'grind pace', critic round 3), so the Goku 35 gate costs what LoG2's do.
  * Shooters fire every 80-100 frames: a laser lands far more often than a melee blow, and at 60-70 frames a pair of
  * Hunter Drones or Pride Troopers took most of the hero's HP in one clear.
  */
@@ -38,41 +39,41 @@ registerEnemies([
   },
   // ---- Beerus's planet.
   {
-    id: 'fc_puffbird', name: 'Puffbird', sprite: 'fc_puffbird', hp: 360, str: 14, pow: 1, end: 14, exp: 900, ai: 'flyer', speed: 1.3,
+    id: 'fc_puffbird', name: 'Puffbird', sprite: 'fc_puffbird', hp: 360, str: 14, pow: 1, end: 14, exp: 320, ai: 'flyer', speed: 1.3,
     desc: 'A fluffy pink bird from Beerus\'s planet. Pecks hard enough to crack stone. Whis finds them adorable.',
   },
   {
-    id: 'fc_mossBeast', name: 'Moss Grazer', sprite: 'fc_mossBeast', hp: 420, str: 14, pow: 1, end: 18, exp: 2200, ai: 'charger', speed: 1.1,
+    id: 'fc_mossBeast', name: 'Moss Grazer', sprite: 'fc_mossBeast', hp: 420, str: 14, pow: 1, end: 18, exp: 800, ai: 'charger', speed: 1.1,
     desc: 'A horned grazer covered in teal moss. Charges anyone who steps on its favourite patch of grass.',
   },
   {
-    id: 'fc_lakeCrab', name: 'Violet Crab', sprite: 'fc_lakeCrab', hp: 360, str: 14, pow: 1, end: 20, exp: 1600, ai: 'rusher', speed: 0.8, drops: 'water',
+    id: 'fc_lakeCrab', name: 'Violet Crab', sprite: 'fc_lakeCrab', hp: 360, str: 14, pow: 1, end: 20, exp: 560, ai: 'rusher', speed: 0.8, drops: 'water',
     desc: 'A crab from the Oracle Fish\'s lake. Its shell shimmers like amethyst.',
   },
   {
-    id: 'fc_starWasp', name: 'Star Wasp', sprite: 'fc_starWasp', hp: 760, str: 22, pow: 1, end: 24, exp: 5200, ai: 'flyer', speed: 1.5,
+    id: 'fc_starWasp', name: 'Star Wasp', sprite: 'fc_starWasp', hp: 760, str: 22, pow: 1, end: 24, exp: 2000, ai: 'flyer', speed: 1.5,
     desc: 'A wasp whose wings glitter like starlight. Nests in the strange rocks on Beerus\'s planet.',
   },
   {
-    id: 'fc_hornBeast', name: 'Horned Behemoth', sprite: 'fc_hornBeast', hp: 940, str: 24, pow: 1, end: 30, exp: 14000, ai: 'heavy', speed: 0.85, box: { w: 20, h: 10 },
+    id: 'fc_hornBeast', name: 'Horned Behemoth', sprite: 'fc_hornBeast', hp: 940, str: 24, pow: 1, end: 30, exp: 3500, ai: 'heavy', speed: 0.85, box: { w: 20, h: 10 },
     desc: 'A huge violet beast that sleeps as much as Lord Beerus does. Waking it is a terrible idea.',
   },
   // ---- Hell.
   {
-    id: 'fc_hellBat', name: 'Inferno Bat', sprite: 'fc_hellBat', hp: 1650, str: 44, pow: 1, end: 36, exp: 30000, ai: 'flyer', speed: 1.55,
+    id: 'fc_hellBat', name: 'Inferno Bat', sprite: 'fc_hellBat', hp: 1650, str: 44, pow: 1, end: 36, exp: 26400, ai: 'flyer', speed: 1.55,
     desc: 'A bat born in the fires of Hell. Its screech makes the damned cover their ears.',
   },
   {
-    id: 'fc_lavaOoze', name: 'Lava Ooze', sprite: 'fc_lavaOoze', hp: 1650, str: 44, pow: 42, end: 36, exp: 34000, ai: 'exploder', speed: 1.0,
+    id: 'fc_lavaOoze', name: 'Lava Ooze', sprite: 'fc_lavaOoze', hp: 1650, str: 44, pow: 42, end: 36, exp: 30000, ai: 'exploder', speed: 1.0,
     desc: 'Molten muck that crawled out of Hell\'s lava lake. Bursts into burning slag when destroyed.',
   },
   // ---- Tournament of Power stage.
   {
-    id: 'fc_topBrawler', name: 'Rival Fighter', sprite: 'universeFighter', hp: 1700, str: 46, pow: 40, end: 40, exp: 55000, ai: 'rusher', speed: 1.3,
+    id: 'fc_topBrawler', name: 'Rival Fighter', sprite: 'universeFighter', hp: 1700, str: 46, pow: 40, end: 40, exp: 38600, ai: 'rusher', speed: 1.3,
     desc: 'A warrior from another universe fighting for its survival. Knock them off the stage!',
   },
   {
-    id: 'fc_topGunner', name: 'Pride Trooper', sprite: 'prideTrooper', hp: 1700, str: 44, pow: 46, end: 40, exp: 60000, ai: 'shooter', speed: 1.2,
+    id: 'fc_topGunner', name: 'Pride Trooper', sprite: 'prideTrooper', hp: 1700, str: 44, pow: 46, end: 40, exp: 42100, ai: 'shooter', speed: 1.2,
     shot: { color: '#e04060', cooldown: 80, speed: 2.6, mult: 0.8 },
     desc: 'A Universe 11 Pride Trooper. Strikes from range while shouting about justice.',
   },

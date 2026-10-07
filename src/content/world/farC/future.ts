@@ -110,6 +110,9 @@ registerMaps([
       // every clear.
       late('fc_hunterDrone', 38, 7), late('fc_hunterDrone', 16, 10), late('fc_ravager', 6, 20),
       late('mechTrooper', 26, 15), late('fc_ravager', 18, 15), late('goldDrone', 28, 26), late('fc_ravager', 14, 25),
+      // One more Ravager on the south plaza: melee, as every patrol added here is (each Ravager is about a twentieth of
+      // a clear's damage; the Hunter Drones' lasers half of it).
+      late('fc_ravager', 34, 29),
       late('redMech', 31, 21, 'chapter>=11'),
     ],
     objects: [
@@ -184,6 +187,8 @@ registerMaps([
       // hero: on the deck it backs out over the cliffs, out of reach, and near an edge it backs into a corner.
       late('fc_hunterDrone', 12, 16), late('fc_hunterDrone', 34, 19), late('fc_ravager', 23, 18),
       late('mechTrooper', 38, 6), late('goldDrone', 13, 15),
+      // Melee patrols at both ends of the road, where a shooter would back out of reach.
+      late('fc_ravager', 8, 7), late('mechTrooper', 43, 15),
     ],
     objects: [
       { type: 'sign', x: 2, y: 3, text: 'ROUTE 9 - West City 3 km. Overpass damaged: use the ramp to the service road.' },
@@ -340,6 +345,9 @@ registerMaps([
     enemies: [
       early('fc_scrapHound', 20, 20), early('fc_scrapHound', 9, 22), early('fc_scavDrone', 14, 11), early('fc_scavDrone', 26, 11), early('fc_scrapHound', 32, 16),
       late('fc_hunterDrone', 14, 11), late('fc_hunterDrone', 26, 11), late('fc_ravager', 20, 18), late('goldDrone', 32, 16),
+      // Melee patrols among the collapsed wings (no more shooters: the two Hunter Drones already deal most of a
+      // clear's damage).
+      late('mechTrooper', 15, 3), late('fc_ravager', 21, 3),
       late('redMech', 26, 7, 'chapter>=11'),
     ],
     barriers: [{ id: 'fc_vault', x: 29, y: 6, w: 1, h: 2, level: 34, character: 'trunks' }],

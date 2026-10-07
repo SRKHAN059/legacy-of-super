@@ -53,7 +53,8 @@ registerOverlay('kame_island', {
     { id: 'c12_krillinK', sprite: 'krillin', x: HUB.kame.krillin[0], y: HUB.kame.krillin[1], dir: 'left', talk: 'c12_krillin_kame', name: 'Krillin', showIf: 'chapter>=12&!quest:c13_krillin&!done:c13_krillin', hideIf: 'c12_herbGot' },
     { id: 'act5_krillinK1', sprite: 'krillinGi', x: HUB.kame.krillin[0], y: HUB.kame.krillin[1], dir: 'left', talk: 'c12_krillin_kame', name: 'Krillin', showIf: 'c12_herbGot&!quest:c13_krillin&!post_game', hideIf: 'c14_departed' },
     { id: 'act5_krillinK2', sprite: 'krillinGi', x: HUB.kame.krillin[0], y: HUB.kame.krillin[1], dir: 'left', talk: 'c12_krillin_kame', name: 'Krillin', showIf: 'done:c13_krillin&!c12_herbGot&!post_game', hideIf: 'c14_departed' },
-    { id: 'post_krillinK', sprite: 'krillinGi', x: HUB.kame.krillin[0], y: HUB.kame.krillin[1], dir: 'left', talk: 'post_krillin_talk', name: 'Krillin', showIf: 'post_game' },
+    // After the credits he spars at the Satan Dojo instead while a challenge taken up there still has him unbeaten.
+    { id: 'post_krillinK', sprite: 'krillinGi', x: HUB.kame.krillin[0], y: HUB.kame.krillin[1], dir: 'left', talk: 'post_krillin_talk', name: 'Krillin', showIf: 'post_game', hideIf: 'quest:c02_spar&!c02_beatKrillin' },
     { id: 'c13_chiaotzuK', sprite: 'chiaotzu', x: HUB.kame.chiaotzu[0], y: HUB.kame.chiaotzu[1], dir: 'right', talk: 'c13_chiaotzu_talk', name: 'Chiaotzu', showIf: 'quest:c13_tien' },
   ],
   // Coming home with the Paradise Herb: Master Roshi meets you on the beach and takes it.

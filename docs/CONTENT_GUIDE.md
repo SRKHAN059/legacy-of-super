@@ -128,7 +128,12 @@ a warp along the bottom-centre edge back outside. **Always place the arrival til
 
 **Edge exits**: walking off the map edge into the neighbour. The perpendicular coordinate is kept (+`offset`).
 Design neighbouring maps so their shared border has walkable openings that line up. The regional map (R) lays
-maps out using these exits, so keep them geometrically consistent.
+maps out using these exits, so keep them geometrically consistent. The player arrives 1.2 tiles in from the far
+edge, so the first two rows (or columns) behind an opening must be clear, gates included. The wedge scan in
+`tests/content.test.ts` (`tests/walkscan.ts`) holds every map to this. It checks that every warp, flight circle,
+landing spot and edge position lands on a free feet box. It also checks that every chest, sign, NPC, pickup and
+trigger can be reached, and that no gap the player must pass is exactly as wide as the feet box (10×6 px; leave at
+least 1 px to spare).
 
 **Coordinates**: everything is in tiles. NPC/enemy `x,y` = the tile they stand on.
 
@@ -138,7 +143,14 @@ maps out using these exits, so keep them geometrically consistent.
 (e.g. `showIf: 'chapter==5'`, `hideIf: 'c05_done'`).
 
 **Conditions** (`showIf`/`hideIf`/`openIf`/`s.check()`): `flag`, `!flag`, `a&b`, `chapter>=3` (`>= <= == > <`),
-`has:item`, `char:vegeta` (active character), `quest:id` (active), `done:id` (finished).
+`has:item`, `char:vegeta` (active character), `quest:id` (active), `done:id` (finished), `world:space` (the world the
+player is in: `earth`, `future` or `space`).
+
+**One place at a time.** A named character stands on one map per story point: when the story puts someone elsewhere
+(a party, a battlefield, off-world), gate their usual NPC away for that stretch. `showIf` is one conjunction and
+`hideIf` one more, so a character with several absences gets one NPC def per stretch (same id, disjoint conditions).
+A character who carries the player somewhere (Whis between Earth and space) is gated by `world:`, so he is on the
+player's side of the trip. `tests/full_game.test.ts` checks this at every story point of the one-save run.
 
 ---
 
@@ -222,8 +234,13 @@ registerQuests([{ id: 'c03_dragonballs', title: 'Gather the seven Dragon Balls',
 | 14 | Goku learns `spiritBomb`; Vegeta form → `ssbe`, learns `finalFlash`; finale: Goku `transformNow('ui')` (god-mode, like LoG2's SSJ2 Gohan), relay with guests Android 17 / Frieza via `switchTo('android17')` etc. |
 | Post | Trophies (L50 gates) → Mr. Satan unlock + alternate ending. |
 
-**Hero level curve** (cap 50): Prologue Trunks 6 · Ch1 1–8 · Ch2 8–12 · Ch3 12–15 · Ch4 15–18 · Ch5 18–22 ·
-Ch6 22–25 · Ch7 25–29 · Ch8 29–31 · Ch9 30–34 · Ch10 34–37 · Ch11 37–40 · Ch12 40–42 · Ch13 42–45 · Ch14 45–48 · Post 48–50.
+**Hero level curve** (cap 50), the levels the heroes a player plays reach in each chapter's story fights in the
+measured story run (`tests/fixtures/story_fights.json`; per hero in `docs/CHAPTERS.md`'s band table): Prologue Trunks
+6–7 · Ch1 1–10 · Ch2 8–12 · Ch3 10–15 · Ch4 15–16 · Ch5 16–19 · Ch6 19–20 · Ch7 20–25 · Ch8 26–28 · Ch9 28–33 ·
+Ch10 29–35 · Ch11 34–35 · Ch12 35–37 · Ch13 39–41 · Ch14 41–44 · Post 44–50 (the L50 trophy gates). Tune a chapter's
+fights and zones to these levels, not to `CHAPTER_MIN_LEVEL`: that table is the anchor of the hand-over and
+forced-fighter safety nets and the floor of a chapter started on its own (tests, `?map=`), and most chapters' heroes
+start below it.
 
 ---
 
@@ -232,15 +249,15 @@ Ch6 22–25 · Ch7 25–29 · Ch8 29–31 · Ch9 30–34 · Ch10 34–37 · Ch11
 Damage uses the exact LoG2 ROM formula (cubic in STR/POW, END subtracts proportionally — see
 `src/game/leveling.ts`). Design enemies by tier using the shared bestiary (`src/content/bestiary.ts`) as reference:
 
-| Tier | Hero lv | HP | STR/POW | END | exp |
+| Tier | Hero lv | HP | STR/POW | END | exp (paced, see below) |
 |---|---|---|---|---|---|
-| T1 | 1–5 | 35–70 | 6–8 | 3–5 | 15–45 |
-| T2 | 6–12 | 150–300 | 12–18 | 8–14 | 150–600 |
-| T3 | 13–20 | 400–700 | 20–28 | 15–22 | 800–3000 |
-| T4 | 21–28 | 800–1200 | 28–36 | 22–30 | 3000–6000 |
-| T5 | 29–36 | 1400–2200 | 36–46 | 30–40 | 9000–20000 |
-| T6 | 37–44 | 2500–4000 | 46–58 | 40–50 | 25000–45000 |
-| T7 | 45–50 | 4500–6500 | 58–70 | 50–62 | 50000–90000 |
+| T1 | 1–5 | 35–70 | 6–8 | 3–5 | 15–140 |
+| T2 | 6–12 | 150–300 | 12–18 | 8–14 | 120–600 |
+| T3 | 13–20 | 400–700 | 20–28 | 15–22 | 300–2500 |
+| T4 | 21–28 | 800–1200 | 28–36 | 22–30 | 2000–9000 |
+| T5 | 29–36 | 1400–2200 | 36–46 | 30–40 | 5000–20000 |
+| T6 | 37–44 | 2500–4000 | 46–58 | 40–50 | 15000–45000 |
+| T7 | 45–50 | 4500–6500 | 58–70 | 50–62 | 25000–60000 |
 
 **Bosses** (LoG2's own boss table, mapped to hero level):
 
@@ -263,8 +280,26 @@ trimmed HP. Exploders' death blast hits with max(STR, POW) ×1.1.
 **Regular enemies are tuned in play, not only by tier.** The tables above are where to start; what counts is the
 hero who walks into the zone, at the level and in the form the story brings: LoG2's per-enemy band is 5-9 melee
 strings to drop one and 15 or more of its hits to knock the hero out, and a zone clear costs no knock-out and at most
-one Senzu. Lower HP, END and the attack stat to get there, not EXP (a zone's EXP per minute sets how long the story
-gates take). `tests/grind.test.ts` holds every hostile zone to this (§9).
+one Senzu. Lower HP, END and the attack stat to get there, not EXP. `tests/grind.test.ts` holds every hostile zone to
+this (§9).
+
+**Regular-enemy EXP sets the pace, LoG2's pace.** LoG2's levelling is slow: measured with the fair bot on LoG2's own
+zones (ROM stats and placements, LoG2's hero at that stage; the `tests/grind.test.ts` report), a level costs 0.29–1.56
+minutes of clearing below L16, 0.68–1.34 at L16–29, 0.95–1.46 at L30–39 and 2.7–3.1 from L40, and a story gate costs
+6.7–14.8 minutes and 70–86 kills. Give a zone's residents the EXP that makes a level cost that long for the hero who
+walks in: EXP per minute = level span ÷ minutes per level, and a zone clears at about 4–6 s a kill, so a kill pays
+roughly 1/12 to 1/25 of the level span at L16–39 and 1/40 from L40 (the ROM clamp keeps any kill between 1/128 and 1/2
+of the span). A LoG2 port keeps its ROM EXP only where it lives at LoG2's level; met earlier, it is paced (the King
+Crab is LoG2's L30 Alligator with 300 EXP, not 5,400, at the L12 oasis). The arena, Baba's lake and the post-game
+regulars pay the same way. Boss EXP is scripted and untouched by this rule. The grind test holds each level range's
+median stage to LoG2's band and each story gate to 5–15 fair-bot minutes (§9).
+
+**Density.** A hostile zone holds about ten regular enemies in reach (LoG2: 12 a reference zone), spread over open
+ground at least seven tiles from every way in (a creature that sees the hero arrive jumps them) and clear of the spots
+where a story scene fights on that map (sparring rings, warp-in points, boss arenas), unless the scene clears the
+wildlife first (`scatterWildlife`, `clearMooks`, `clearWild`) or a flag hides it (`fc_topQuiet`, `done:` of the scene's
+quest). A scene that ends in `battle(s)` fights everything on the map. Prefer melee types when filling a zone: a
+shooter or flyer adds far more damage per clear than its EXP is worth, and a clear may cost at most one Senzu.
 
 Keep END < 124. Use `resMelee`/`resKi` (0.5 = half damage) for gimmicks (e.g. a ki-resistant shell).
 `absorbKi: true` = melee-only boss (LoG2 Androids 19/20 — ki heals them; tell the player via dialogue).
@@ -435,7 +470,7 @@ Frieza attack). World builders own ambient NPCs; chapter agents own story NPCs v
    A recording rolls its own level-ups (the full-game run is not seeded), so a fresh one moves every hero's stats by a
    point or two: re-run this file and `tests/grind.test.ts` on it before committing it, and keep only the story run
    (the `node -e` filter in the `every story fight` header).
-5. Grind zones and story gates (`tests/grind.test.ts`, part of the default suite, about 30 s). LoG2's core loop is
+5. Grind zones and story gates (`tests/grind.test.ts`, part of the default suite, about 45 s). LoG2's core loop is
    walking into a hostile zone and fighting its regular enemies for EXP; `clearZone` (`tests/fairbot.ts`) has the fair
    bot do exactly that, sealed in, through real input and real damage both ways, from the save a player has when the
    zone opens (taken from the committed recording). The file checks:
@@ -449,9 +484,13 @@ Frieza attack). World builders own ambient NPCs; chapter agents own story NPCs v
      (the dire wolf, Pilaf's pond King Crab, the red Destroyer, the Universe 4 roamer), each named after the LoG2 enemy
      that stands behind it and held to LoG2's own extremes (25 hits to kill, 4 to KO);
    - the story gates (`STORY_GATES`): each ground from its `arrive` level to its gate level in its own zones, visit
-     after visit with HP, EXP and Senzu carried over (20 s per return to a zone), on seeds 1-3. It must cost 2-12
-     minutes of fair-bot play (LoG2's own gates cost this bot 7-15), with no knock-out and at most 1 Senzu per visit.
-     `GATE_SHORT` lists the documented exception (Chapter 3's switching tutorial, capped by Chapter 4's band start);
+     after visit with HP, EXP and Senzu carried over (20 s per return to a zone), on seeds 1-3. It must cost 5-15
+     minutes of fair-bot play (LoG2's own gates cost this bot 6.6-15.2), at most one knock-out on average (LoG2's
+     Trunks 30 gate costs this bot 0.33-0.67, its Goku 40 gate about seven) and at most 1 Senzu per visit;
+   - the pace (`PACE_BANDS`): the median minutes per level of the swept stages in each level range (L1-15 from
+     Chapter 3 on, L16-29, L30-39, L40-50) lies in LoG2's band for that range, 15% either way for seed noise (the
+     tutorial's zones, Prologue to Chapter 2, level faster on purpose: Chapters 1-2's story fights are tuned at the
+     levels they give);
    - the harness itself: mob attack stats, the LoG2 reference zones against the ROM tables, map entries, knock-out
      counting, goal stops and save chaining.
 
