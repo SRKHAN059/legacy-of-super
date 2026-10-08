@@ -1,0 +1,100 @@
+{
+  "sheet": "kami_s_lookout_npc.png",
+  "blocks": [
+    {
+      "id": "dende",
+      "name": "Dende (young Namekian, red tunic, white undershirt, purple sash)",
+      "origin": [0, 32],
+      "cell": [16, 32],
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "skin": ["#007b08", "#107b00", "#31ad00", "#52d600"],
+        "outfit": ["#7b0000", "#ad0810", "#d61029"],
+        "outfit2": ["#737373", "#949494", "#adadad", "#c6c6c6", "#dedede"],
+        "boots": ["#7b3100", "#ad4a00"],
+        "eyes": ["#000000", "#ffffff"],
+        "accent": ["#7b21ad", "#ad21ff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Green skin is palette 'skin'; no hair part."
+    },
+    {
+      "id": "kami",
+      "name": "Kami (old Namekian guardian, blue cape, white robe, staff)",
+      "origin": [112, 32],
+      "cell": [16, 32],
+      "cols": 2,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [0], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "skin": ["#107b00", "#31ad00", "#52d600"],
+        "outfit": ["#210084", "#3110ad", "#4221d6"],
+        "outfit2": ["#737373", "#c6c6c6", "#ffffff"],
+        "eyes": ["#000000"],
+        "accent": ["#ad0810", "#d61029", "#ff217b", "#ad637b", "#ff7373"],
+        "prop": ["#845218", "#a56b31", "#ad7b39"]
+      },
+      "notes": "Only cols 0 idle and 1 blink (up col 1 empty). He never walks on the sheet, so walk holds the idle frame. The staff is palette 'prop'; red vest with the spade symbol 'accent'."
+    },
+    {
+      "id": "popo",
+      "name": "Mr. Popo (black skin, white turban, red and gold vest)",
+      "origin": [160, 32],
+      "cell": [16, 32],
+      "shadow": "outline",
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "hair": ["#5a5a5a", "#949494", "#adadad", "#c6c6c6", "#dedede", "#ffffff"],
+        "skin": ["#000000"],
+        "outfit": ["#7b0000", "#ad0810", "#d61029", "#d66300", "#ff9418", "#ffd642"],
+        "accent": ["#2163ce", "#add6ff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. His skin is #000000 (palette 'skin'), the same colour as the baked shadow. The turban and white trousers share the 'hair' ramp; turban jewel is 'accent'. Shadow: black shoes, feet or a black skirt/coat underside touch the baked black shadow, so the block uses the 'outline' shadow mode, which keeps the black where it meets the coloured body and strips the ellipse."
+    },
+    {
+      "id": "korin",
+      "name": "Korin (white cat sage with his staff)",
+      "origin": [272, 32],
+      "cell": [16, 32],
+      "cols": 1,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "walk": { "frames": [0], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "skin": ["#737373", "#949494", "#adadad", "#dedede", "#ffffff"],
+        "accent": ["#ce637b", "#ff9494", "#e7a5ad"],
+        "prop": ["#845218", "#a56b31", "#ad7b39"]
+      },
+      "notes": "A single column: one standing pose per facing (all four facings), no blink or walk frames, so walk holds the idle frame. White fur is palette 'skin'; the staff is 'prop'."
+    }
+  ]
+}

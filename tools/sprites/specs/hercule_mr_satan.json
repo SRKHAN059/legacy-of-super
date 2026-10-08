@@ -1,0 +1,196 @@
+{
+  "sheet": "hercule_mr_satan.png",
+  "blocks": [
+    {
+      "id": "hercule",
+      "name": "Hercule / Mr. Satan (Cell-Games afro, brown gi, white trousers) - NPC fighter",
+      "origin": [0, 32],
+      "cell": 32,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 8,
+          "loop": true
+        },
+        "run": {
+          "frames": [6, 7, 8, 9],
+          "fps": 10,
+          "loop": true
+        },
+        "stance": {
+          "frames": [10],
+          "fps": 1,
+          "loop": false
+        },
+        "punch1": {
+          "frames": [10, 11, 12, 13],
+          "fps": 12,
+          "loop": false
+        },
+        "punch2": {
+          "frames": [14, 15, 16, 17],
+          "fps": 12,
+          "loop": false
+        },
+        "punch3": {
+          "frames": [18, 19, 20, 21],
+          "fps": 12,
+          "loop": false
+        },
+        "kick": {
+          "frames": [18, 19, 20, 21],
+          "fps": 12,
+          "loop": false
+        },
+        "blast": {
+          "frames": [14, 15, 16],
+          "fps": 10,
+          "loop": false
+        },
+        "victorySign": {
+          "frames": {
+            "down": [22]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "hurt": {
+          "frames": [23],
+          "fps": 1,
+          "loop": false
+        },
+        "guard": {
+          "frames": [24, 25],
+          "fps": 8,
+          "loop": false
+        },
+        "charge": {
+          "frames": [26],
+          "fps": 1,
+          "loop": true
+        },
+        "fly": {
+          "frames": {
+            "down": [27, 28, 29, 30],
+            "left": [31, 32, 33, 34],
+            "up": [27, 28, 29, 30]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyDownRight": {
+          "frames": {
+            "down": [31, 32, 33, 34]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyUpLeft": {
+          "frames": {
+            "right": [31, 32, 33, 34]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyUpRight": {
+          "frames": {
+            "up": [31, 32, 33, 34]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "shout": {
+          "frames": {
+            "down": [35, 36],
+            "left": [35],
+            "right": [35]
+          },
+          "fps": 6,
+          "loop": true
+        },
+        "ko": {
+          "frames": {
+            "left": [35, 36, 37, 38],
+            "right": [35, 36, 37, 38]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "koHold": {
+          "frames": {
+            "left": [38],
+            "right": [38]
+          },
+          "fps": 1,
+          "loop": true
+        },
+        "nervous": {
+          "frames": {
+            "down": [37]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "raise": {
+          "frames": {
+            "down": [38]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "cheer": {
+          "frames": {
+            "down": [38, 22]
+          },
+          "fps": 3,
+          "loop": true
+        },
+        "haloCry": {
+          "frames": {
+            "down": [39, 40]
+          },
+          "fps": 4,
+          "loop": true
+        }
+      },
+      "palette": {
+        "hair": ["#000000"],
+        "skin": ["#845218", "#946329", "#a56b31", "#ad7b39", "#c69452", "#dead63", "#f7c673"],
+        "outfit": ["#6b3110", "#844218", "#9c4a21"],
+        "outfit2": ["#424242", "#5a5a5a", "#737373", "#949494", "#adadad", "#c6c6c6", "#dedede", "#ffffff"],
+        "boots": ["#6b3110", "#844218"],
+        "eyes": ["#5a5a5a", "#adadad", "#ffffff"],
+        "mouth": ["#7b0000", "#ad0810", "#d61029"],
+        "flame": ["#7b3100", "#ad4a00", "#d66300", "#ff9418", "#ffb529", "#ffef5a"],
+        "halo": ["#ffd642", "#ffef5a", "#ffffbd"],
+        "tears": ["#00ffff", "#adffff"]
+      },
+      "notes": "Cells are 32x32 on the checkerboard #47ffbb/#34bc88; the surround is #2a966c and empty cells carry a #237f5a border - treat all four as transparent. The baked ground shadow is #000000, the same colour as outlines/eyes (and hair where black), so strip it by geometry, never by colour. The RIGHT row is a pixel-exact horizontal mirror of the LEFT row in every column. Every frame of a body on the floor sits in a ko* animation, which the build strips in its 'flat' shadow mode so black hair and eye lines touching the floor survive. Row lengths: down 41 (0-40), left/right 39 with cols 22 and 27-30 empty, up 35 (0-34) with col 1 empty (no back-view blink). The layout matches Goku's sheet up to col 26. Order: 0 idle, 1 blink, 2-5 walk, 6-9 run (shouting with his mouth open, legs pumping, brown dust puffs kicked up behind), 10-13 / 14-17 / 18-21 the three melee strings like Goku's (wind-up, hit, follow-through, recover): 10-13 jab + hook (10 fist cocked high, also used as 'stance'), 14-17 straight one-two with long white trails, 18-21 kick (chamber, side kick, extended kick with trail, retract) - the third string doubles as kick. Hercule has NO ki attack on the sheet: 'blast' reuses the straight-punch thrust 14-16 so a projectile can leave his fist. 22 (down only) his trademark victory V-sign. 23-26 like Goku's 38-41: 23 hurt flinch with hit sparks (side rows: upright, arms clutched to the chest), 24-25 crossed-arm block with and without the spark, 26 fists-clenched power-up stance (engine aura on top). 27-34 flight with jet flames at the soles (no baked shadow; the flame flickers yellow plus -> orange plus -> dark embers over the 4 frames): 27-30 (down/up only) straight toward / away from the camera; 31-34 are DIAGONAL like Goku's flight - down row = flying down-right, left row = down-left, right row = up-left (back view), up row = up-right (back view); down is the exact mirror of left and right the mirror of up. So 'fly' uses 27-30 for down/up and the left row 31-34 for left, and omits right: mirror the left frames (that is exactly the down row 31-34, kept as flyDownRight); flyUpLeft/flyUpRight keep the back-view diagonals. 35-38: left/right = knock-out (35 knocked back upright screaming, 36 thrown onto his backside, 37 landing on his back with a leg up, 38 flat on his back = koHold); down = emotes: 35-36 shouting with the mouth wide open ('shout' - reads as his boastful laugh or a scream; the side rows reuse the leaning-back 35), 37 teeth-gritted nervous grimace with hands clasped, 38 both arms raised overhead (raise; 'cheer' alternates it with the V-sign). 39-40 (down only) wailing with tears and a golden halo over the afro (the 'I'm dead!' gag). Baked effects: white trails in 11-21, white hit sparks in 23-25, brown dust in 6-9, jet flames in 27-34, halo + cyan tears in 39-40. Palette: outfit = brown gi and gloves, outfit2 = white/grey trousers and belt (#ffffff is also the trails), boots = brown (the gi ramp); #000000 is the afro, beard, outlines and the baked shadow; mouth reds are the open mouth in 6-9, 35-36, 39-40; flame also carries a few orange pixels on the fists in 11-14."
+    }
+  ]
+}

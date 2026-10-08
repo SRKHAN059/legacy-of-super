@@ -1,0 +1,75 @@
+{
+  "sheet": "kame_house_npc.png",
+  "blocks": [
+    {
+      "id": "roshi",
+      "name": "Master Roshi (bald, white beard, red-tinted sunglasses, orange shirt, purple trousers)",
+      "origin": [0, 32],
+      "cell": [16, 32],
+      "cols": 5,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "walk": { "frames": [1, 2, 3, 4], "fps": 6, "loop": true }
+      },
+      "palette": {
+        "hair": ["#949494", "#c6c6c6", "#dedede", "#ffffff"],
+        "skin": ["#845218", "#b56339", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#ad4a00", "#d66300", "#ff9418"],
+        "outfit2": ["#3110ad", "#4221d6", "#5a31ff", "#734aff"],
+        "boots": ["#e7a542"],
+        "eyes": ["#000000", "#7b0000", "#ad0810"],
+        "accent": ["#5a5a5a", "#737373"]
+      },
+      "notes": "Cols 0 idle, 1-4 walk cycle (step, pass, step, pass); no blink (sunglasses), so all four facings have five frames. White beard/eyebrows are palette 'hair'; the red-tinted sunglasses (and the black eyes behind them) are 'eyes'; 'accent' #5a5a5a/#737373 are the dark greys of the beard, sandal straps and the grey shapes on his back; #e7a542 sandal straps are 'boots'."
+    },
+    {
+      "id": "maron",
+      "name": "Maron (light-blue hair, yellow swimsuit)",
+      "origin": [96, 32],
+      "cell": [16, 32],
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "hair": ["#21637b", "#2184ff", "#73adff"],
+        "skin": ["#845218", "#a56b31", "#ce8463", "#c69452", "#e79c84", "#f7c673", "#ffbdbd"],
+        "outfit": ["#6b6b00", "#9c9c00", "#cece00", "#ffff39"],
+        "eyes": ["#000000", "#006bff", "#734aff", "#c6c6c6", "#ffffff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle."
+    },
+    {
+      "id": "turtle",
+      "name": "Turtle (Umigame, Roshi's sea turtle)",
+      "origin": [208, 32],
+      "cell": [32, 16],
+      "cols": 2,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [0], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "skin": ["#7b6342", "#a56b31", "#dead63", "#f7c673"],
+        "outfit": ["#6b3110", "#9c4a21", "#ad4a00", "#946329"],
+        "eyes": ["#000000", "#c6c6c6", "#ffffff"],
+        "accent": ["#ff8cd6"]
+      },
+      "notes": "32 wide x 16 tall cells (cell [32, 16]). Col 0 idle, col 1 blink (head ducks/eyes shut; no back-facing col 1). No walk frames on the sheet, so walk holds the idle frame. No baked ground shadow. The shell is palette 'outfit', head and flippers 'skin', mouth 'accent'."
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "sheet": "goku_s_friends_others.png",
+  "blocks": [
+    {
+      "id": "yajirobe",
+      "name": "Yajirobe (wild long black hair, orange gi, katana at his hip)",
+      "origin": [0, 32],
+      "cell": [16, 32],
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "hair": ["#000000", "#424242"],
+        "skin": ["#845218", "#946329", "#a56b31", "#ad7b39", "#c69452", "#dead63", "#f7c673", "#f7dead"],
+        "outfit": ["#7b3100", "#ad4a00", "#d66300"],
+        "prop": ["#6b6b00", "#9c9c00"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Black hair is #000000 like the baked shadow (#424242 hair highlights). The katana hilt is palette 'prop'. Shadow: the default 'strip' mode is used; it also takes a few black sandal-strap pixels where they touch the ellipse ('outline' mode was reviewed and gains nothing visible here)."
+    },
+    {
+      "id": "puar",
+      "name": "Puar (blue flying cat)",
+      "origin": [112, 32],
+      "cell": [16, 32],
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "baseline": 30,
+      "anims": {
+        "idle": {
+          "frames": { "down": [0, 1], "left": [0, 1], "right": [0, 1], "up": [0] },
+          "fps": 3,
+          "loop": true
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "hair": ["#007373", "#2163ff", "#00a5a5", "#21a5ce", "#21a5e7"],
+        "skin": ["#7b6342", "#737373", "#ada57b", "#f7dead"],
+        "eyes": ["#000000"]
+      },
+      "notes": "Always airborne: the baked shadow sits ~6px below the body. Col 0 hover, col 1 the same pose 1px lower (hover bob; no back-facing col 1), cols 2-5 swim-flying forward (body horizontal, tail trailing). Fur is palette 'hair', the cream face/belly 'skin'. 'baseline' pins the ground row to the shadow line so the hover gap survives ground alignment."
+    },
+    {
+      "id": "oolong",
+      "name": "Oolong (pink pig, navy Mao suit)",
+      "origin": [224, 32],
+      "cell": [16, 32],
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "skin": ["#ce637b", "#ff9494", "#ffbdbd"],
+        "outfit": ["#210084", "#3110ad", "#4221d6"],
+        "outfit2": ["#5a5a5a", "#737373", "#949494", "#adadad", "#c6c6c6", "#dedede", "#ffffff"],
+        "eyes": ["#000000"],
+        "accent": ["#946329"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. The white collar/cuffs and buttons are 'outfit2'."
+    },
+    {
+      "id": "chiaotzu",
+      "name": "Chiaotzu (white face, red cap, floating)",
+      "origin": [336, 32],
+      "cell": [16, 32],
+      "cols": 3,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "baseline": 30,
+      "anims": {
+        "idle": {
+          "frames": { "down": [0, 1], "left": [0, 1], "right": [0, 1], "up": [0] },
+          "fps": 3,
+          "loop": true
+        },
+        "walk": { "frames": [2], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#000000", "#7b0000", "#ad0810", "#d61029", "#ff1839", "#ff4a4a"],
+        "skin": ["#737373", "#949494", "#adadad", "#e7a5ad", "#c6c6c6", "#dedede", "#ffffff"],
+        "outfit": ["#5a31ff", "#73adff", "#94c6ff"],
+        "outfit2": ["#424242"],
+        "accent": ["#007b08", "#00ad18"]
+      },
+      "notes": "Always floating (detached shadow ~6px below). Col 0 hover, col 1 hover 1px lower (bob; no back-facing col 1), col 2 the single glide pose he moves in (all four facings). His red cap and black hair are palette 'hair' (#000000 also draws his black trousers, whose highlight #424242 is 'outfit2'); the white face is 'skin'; green trim 'accent'. 'baseline' keeps the hover gap. Shadow: he floats, so the baked shadow is a separate ellipse below him and the default 'strip' mode removes it, together with the few black shoe pixels that touch it."
+    }
+  ]
+}

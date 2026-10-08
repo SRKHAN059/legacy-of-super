@@ -1,5 +1,6 @@
-import type { Pose, SpriteSet } from '../art/humanoid';
+import type { Pose, SpriteAnim, SpriteAnims, SpriteSet } from '../art/humanoid';
 import { spriteSet } from '../art/registry';
+import { animIndex, POSE_ANIMS, spriteAnims } from '../art/sheets';
 import { CREATURES } from '../content/creatures';
 import { tint, type Bitmap } from '../engine/gfx';
 import type { Dir, Rect } from '../engine/math';
@@ -58,6 +59,13 @@ export class Actor {
   set: SpriteSet;
   /** Pixel size of a creature frame (0 for humanoids). */
   creatureSize: number;
+  /** Animation clock in ticks: advanced by animate(), or by draw() for actors nobody animates. */
+  animClock = 0;
+  /** Animation currently playing (sheet sprites) and the clock tick it started on. */
+  private animKey = '';
+  private animStart = 0;
+  /** Whether animate() ran since the last draw. */
+  private ticked = false;
 
   constructor(spriteId: string, x: number, y: number) {
     this.spriteId = spriteId;
@@ -105,11 +113,60 @@ export class Actor {
   animate(): void {
     if (this.moving) this.walkT += this.running ? 1.8 : 1;
     else this.walkT = 0;
+    this.animClock++;
+    this.ticked = true;
+  }
+
+  /** Ticks the current animation has been playing (restarts whenever the animation changes). */
+  private animTime(key: string): number {
+    if (key !== this.animKey) {
+      this.animKey = key;
+      this.animStart = this.animClock;
+    }
+    return this.animClock - this.animStart;
+  }
+
+  /**
+   * Animated frame for sheet sprites: the walk / run cycle while moving (phase from walkT, so it
+   * speeds up with running), the idle loop with periodic blinks, and each Pose's animation timed
+   * from the moment the pose began (attacks, charge loop, hurt, ko...). Null when the set has no
+   * animation for the pose (the still Pose frame is used).
+   */
+  private animatedFrame(anims: SpriteAnims, pose: Pose): Bitmap | null {
+    if (pose === 'idle' && this.moving) {
+      const run = this.running && anims.run;
+      const a: SpriteAnim | undefined = run ? anims.run : anims.walk;
+      if (!a) return null;
+      this.animTime(run ? 'run' : 'walk');
+      const frames = a.frames[this.dir];
+      const ticks = run ? this.walkT / 1.8 : this.walkT;
+      return frames[Math.floor((ticks * a.fps) / 60) % frames.length];
+    }
+    const name = POSE_ANIMS[pose].find((n) => anims[n]);
+    if (!name) return null;
+    const a = anims[name];
+    const t = this.animTime(name);
+    const frames = a.frames[this.dir];
+    if (name === 'idle' && frames.length === 1 && anims.blink) {
+      // A blink every few seconds; the period varies per sprite so crowds don't blink in unison.
+      const blink = anims.blink.frames[this.dir];
+      const dur = Math.max(1, Math.round((blink.length * 60) / anims.blink.fps));
+      const period = 170 + (this.spriteId.length * 13) % 60;
+      const phase = t % period;
+      if (phase >= period - dur) return blink[animIndex(anims.blink, blink.length, phase - (period - dur))];
+      return frames[0];
+    }
+    return frames[animIndex(a, frames.length, t)];
   }
 
   /** Current bitmap. */
   frame(): Bitmap {
     let pose: Pose = this.scriptPose ?? this.pose;
+    const anims = spriteAnims(this.set);
+    if (anims) {
+      const b = this.animatedFrame(anims, pose);
+      if (b) return b;
+    }
     if (pose === 'idle' && this.moving) {
       const step = Math.floor(this.walkT / 8) % 4;
       pose = step === 0 ? 'walk1' : step === 2 ? 'walk2' : 'idle';
@@ -130,6 +187,8 @@ export class Actor {
 
   /** Draw the sprite (with flash / blink / alpha). */
   draw(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
+    if (!this.ticked) this.animClock++;
+    this.ticked = false;
     if (this.hidden) return;
     if (this.inv > 0 && Math.floor(this.inv / 3) % 2 === 1) return;
     let bmp = this.frame();

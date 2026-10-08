@@ -1,0 +1,187 @@
+{
+  "sheet": "future_trunks_super_saiyan.png",
+  "blocks": [
+    {
+      "id": "futureTrunksSSJ",
+      "name": "Future Trunks, Super Saiyan - playable fighter",
+      "origin": [0, 32],
+      "cell": 32,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 8,
+          "loop": true
+        },
+        "run": {
+          "frames": [6, 7, 8, 9],
+          "fps": 10,
+          "loop": true
+        },
+        "punch1": {
+          "frames": [10, 11, 12, 13],
+          "fps": 12,
+          "loop": false
+        },
+        "punch2": {
+          "frames": [14, 15, 16, 17],
+          "fps": 12,
+          "loop": false
+        },
+        "punch3": {
+          "frames": [18, 19, 20, 21],
+          "fps": 12,
+          "loop": false
+        },
+        "kick": {
+          "frames": [18, 19, 20, 21],
+          "fps": 12,
+          "loop": false
+        },
+        "chargedMelee": {
+          "frames": [22, 23, 24, 25, 26, 27, 28],
+          "fps": 10,
+          "loop": false
+        },
+        "swordLeapSlash": {
+          "frames": [22, 23, 24, 25, 26, 27, 28],
+          "fps": 10,
+          "loop": false
+        },
+        "blast": {
+          "frames": [29, 30, 31],
+          "fps": 10,
+          "loop": false
+        },
+        "blastRapid": {
+          "frames": [30, 31],
+          "fps": 10,
+          "loop": true
+        },
+        "hurt": {
+          "frames": [36],
+          "fps": 1,
+          "loop": false
+        },
+        "guard": {
+          "frames": [37, 38],
+          "fps": 8,
+          "loop": false
+        },
+        "charge": {
+          "frames": [39],
+          "fps": 1,
+          "loop": true
+        },
+        "levelUp": {
+          "frames": [40, 41, 42, 43],
+          "fps": 6,
+          "loop": false
+        },
+        "scratchHead": {
+          "frames": [42, 43],
+          "fps": 4,
+          "loop": true
+        },
+        "fly": {
+          "frames": [44, 45, 46, 47],
+          "fps": 8,
+          "loop": true
+        },
+        "flyDownRight": {
+          "frames": {
+            "down": [48, 49, 50, 51]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyDownLeft": {
+          "frames": {
+            "left": [48, 49, 50, 51]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyUpLeft": {
+          "frames": {
+            "right": [48, 49, 50, 51]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyUpRight": {
+          "frames": {
+            "up": [48, 49, 50, 51]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "ko": {
+          "frames": {
+            "left": [52, 53, 54, 55],
+            "right": [52, 53, 54, 55]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "handsOnHips": {
+          "frames": {
+            "down": [52]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "raise": {
+          "frames": {
+            "down": [53]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "powerDown": {
+          "frames": {
+            "down": [54, 55, 56, 57]
+          },
+          "fps": 6,
+          "loop": false
+        }
+      },
+      "palette": {
+        "hair": ["#ad7b39", "#e7a542", "#ffff39"],
+        "hairBase": ["#7b217b", "#ad21ad", "#d652ff", "#efadff"],
+        "skin": ["#845218", "#a56b31", "#c69452", "#dead63", "#f7c673"],
+        "outfit": ["#210084", "#3110ad", "#4221d6", "#5a31ff"],
+        "outfit2": ["#424242", "#5a5a5a", "#737373", "#949494", "#adadad", "#dedede"],
+        "boots": ["#ad4a00", "#c69452", "#ffd642"],
+        "eyes": ["#107b00", "#31ad00", "#ffffff"],
+        "sheath": ["#7b3100", "#ad4a00", "#d66300"],
+        "blade": ["#424242", "#5a5a5a", "#737373", "#adadad", "#c6c6c6", "#dedede", "#ffffff"]
+      },
+      "notes": "Super Saiyan Future Trunks (golden hair, green eyes). Same grid as future_trunks.png for cols 0-31 and 36-55: Cells are 32x32 on the #47ffbb/#34bc88 checker; the surround #2a966c and the empty-cell border #237f5a are background. The RIGHT row is the horizontal mirror of the LEFT row (the build dedupes it). Up col 1 is empty (no back-view blink). Order: 0 idle, 1 blink, 2-5 walk, 6-9 run, 10-13 / 14-17 / 18-21 the three melee strings (wind-up, hit with white swoosh, follow-through, recover; the third string is a spinning kick, so punch3 and kick share 18-21), 22-28 sword charged melee (22 reach for the hilt, 23 draw with an arc trail, 24 blade held low, 25-26 leap with the sword overhead - no baked shadow, 27 downward cleave with a big arc, 28 blade resting on the ground), 29 ki wind-up (body twisted back), 30/31 alternate-hand palm thrusts (loop 30-31 for rapid fire), Cols 32-35 are pixel-identical copies of 10-13 (the first melee string) - this form has no quick-draw special cell, so they are not exported. 36 hit flinch (eyes shut, white hit spark at the head), 37-38 crouched guard behind raised fists (37 carries the block spark, 38 is the held pose), 39 fists-clenched power-up stance (the engine aura goes on top), 40-43 the level-up / emote slot (40-41 with white sparkles, 42-43 without; 41 and 43 are both hands on the head from the front and a hand rubbing the back of the head from the side - a sheepish head scratch; same slot as goku.json levelUp), 44-47 level flight with the whole body drawn (feet trailing behind/above the head, hair fluttering; no baked shadow), 48-51 diagonal flight (no baked shadow): the DOWN row flies down-right, LEFT row down-left, RIGHT row up-left and UP row up-right (back views), exported as flyDownRight / flyDownLeft / flyUpLeft / flyUpRight with the single sheet row each uses, 52-55 knock-down in the side rows only (52 doubled over, 53 falling onto the hands, 54-55 flat on the ground). Down-row 52 = standing with hands on the hips, down-row 53 = both arms raised straight up (the only 'raise' cell, so raise is front-facing only). The knock-down cells 53-55 already show the hair reverted to lavender (he drops out of Super Saiyan when knocked out); 53 mixes both ramps. Down-only cells: 52 hands on hips, 53 arms raised, 54-57 powering down (54-55 eyes shut with arms relaxed outward, 56 hair fading from gold to lavender, 57 base-form hair) - pair with futureTrunks for the rest of the scene. Cols 56-57 hold only the down row. Cells with no baked shadow: 25-26, 44-51. Palette: #ad7b39 is the golden-hair outline and also a skin shade on hands/face in a few cells; 'hairBase' is the lavender ramp of the knock-down / power-down cells; white is shared by hair highlights, eyes, blade and effects."
+    }
+  ]
+}

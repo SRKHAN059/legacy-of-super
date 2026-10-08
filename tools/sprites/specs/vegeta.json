@@ -1,0 +1,188 @@
+{
+  "sheet": "vegeta.png",
+  "blocks": [
+    {
+      "id": "vegeta",
+      "name": "Vegeta (base form, Saiyan armour) - playable fighter",
+      "origin": [0, 32],
+      "cell": 32,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 8,
+          "loop": true
+        },
+        "run": {
+          "frames": [6, 7, 8, 9],
+          "fps": 10,
+          "loop": true
+        },
+        "punch1": {
+          "frames": [10, 11, 12, 13],
+          "fps": 12,
+          "loop": false
+        },
+        "punch2": {
+          "frames": [14, 15, 16, 17],
+          "fps": 12,
+          "loop": false
+        },
+        "punch3": {
+          "frames": [18, 19, 20, 21],
+          "fps": 12,
+          "loop": false
+        },
+        "kick": {
+          "frames": [18, 19, 20, 21],
+          "fps": 12,
+          "loop": false
+        },
+        "chargedMelee": {
+          "frames": [22, 23, 24, 25, 26, 27],
+          "fps": 12,
+          "loop": false
+        },
+        "stance": {
+          "frames": [27],
+          "fps": 1,
+          "loop": false
+        },
+        "blast": {
+          "frames": [28, 29, 30],
+          "fps": 10,
+          "loop": false
+        },
+        "kiSweep": {
+          "frames": [31, 32, 33, 34],
+          "fps": 10,
+          "loop": false
+        },
+        "hurt": {
+          "frames": [35],
+          "fps": 1,
+          "loop": false
+        },
+        "guard": {
+          "frames": [36, 37],
+          "fps": 8,
+          "loop": false
+        },
+        "charge": {
+          "frames": [38],
+          "fps": 1,
+          "loop": true
+        },
+        "armsFolded": {
+          "frames": [39, 40, 41, 42],
+          "fps": 5,
+          "loop": true
+        },
+        "raise": {
+          "frames": [39, 40, 41, 42],
+          "fps": 5,
+          "loop": true
+        },
+        "swim": {
+          "frames": [43, 44, 45, 46],
+          "fps": 6,
+          "loop": true
+        },
+        "fly": {
+          "frames": {
+            "down": [47, 48, 49, 50],
+            "left": [47, 48, 49, 50],
+            "up": [47, 48, 49, 50]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyUpLeft": {
+          "frames": {
+            "right": [47, 48, 49, 50]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "ko": {
+          "frames": {
+            "left": [51, 52, 53, 54],
+            "right": [51, 52, 53, 54]
+          },
+          "fps": 8,
+          "loop": false,
+          "shadow": "keep"
+        },
+        "koFront": {
+          "frames": {
+            "down": [51, 52]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "kiOrb": {
+          "frames": {
+            "down": [53, 54, 55, 56]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "transform": {
+          "frames": {
+            "down": [57, 58, 59, 60]
+          },
+          "fps": 6,
+          "loop": false
+        },
+        "haloIdle": {
+          "frames": {
+            "down": [61, 62]
+          },
+          "fps": 2,
+          "loop": true
+        }
+      },
+      "palette": {
+        "hair": ["#000000", "#737373"],
+        "skin": ["#845218", "#ad7b39", "#c69452", "#dead63", "#f7c673"],
+        "outfit": ["#210084", "#3110ad", "#4221d6"],
+        "outfit2": ["#424242", "#5a5a5a", "#737373", "#949494", "#adadad", "#c6c6c6", "#dedede", "#ffffff"],
+        "boots": ["#737373", "#949494", "#c6c6c6", "#ffffff"],
+        "eyes": ["#000000", "#c6c6c6", "#ffffff"],
+        "trim": ["#6b6b00", "#9c9c00", "#cece00"]
+      },
+      "paletteShared": {
+        "#000000": "hair, pupils, every outline and the baked ground shadow",
+        "#737373": "a few hair glints and the outline of the armour, gloves and boots",
+        "#949494": "armour, gloves and boots",
+        "#c6c6c6": "eye whites, armour, gloves and boots",
+        "#ffffff": "eye whites, armour/glove/boot highlights and white effects"
+      },
+      "notes": "Cells are 32x32 on alternating solid checker cells #47ffbb/#34bc88; the sheet surround is #2a966c with a #237f5a border - treat all four as transparent. The RIGHT row is a pixel-exact horizontal mirror of the LEFT row in every column except the flight cells. Row lengths: down 63 cells (0-62), left/right 55 (0-54), up 51 (0-50) with up col 1 empty (no back-view blink). Order: 0 idle, 1 blink, 2-5 walk, 6-9 run, 10-13 / 14-17 / 18-21 the three melee strings (wind-up, hit, follow-through, recover; the third string is the kick, so punch3 and kick share 18-21), 22-27 leaping somersault strike used as the charged melee (22 crouch, 23 leap with arm thrown up, 24 tuck, 25 somersault with a white arc, 26 diving strike landing with an arc, 27 low landing stance), 28-30 one-hand ki blast (28 fist drawn back, 29 palm thrust, 30 full extension), 31-34 ki sweep (31 blue ki swirl gathers on the rear hand, 32 swept forward as a big blue crescent, 33 crescent follows through low, 34 fades), 35 hurt flinch with a white hit spark at the head, 36-37 crossed-arm X-block (36 carries a small block spark, 37 is the held pose), 38 chest-out power-up stance (near-idle; the engine aura makes it read), 39-42 Vegeta's arms-folded pose with a curl of steam rising above his head (looping) - he has no arms-raised pose, so raise uses it as his victory/confident pose, 43-46 swimming (head and arms above the waterline, no baked shadow), 47-50 flying (no baked shadow), 51-54 knocked out on the side rows (51 stagger, 52 thrown back, 53 flat, 54 settled). The down row only has 51 (stagger) and 52 (thrown back, arms over the head) for the knockout, exposed as 'koFront'. 'ko' sets shadow \"keep\": on the lying frames 53-54 the shadow finder would strip the black closed-eye lines of the face; the cost is the baked ground shadow staying under the two short fall frames 51-52. Down-only cells: 53-56 cupping a ki orb (53 hands together with a cyan glint, 54 flash at the chest, 55 blue orb ring at his side, 56 orb flaring), 57-60 Super Saiyan transformation (57 flex, 58 hair rising brown, 59-60 golden - continue on vegeta_super_saiyan.png), 61-62 dead with halo (hair fluttering). FLIGHT IS DIAGONAL: row 0 = flying down-right toward the camera, row 1 = down-left, row 2 = up-left (back view), row 3 = up-right (back view); row 0 mirrors row 1 and row 3 mirrors row 2. So 'fly' omits right: mirror the left frames (that is exactly row 0); the row-2 frames are kept as 'flyUpLeft'. outfit = blue bodysuit; outfit2 = white armour and gloves; trim = the olive-gold shoulder straps and belt (extra key). Cells with no baked shadow: 23-25 (airborne - the body is drawn raised in the cell, so the engine shadow alone reads as the jump), 43-50 (swim, fly), down-row 12/16/33 (trail or ki arc drawn over the ground) and down-row 58-62. paletteShared (extra key) lists every colour that belongs to more than one part: Vegeta's hair, pupils and eye whites have no colour of their own (black = outlines/shadow, #737373 glint = armour outline, whites = armour), so recolour those parts by region and strip the baked shadow by geometry. Baked effects: white swoosh trails 11-21 and 25-26, sparkles 35-36, blue ki 31-34 and 53-56, steam curl 39-42, halo yellows 61-62."
+    }
+  ]
+}

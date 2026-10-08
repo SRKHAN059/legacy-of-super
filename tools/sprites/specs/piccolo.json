@@ -1,0 +1,239 @@
+{
+  "sheet": "piccolo.png",
+  "blocks": [
+    {
+      "id": "piccolo",
+      "name": "Piccolo (weighted turban and cape) - playable fighter",
+      "origin": [0, 32],
+      "cell": 32,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 8,
+          "loop": true
+        },
+        "run": {
+          "frames": [6, 7, 8, 9],
+          "fps": 10,
+          "loop": true
+        },
+        "punch1": {
+          "frames": [10, 11, 12, 13],
+          "fps": 12,
+          "loop": false
+        },
+        "punch2": {
+          "frames": [14, 15, 16, 17],
+          "fps": 12,
+          "loop": false
+        },
+        "punch3": {
+          "frames": [18, 19, 20, 21],
+          "fps": 12,
+          "loop": false
+        },
+        "kick": {
+          "frames": [18, 19, 20, 21],
+          "fps": 12,
+          "loop": false
+        },
+        "chargedMelee": {
+          "frames": [22, 23, 24, 25, 26, 27],
+          "fps": 12,
+          "loop": false
+        },
+        "spinAttack": {
+          "frames": [22, 23, 24, 25, 26, 27],
+          "fps": 12,
+          "loop": false
+        },
+        "blast": {
+          "frames": [28, 29, 30],
+          "fps": 10,
+          "loop": false
+        },
+        "blastRapid": {
+          "frames": [29, 30],
+          "fps": 10,
+          "loop": true
+        },
+        "beam": {
+          "frames": [31, 32, 33],
+          "fps": 8,
+          "loop": false
+        },
+        "beamHold": {
+          "frames": [32, 33],
+          "fps": 10,
+          "loop": true
+        },
+        "hurt": {
+          "frames": [34],
+          "fps": 1,
+          "loop": false
+        },
+        "guard": {
+          "frames": [35, 36],
+          "fps": 8,
+          "loop": false
+        },
+        "charge": {
+          "frames": [37],
+          "fps": 1,
+          "loop": true
+        },
+        "levelUp": {
+          "frames": [38, 39, 40, 41],
+          "fps": 6,
+          "loop": false
+        },
+        "flex": {
+          "frames": [40, 41],
+          "fps": 4,
+          "loop": true
+        },
+        "fly": {
+          "frames": [42, 43, 44, 45],
+          "fps": 8,
+          "loop": true
+        },
+        "flyDownRight": {
+          "frames": {
+            "down": [46, 47, 48, 49]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyDownLeft": {
+          "frames": {
+            "left": [46, 47, 48, 49]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyUpLeft": {
+          "frames": {
+            "right": [46, 47, 48, 49]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyUpRight": {
+          "frames": {
+            "up": [46, 47, 48, 49]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "ko": {
+          "frames": {
+            "left": [50, 51, 52, 53],
+            "right": [50, 51, 52, 53]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "lookAside": {
+          "frames": {
+            "down": [50]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "raise": {
+          "frames": {
+            "down": [51]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "meditateStart": {
+          "frames": {
+            "down": [52, 53]
+          },
+          "fps": 4,
+          "loop": false
+        },
+        "meditate": {
+          "frames": {
+            "down": [54, 55]
+          },
+          "fps": 2,
+          "loop": true
+        },
+        "removeWeights": {
+          "frames": {
+            "down": [56, 57, 58, 59]
+          },
+          "fps": 6,
+          "loop": false
+        },
+        "haloIdle": {
+          "frames": {
+            "down": [60, 61]
+          },
+          "fps": 2,
+          "loop": true
+        },
+        "idleOneArm": {
+          "frames": {
+            "down": [63, 63, 63, 63, 63, 63, 63, 63, 63, 64]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blinkOneArm": {
+          "frames": {
+            "down": [64]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "regenerateArm": {
+          "frames": {
+            "down": [65, 66, 67, 68, 69, 70]
+          },
+          "fps": 8,
+          "loop": false
+        }
+      },
+      "palette": {
+        "skin": ["#107b00", "#31ad00", "#52d600"],
+        "skin2": ["#ad0810", "#ad217b", "#ff217b", "#e7637b", "#ff7373"],
+        "outfit": ["#212142", "#520084", "#6308ad"],
+        "outfit2": ["#5a5a5a", "#737373", "#949494", "#adadad", "#c6c6c6", "#dedede", "#ffffff"],
+        "sash": ["#0039b5", "#2163ce", "#2184ff"],
+        "boots": ["#7b3100", "#ad4a00"],
+        "eyes": ["#000000", "#c6c6c6", "#ffffff"],
+        "turbanGem": ["#7b217b", "#ad21ad", "#e763e7"],
+        "halo": ["#ffd642", "#ffef5a", "#ffffbd"]
+      },
+      "notes": "Piccolo in his weighted turban and cape. Cells are 32x32 on the #47ffbb/#34bc88 checker; the surround #2a966c and the empty-cell border #237f5a are background. The RIGHT row is the horizontal mirror of the LEFT row (the build dedupes it). Up col 1 is empty (no back-view blink). Order: 0 idle, 1 blink, 2-5 walk, 6-9 run, 10-13 / 14-17 / 18-21 the three melee strings (wind-up, hit with white swoosh, follow-through, recover; front/back views of 14-17 swap hands; the third string is a kick, so punch3 and kick share 18-21), 22-27 whirlwind spin charged melee (22 wind-up, 23-26 one full turn with circular trails, 27 lands), 28 ki wind-up (hand drawn back by the head), 29/30 alternate-hand palm thrusts (loop 29-30 for rapid fire), 31-33 one-hand beam (31 wide-stance wind-up, 32 is a pixel copy of a palm-thrust cell, 33 the same pose with a translucent glow overlay - loop 32-33 while the beam is held; 33 contains ~30 alpha-blended colours that are not part of any palette ramp), 34 hit flinch (head bowed, white hit spark), 35-36 crossed-arm X-block crouch (35 carries the block spark, 36 is the held pose), 37 arms-crossed head-bowed power-up stance (the engine aura goes on top), 38-41 level-up slot (38 idle + sparkles, 39 fists clenched + sparkles, 40 fists clenched, 41 back to idle; same slot as goku.json levelUp; 'flex' loops 40-41), 42-45 level flight with the whole body drawn (cape streaming behind; no baked shadow), 46-49 diagonal flight (no baked shadow): the DOWN row flies down-right, LEFT row down-left, RIGHT row up-left and UP row up-right (back views), exported as flyDownRight / flyDownLeft / flyUpLeft / flyUpRight with the single sheet row each uses, 50-53 knock-down in the side rows only (50 doubled over, 51 thrown onto the back, 52-53 flat). Down-row 50 = glancing aside, down-row 51 = one arm raised straight up (the only 'raise' cell, so raise is front-facing only). Down-only cutscene cells: 52 lifting a leg to fold it, 53 legs crossed and hovering just off the ground (meditateStart), 54-55 meditating with eyes shut, hovering higher - a slow 2-frame loop (meditate; the baked shadow there is detached below the body and is stripped, the hover height is kept), 56-59 taking off the weighted clothing (56 hand at the collar clasp, 57 head bowed pulling the turban as the cape swings out, 58 turban and cape flung up in one bundle, 59 bare-headed Piccolo letting the cape drop - continue on piccolo_without_weight.png), 60-61 dead with a halo (cape/feet stirring, no baked shadow), 62 empty, 63-64 idle / blink with the right arm torn off (bloody stump on the screen-left side), 65-70 regenerating the arm (65 straining - body drawn further right in the cell, 66 the new arm bursts out in a green spray with the mouth open, 67-68 the arm extends through the slime, 69 arm back at his side with slime dropping, 70 slime puddle on the ground; the goo uses #00ff00 / #6b6b00 plus the skin greens). Side and back rows are empty from col 54 (side) / 50 (up). Palette: #000000 is pupils, outlines and the baked shadow; white and the greys are shared by the cape, turban, shoulder pads, eye whites and the swoosh effects; 'skin2' is the pink/red muscle patches on the arms; 'sash' the blue belt; 'turbanGem' the purple turban top; 'halo' only occurs in 60-61."
+    }
+  ]
+}

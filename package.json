@@ -9,7 +9,10 @@
     "preview": "vite preview --port 4173",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:balance": "vitest run tests/balance.test.ts tests/grind.test.ts"
+    "test:balance": "vitest run tests/balance.test.ts tests/grind.test.ts",
+    "sprites": "node tools/sprites/build.mjs",
+    "sprites:check": "node tools/sprites/build.mjs --check",
+    "sprites:preview": "vite-node tools/sprites/preview.ts"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

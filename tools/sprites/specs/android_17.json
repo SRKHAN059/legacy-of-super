@@ -1,0 +1,153 @@
+{
+  "sheet": "android_17.png",
+  "blocks": [
+    {
+      "id": "android17",
+      "name": "Android 17",
+      "origin": [0, 32],
+      "cell": 32,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 8,
+          "loop": true
+        },
+        "punch1": {
+          "frames": [6, 7, 8, 9],
+          "fps": 12,
+          "loop": false
+        },
+        "punch2": {
+          "frames": [10, 11, 12, 13],
+          "fps": 12,
+          "loop": false
+        },
+        "punch3": {
+          "frames": [14, 15, 16, 17],
+          "fps": 12,
+          "loop": false
+        },
+        "kick": {
+          "frames": [14, 15, 16, 17],
+          "fps": 12,
+          "loop": false
+        },
+        "blast": {
+          "frames": [18, 19, 20],
+          "fps": 10,
+          "loop": false
+        },
+        "charge": {
+          "frames": [24],
+          "fps": 1,
+          "loop": true
+        },
+        "hurt": {
+          "frames": [21],
+          "fps": 1,
+          "loop": false
+        },
+        "ko": {
+          "frames": {
+            "down": [31]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "raise": {
+          "frames": [6],
+          "fps": 1,
+          "loop": false
+        },
+        "fly": {
+          "frames": [25, 26, 27, 28],
+          "fps": 8,
+          "loop": true
+        },
+        "guard": {
+          "frames": [22, 23],
+          "fps": 8,
+          "loop": false
+        },
+        "fall": {
+          "frames": {
+            "down": [29, 30]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "proneLookUp": {
+          "frames": {
+            "down": [31, 32]
+          },
+          "fps": 2,
+          "loop": false,
+          "shadow": "flat"
+        },
+        "carryIdle": {
+          "frames": [34],
+          "fps": 1,
+          "loop": true
+        },
+        "carryBlink": {
+          "frames": {
+            "down": [35],
+            "left": [35],
+            "right": [35]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "carry": {
+          "frames": {
+            "down": [34],
+            "left": [36, 37, 38, 39],
+            "right": [36, 37, 38, 39],
+            "up": [34]
+          },
+          "fps": 8,
+          "loop": true
+        }
+      },
+      "palette": {
+        "hair": ["#000000", "#5a5a5a", "#737373"],
+        "skin": ["#845218", "#a56b31", "#ad7b39", "#c69452", "#dead63", "#f7c673", "#f7dead"],
+        "eyes": ["#21bdff", "#dedede", "#ffffff"],
+        "scarf": ["#7b3100", "#ad4a00", "#d66300"],
+        "outfit": ["#000000", "#424242"],
+        "sleeves": ["#737373", "#adadad", "#ffffff"],
+        "belt": ["#946329"],
+        "outfit2": ["#21217b", "#3110ad", "#4221d6", "#5a31ff", "#7b63e7"],
+        "socks": ["#107b00", "#007b08", "#00ad18"],
+        "boots": ["#737373", "#949494", "#c6c6c6"],
+        "item": ["#ad0810", "#ff0000", "#ffffff"]
+      },
+      "notes": "Cells are on the #47ffbb/#34bc88 checkerboard; the sheet surround is #2a966c and block borders/empty cells are #237f5a - treat all four as transparent. Main grid: down row cols 0-32, left/right/up rows cols 0-28; the up row has no blink cell (up col 1 empty). Order: 0 idle, 1 blink, 2-5 walk, three 4-frame melee strings with white swoosh trails (6-9 hook, 10-13 straight punch, 14-17 front kick - the third string is the kick, so punch3 and kick share 14-17), 18-20 one-hand ki shot (18 ready stance, 19 palm out, 20 arm fully extended; same hand in both), 21 hurt flinch with a white hit spark, 22-23 block with a forearm across the face (22 with the block spark, 23 held), 24 cocky power-up stance with a hand at the chest (charge; engine aura on top), 25-28 Superman-style flight (body horizontal, hair and scarf streaming; down = flying toward the camera, up = away, boot soles showing), a 4-frame flutter loop with no baked shadow. Down row only: 29 reaching forward and 30 diving forward ('fall') are drawn side-on FACING LEFT (mirror them for a right-facing scene); the dive lands in 31, lying face-down toward the camera (used as ko - play fall then ko), and 32 lifts his head from that position. Lying frames use the 'flat' shadow mode so the body's bottom outline survives. A second block of cells at x=1088 (same grid, cols 34-39) repeats idle/blink/walk while holding a small red-and-white item in his right hand: 34 idle, 35 blink, 36-39 walk; the walk exists only for left/right and the up row has only 34, so carry falls back to the standing frame when facing down/up. No arms-raised frame: raise reuses the punch1 wind-up (6, fist raised beside the head). Palette: #000000 is the hair base, the black vest, every outline and the shadow; #737373 is shared by hair highlights, sleeve cuffs and shoes; #ffffff appears in eye whites, sleeve highlights, the item and the swoosh trails; the brown belt uses #946329 plus the skin shades #845218/#ad7b39 with a #5a5a5a/#949494 buckle, and the shoes mix the boots greys with the trouser blues. The baked ground shadow under the feet is #000000, the same colour as outlines/eyes, so strip it by geometry (the engine draws its own), never by colour."
+    }
+  ]
+}

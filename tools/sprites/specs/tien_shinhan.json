@@ -1,0 +1,163 @@
+{
+  "sheet": "tien_shinhan.png",
+  "blocks": [
+    {
+      "id": "tien",
+      "name": "Tien Shinhan (green pants, red sash) - NPC ally fighter",
+      "origin": [0, 32],
+      "cell": 32,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 8,
+          "loop": true
+        },
+        "stance": {
+          "frames": [6],
+          "fps": 1,
+          "loop": false
+        },
+        "punch1": {
+          "frames": [6, 7],
+          "fps": 12,
+          "loop": false
+        },
+        "punch2": {
+          "frames": [6, 8, 9],
+          "fps": 12,
+          "loop": false
+        },
+        "punch3": {
+          "frames": [10, 11, 12, 13],
+          "fps": 12,
+          "loop": false
+        },
+        "kick": {
+          "frames": [10, 11, 12, 13],
+          "fps": 12,
+          "loop": false
+        },
+        "combo": {
+          "frames": [6, 7, 8, 9],
+          "fps": 12,
+          "loop": false
+        },
+        "blast": {
+          "frames": [14, 15, 16],
+          "fps": 10,
+          "loop": false
+        },
+        "blastRapid": {
+          "frames": [15, 16],
+          "fps": 10,
+          "loop": true
+        },
+        "hurt": {
+          "frames": [18],
+          "fps": 1,
+          "loop": false
+        },
+        "guard": {
+          "frames": {
+            "down": [19, 17],
+            "left": [17, 19],
+            "right": [17, 19],
+            "up": [19, 17]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "charge": {
+          "frames": [20],
+          "fps": 1,
+          "loop": true
+        },
+        "levelUp": {
+          "frames": [21, 22, 23, 24],
+          "fps": 6,
+          "loop": false
+        },
+        "cheer": {
+          "frames": [23, 24],
+          "fps": 4,
+          "loop": true
+        },
+        "raise": {
+          "frames": [23],
+          "fps": 1,
+          "loop": false
+        },
+        "surprised": {
+          "frames": [24],
+          "fps": 1,
+          "loop": false
+        },
+        "fly": {
+          "frames": [25, 26, 27, 28],
+          "fps": 8,
+          "loop": true
+        },
+        "ko": {
+          "frames": {
+            "left": [29, 30, 31, 32],
+            "right": [29, 30, 31, 32]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "koHold": {
+          "frames": {
+            "left": [32],
+            "right": [32]
+          },
+          "fps": 1,
+          "loop": true
+        },
+        "blownAway": {
+          "frames": {
+            "left": [33],
+            "right": [33]
+          },
+          "fps": 1,
+          "loop": false
+        }
+      },
+      "palette": {
+        "skin": ["#845218", "#946329", "#a56b31", "#ce8463", "#c69452", "#e79c84", "#ffbdad"],
+        "skinAlt": ["#ad7b39", "#dead63", "#f7c673"],
+        "outfit": ["#107b00", "#31ad00", "#52d600"],
+        "outfit2": ["#7b0000", "#ad0810", "#d61029", "#ff1839"],
+        "boots": ["#424242", "#5a5a5a", "#737373"],
+        "wraps": ["#6b6b00", "#9c9c00", "#cece00"],
+        "eyes": ["#000000", "#737373", "#c6c6c6", "#ffffff"],
+        "effects": ["#ffffff"]
+      },
+      "notes": "Cells are 32x32 on the checkerboard #47ffbb/#34bc88; the surround is #2a966c and empty cells carry a #237f5a border - treat all four as transparent. The baked ground shadow is #000000, the same colour as outlines/eyes (and hair where black), so strip it by geometry, never by colour. The RIGHT row is a pixel-exact horizontal mirror of the LEFT row in every column. Every frame of a body on the floor sits in a ko* animation, which the build strips in its 'flat' shadow mode so black hair and eye lines touching the floor survive. Tien is bald (no hair ramp) and has a third eye (white/#c6c6c6 with a black pupil). Row lengths: down 29 (0-28), left/right 34 (0-33), up 29 with up col 1 empty (no back-view blink). Order: 0 idle, 1 blink, 2-5 walk (right step, pass, left step, pass), 6-9 punch string (6 fighting-stance wind-up, 7 straight jab with a white trail, 8 hook with a white arc, 9 follow-through with the arc's tail) - split into punch1 6-7 (wind-up, jab) and punch2 6, 8-9 (wind-up, hook, follow-through) so each string's second frame is its hit, 'combo' plays it whole; 10-13 kick string (10 knee chambered, 11 side kick with a white trail, 12 extended kick with the trail's tail, 13 knee retracted) - used as both punch3 and kick, like Goku's third string; 14-16 one-hand ki blast (14 wind-up stance, 15 front palm thrust, 16 rear palm thrust - loop 15-16 for rapid fire; facing up the thrusting arm points up the screen). 17-19 hurt/guard set: 18 hurt recoil (hunched, eyes shut, hit sparks); 17 and 19 are the same braced block pose with and without the white spark (spark on 17 for left/right, on 19 for down/up). 20 power-up stance (left/right identical to idle; down/up a pixel lower with the arms set wider) - the engine draws the aura on top. 21-24 level-up cheer like Goku's 42-45: 21 fists raised beside the head with sparkles, 22 wide-eyed with sparkles, 23 fists raised, 24 wide-eyed near-idle (also 'surprised'). 25-28 flying (no baked shadow): side rows horizontal Superman pose, down row head-first toward the camera with the shoes above the head, up row from behind with dangling legs. 29-32 (left/right only) knock-out: 29 hit with sparks, 30 recoil with sparks, 31 thrown onto his backside, 32 flat on his back (koHold). 33 (left/right only) 'blownAway': the body stretched out horizontally in the air with the head toward the back of the facing (left row: head on the right), hands by the head, legs straight, no ground shadow - reads as being launched backwards by a hit; its skin uses a yellow-tan ramp (skinAlt #ad7b39/#dead63/#f7c673, the ramp Yamcha and Hercule use) found nowhere else on Tien, so recolour skinAlt together with skin. Baked effects: white trails in 7-9 and 11-12, two-size white sparks in 17-19, 21-22, 29-30. Palette: outfit = green gi, outfit2 = red sash and wristbands, boots = black shoes (#424242/#5a5a5a/#737373 soles), wraps = olive ankle wraps; #737373 is also the eyes' mid-grey. Stray single pixels of #210084/#21217b/#7b3100 in a few action cells are ripper residue."
+    }
+  ]
+}

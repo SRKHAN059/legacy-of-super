@@ -610,8 +610,23 @@ function rotate90(src: Bitmap): Bitmap {
   return bmp;
 }
 
-/** A complete sprite set: pose → direction → bitmap. */
+/**
+ * A complete sprite set: pose → direction → bitmap. Every Pose resolves to one still frame in every
+ * facing; sheet-backed sets additionally carry multi-frame animations (see `spriteAnims` in ./sheets).
+ */
 export type SpriteSet = Record<Pose, Record<Dir, Bitmap>>;
+
+/** One multi-frame animation of a sprite set: the frames per facing, playback rate and looping. */
+export interface SpriteAnim {
+  frames: Record<Dir, Bitmap[]>;
+  /** Frames per second (the game runs at 60 ticks per second). */
+  fps: number;
+  /** Loop forever, or hold the last frame. */
+  loop: boolean;
+}
+
+/** Named animations of a sheet-backed sprite set (idle, walk, punch1, ..., plus optional extras). */
+export type SpriteAnims = Readonly<Record<string, SpriteAnim>>;
 
 /** Generate every pose in every direction for a humanoid spec. */
 export function buildHumanoid(spec: HumanoidSpec): SpriteSet {

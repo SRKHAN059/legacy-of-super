@@ -1,0 +1,272 @@
+{
+  "sheet": "future_trunks.png",
+  "blocks": [
+    {
+      "id": "futureTrunks",
+      "name": "Future Trunks (base form, Capsule Corp jacket, sword on the back) - playable fighter",
+      "origin": [0, 32],
+      "cell": 32,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 8,
+          "loop": true
+        },
+        "run": {
+          "frames": [6, 7, 8, 9],
+          "fps": 10,
+          "loop": true
+        },
+        "punch1": {
+          "frames": [10, 11, 12, 13],
+          "fps": 12,
+          "loop": false
+        },
+        "punch2": {
+          "frames": [14, 15, 16, 17],
+          "fps": 12,
+          "loop": false
+        },
+        "punch3": {
+          "frames": [18, 19, 20, 21],
+          "fps": 12,
+          "loop": false
+        },
+        "kick": {
+          "frames": [18, 19, 20, 21],
+          "fps": 12,
+          "loop": false
+        },
+        "chargedMelee": {
+          "frames": [22, 23, 24, 25, 26, 27, 28],
+          "fps": 10,
+          "loop": false
+        },
+        "swordLeapSlash": {
+          "frames": [22, 23, 24, 25, 26, 27, 28],
+          "fps": 10,
+          "loop": false
+        },
+        "blast": {
+          "frames": [29, 30, 31],
+          "fps": 10,
+          "loop": false
+        },
+        "blastRapid": {
+          "frames": [30, 31],
+          "fps": 10,
+          "loop": true
+        },
+        "swordDrawSlash": {
+          "frames": [32, 33, 34, 35],
+          "fps": 12,
+          "loop": false
+        },
+        "hurt": {
+          "frames": [36],
+          "fps": 1,
+          "loop": false
+        },
+        "guard": {
+          "frames": [37, 38],
+          "fps": 8,
+          "loop": false
+        },
+        "charge": {
+          "frames": [39],
+          "fps": 1,
+          "loop": true
+        },
+        "levelUp": {
+          "frames": [40, 41, 42, 43],
+          "fps": 6,
+          "loop": false
+        },
+        "scratchHead": {
+          "frames": [42, 43],
+          "fps": 4,
+          "loop": true
+        },
+        "fly": {
+          "frames": [44, 45, 46, 47],
+          "fps": 8,
+          "loop": true
+        },
+        "flyDownRight": {
+          "frames": {
+            "down": [48, 49, 50, 51]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyDownLeft": {
+          "frames": {
+            "left": [48, 49, 50, 51]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyUpLeft": {
+          "frames": {
+            "right": [48, 49, 50, 51]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyUpRight": {
+          "frames": {
+            "up": [48, 49, 50, 51]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "ko": {
+          "frames": {
+            "left": [52, 53, 54, 55],
+            "right": [52, 53, 54, 55]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "handsOnHips": {
+          "frames": {
+            "down": [52]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "raise": {
+          "frames": {
+            "down": [53]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "drawSword": {
+          "frames": {
+            "down": [54, 55]
+          },
+          "fps": 6,
+          "loop": false
+        },
+        "swordRest": {
+          "frames": {
+            "down": [56, 57]
+          },
+          "fps": 4,
+          "loop": false
+        },
+        "transform": {
+          "frames": {
+            "down": [58, 59, 60, 61]
+          },
+          "fps": 6,
+          "loop": false
+        },
+        "haloIdle": {
+          "frames": {
+            "down": [62, 63]
+          },
+          "fps": 2,
+          "loop": true
+        }
+      },
+      "palette": {
+        "hair": ["#7b217b", "#ad21ad", "#d652ff", "#efadff"],
+        "skin": ["#845218", "#a56b31", "#ad7b39", "#c69452", "#dead63", "#f7c673"],
+        "outfit": ["#210084", "#3110ad", "#4221d6", "#5a31ff"],
+        "outfit2": ["#424242", "#5a5a5a", "#737373", "#949494", "#adadad", "#dedede"],
+        "boots": ["#ad4a00", "#c69452", "#ffd642"],
+        "eyes": ["#210084", "#4221d6", "#ffffff"],
+        "sheath": ["#7b3100", "#ad4a00", "#d66300"],
+        "blade": ["#424242", "#5a5a5a", "#737373", "#adadad", "#c6c6c6", "#dedede", "#ffffff"],
+        "halo": ["#ffd642", "#ffef5a", "#ffffbd"]
+      },
+      "notes": "Cells are 32x32 on the #47ffbb/#34bc88 checker; the surround #2a966c and the empty-cell border #237f5a are background. The RIGHT row is the horizontal mirror of the LEFT row (the build dedupes it). Up col 1 is empty (no back-view blink). Order: 0 idle, 1 blink, 2-5 walk, 6-9 run, 10-13 / 14-17 / 18-21 the three melee strings (wind-up, hit with white swoosh, follow-through, recover; the third string is a spinning kick, so punch3 and kick share 18-21), 22-28 sword charged melee (22 reach for the hilt, 23 draw with an arc trail, 24 blade held low, 25-26 leap with the sword overhead - no baked shadow, 27 downward cleave with a big arc, 28 blade resting on the ground), 29 ki wind-up (body twisted back), 30/31 alternate-hand palm thrusts (loop 30-31 for rapid fire), 32-35 quick-draw sword slash special (32 steps back and grabs the hilt over the shoulder, 33 lunges drawing the blade, 34 wide slash with a circular arc, 35 follow-through with the blade extended), 36 hit flinch (eyes shut, white hit spark at the head), 37-38 crouched guard behind raised fists (37 carries the block spark, 38 is the held pose), 39 fists-clenched power-up stance (the engine aura goes on top), 40-43 the level-up / emote slot (40-41 with white sparkles, 42-43 without; 41 and 43 are both hands on the head from the front and a hand rubbing the back of the head from the side - a sheepish head scratch; same slot as goku.json levelUp), 44-47 level flight with the whole body drawn (feet trailing behind/above the head, hair fluttering; no baked shadow), 48-51 diagonal flight (no baked shadow): the DOWN row flies down-right, LEFT row down-left, RIGHT row up-left and UP row up-right (back views), exported as flyDownRight / flyDownLeft / flyUpLeft / flyUpRight with the single sheet row each uses, 52-55 knock-down in the side rows only (52 doubled over, 53 falling onto the hands, 54-55 flat on the ground). Down-row 52 = standing with hands on the hips, down-row 53 = both arms raised straight up (the only 'raise' cell, so raise is front-facing only). Down-only cutscene cells: 54 one arm raised to the hilt behind the head, 55 sword drawn and held upright (drawSword), 56-57 both hands on the hilt with the blade pointing down / tip planted (swordRest), 58-61 Super Saiyan transformation (58 head bowed with arms flung out, 59 screaming with the hair flashing gold, 60 golden hair with the jacket lit blue, 61 golden hair - continue on future_trunks_super_saiyan.png), 62-63 dead with a halo (hair stirring). Down-row col 64 and every other cell right of col 55 (side rows) / col 51 (up row) are empty; cols 65-70 are the separate long-haired block. Cells with no baked shadow: 25-26 (leap), 44-51 (flight) and down-row 59-63. Palette: white (#ffffff) is shared by hair highlights, eye whites, the blade edge and every baked effect (swooshes, sparkles); #ad4a00 is shared by boots and sheath, #c69452 by skin and boot highlights, the greys by trousers and blade; #ad7b39 is a skin mid-tone here but is the golden-hair outline in cells 59-61; the waist band uses #2184ff / #ff9418 / #ffd642 accents. 'halo' only occurs in 62-63."
+    },
+    {
+      "id": "futureTrunksLongHair",
+      "name": "Future Trunks with long hair (first arrival) - cutscene character",
+      "origin": [2080, 32],
+      "cell": 32,
+      "rows": {
+        "down": 0,
+        "left": 1
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": {
+            "down": [2, 3, 4, 5]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "levelUp": {
+          "frames": {
+            "left": [2, 3, 4, 5]
+          },
+          "fps": 6,
+          "loop": false
+        },
+        "scratchHead": {
+          "frames": {
+            "left": [4, 5]
+          },
+          "fps": 4,
+          "loop": true
+        }
+      },
+      "palette": {
+        "hair": ["#7b217b", "#d652ff", "#efadff"],
+        "skin": ["#845218", "#a56b31", "#ad7b39", "#c69452", "#dead63", "#f7c673"],
+        "outfit": ["#210084", "#3110ad", "#4221d6", "#5a31ff"],
+        "outfit2": ["#424242", "#737373", "#949494", "#adadad", "#dedede"],
+        "boots": ["#ad4a00", "#c69452", "#ffd642"],
+        "eyes": ["#210084", "#4221d6", "#ffffff"],
+        "sheath": ["#7b3100", "#ad4a00", "#d66300"]
+      },
+      "notes": "Long-haired Future Trunks as he first appears (arrival / meeting Goku). Six cells at cols 65-70 of future_trunks.png (origin x 2080), DOWN and LEFT rows only - right is the mirror of left, there is no back view. Down row: 0 idle, 1 blink, 2-5 walk (step, pass, step, pass). Left row: 0 idle, 1 blink, then 2-5 is the sheepish head-scratch emote of the main block's 40-43 (2-3 with white sparkles, 4-5 without; 3 and 5 rub the back of the head), so the left row has no walk cycle (the side walk falls back to idle). Same palette as the short-haired block; the long hair uses the hair ramp."
+    }
+  ]
+}

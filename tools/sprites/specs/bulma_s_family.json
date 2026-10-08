@@ -1,0 +1,111 @@
+{
+  "sheet": "bulma_s_family.png",
+  "blocks": [
+    {
+      "id": "bulma",
+      "name": "Bulma (Android-saga look: orange jacket, white trousers, red shoes)",
+      "origin": [0, 32],
+      "cell": [16, 32],
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "huff": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "armsCrossed": { "frames": [8], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#21637b", "#00a5a5", "#7bbdce"],
+        "skin": ["#845218", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#6b3110", "#ad4a00", "#a56b31", "#d66300", "#c69452", "#e7a542", "#f7c673"],
+        "outfit2": ["#5a5a5a", "#737373", "#949494", "#adadad", "#c6c6c6", "#dedede"],
+        "boots": ["#7b0000", "#ad0810"],
+        "eyes": ["#000000", "#006bff", "#ffffff"],
+        "accent": ["#d61029", "#946329", "#31ad00"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Cols 6-9 huff: 6 hands on hips with a white anger flash, 7 folds her arms (flash fading), 8 and 9 are the same arms-crossed hold (pixel-identical). #ffffff is shared by the eyes and the trouser highlights."
+    },
+    {
+      "id": "bulmaWithTrunks",
+      "name": "Bulma carrying baby Trunks",
+      "origin": [176, 32],
+      "cell": [16, 32],
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "surprisedHold": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#21637b", "#00a5a5", "#7bbdce"],
+        "skin": ["#845218", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#6b3110", "#ad4a00", "#a56b31", "#d66300", "#c69452", "#e7a542", "#f7c673"],
+        "outfit2": ["#5a5a5a", "#737373", "#949494", "#adadad", "#c6c6c6", "#dedede"],
+        "boots": ["#7b0000", "#ad0810"],
+        "eyes": ["#000000", "#006bff", "#ffffff"],
+        "prop": ["#212142", "#21217b"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Baby Trunks is the dark bundle in her arms (palette 'prop'). Cols 6-9 surprised: wide-eyed stance with white shock lines in 6-7 fading in 8; 8 and 9 are pixel-identical holds."
+    },
+    {
+      "id": "panchy",
+      "name": "Mrs. Briefs (Panchy: curly blonde hair, eyes always closed, pink shoes)",
+      "origin": [352, 32],
+      "cell": [16, 32],
+      "cols": 5,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "walk": { "frames": [1, 2, 3, 4], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "hair": ["#845218", "#6b6b00", "#9c9c00", "#cebd42", "#ffff7b", "#ffffff"],
+        "skin": ["#ad7b39", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#737373", "#949494", "#adadad", "#c6c6c6", "#dedede"],
+        "outfit2": ["#212142", "#21217b", "#3110ad", "#4221d6"],
+        "boots": ["#b50073", "#e721ce", "#ff63e7"]
+      },
+      "notes": "Cols 0 idle, 1-4 walk cycle (step, pass, step, pass). No blink: her eyes are drawn closed, so all four facings have five frames. Closed eyes use the #845218 outline colour, which also outlines her hair and skin (listed once, under 'hair'); the white curl highlight #ffffff is 'hair'."
+    },
+    {
+      "id": "drBriefs",
+      "name": "Dr. Briefs (lavender hair, lab coat, black cat Scratch on his shoulder)",
+      "origin": [448, 32],
+      "cell": [16, 32],
+      "shadow": "outline",
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "hair": ["#21637b", "#7b63ad", "#7ba5ce", "#adbde7"],
+        "skin": ["#845218", "#a56b31", "#ad7b39", "#c69452", "#dead63", "#f7c673", "#f7dead"],
+        "outfit": ["#737373", "#949494", "#adadad", "#c6c6c6", "#dedede", "#ffffff"],
+        "outfit2": ["#424242", "#5a5a5a"],
+        "boots": ["#6b3110"],
+        "eyes": ["#21bde7", "#7bd6e7"],
+        "prop": ["#000000"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. The cat Scratch is solid #000000 (palette 'prop'), the same colour as the baked shadow and his black shoes. His moustache shares the lavender 'hair' ramp; the glasses are 'eyes'. Shadow: black shoes, feet or a black skirt/coat underside touch the baked black shadow, so the block uses the 'outline' shadow mode, which keeps the black where it meets the coloured body and strips the ellipse."
+    }
+  ]
+}

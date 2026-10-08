@@ -348,6 +348,54 @@ a kill. Also: `refillAt/refillTo` (Perfect Cell refill), `stamina` (Golden Friez
   dragonRadar db1–db7 trophyGoku trophyVegeta trophyGohan trophyTrunks trophyPiccolo. Add key items with
   `registerItems([...])` (prefix ids).
 
+### 7.1 LoG2 sprite sheets (preferred character art)
+
+Characters are drawn from the original LoG2 sprite sheets in `assets/sprites/*.png` whenever a cast id is mapped
+to a sheet block; the procedural humanoid builder is only the fallback for ids nobody has mapped. The game and the
+tests never read the PNGs: `npm run sprites` compiles them into `src/art/sheets.gen.ts` (generated, committed).
+
+- **Specs** (`tools/sprites/specs/<sheet>.json`): one file per sheet, a list of `blocks`. A block is one character
+  or form: `id`, `name`, `origin` [x, y] of its first cell, `cell` (32, or [w, h] such as [16, 32] for the small NPC
+  cells; narrow cells are centred in a 32x32 frame, short ones stand on its bottom row), `rows` (row index per
+  facing: down / left / right / up; omit facings the block lacks), `anims`, `palette` (exact sheet colours per body
+  part, darkest to lightest, any part names) and `notes`. Optional: `baseline` (the cell row the feet stand on, for
+  floaters such as Puar), `keepShadow: true`.
+- **Animations**: `{ "frames": [col, ...] | { "down": [...], "left": [...], ... }, "fps": 8, "loop": true }`,
+  columns relative to `origin`. A missing right (left) facing is the mirror of the other side; a missing up / down
+  falls back to the nearest facing. Fighters need idle walk punch1 punch2 punch3 kick blast charge hurt ko raise fly
+  guard (optional: blink run beam teleport transform ... any name). NPCs need idle and walk. Optional
+  `"shadow"`: `"strip"` (default), `"flat"` (only thin slivers count as shadow; the default for animations named
+  ko / lie / sleep / dead / faint / down / sick, so black hair lying on the floor survives) or `"keep"`.
+- **What the build does**: keys out the two checkerboard greens, the outer background and the empty-cell border;
+  removes the baked black ground shadow (black fragments in the bottom band of the cell that do not reach up into
+  the body - review with `node tools/sprites/build.mjs --debug <dir>`, removed pixels are red); moves each block so
+  its standing / walking feet land on the frame's bottom row, exactly where procedural feet stood (actors draw the
+  frame centred on x with its bottom at y + 2, plus the engine's own shadow); stores a head anchor per frame; and
+  writes palette-indexed, run-length-encoded frames, sharing identical and mirrored frames.
+  `npm run sprites:check` fails when the generated file is stale (also a test in `tests/sprites.test.ts`).
+- **Mapping a cast id** (in your content files): `registerSheetCast({ c07_magetta: { block: 'npcTough' } })` from
+  `src/art/registry` (also exported from `src/art/sheets`). A look can:
+  - `recolor: { '#ff7300': '#3050c0' }` exact sheet colours, and/or `parts: { outfit: ['#203080', '#3050c0',
+    '#6080f0'] }` (each palette part maps onto the given ramp by relative position);
+  - `overlay: { palette: { h: '#f0e060', H: '#c0a030' }, rows: { down: [...], left: [...], up: [...] },
+    offset?: { down: [dx, dy] }, erase?: ['#000000'], eraseDepth?: 10, skipAnims?: ['teleport'] }` - a small
+    palette-char grid drawn on every frame relative to that frame's head anchor (x = head centre, y = top of the
+    head; the default offset centres the grid over the anchor). `right` mirrors `left` when omitted. `erase` first
+    clears the given sheet colours (e.g. the original hair), limited to `eraseDepth` rows below the anchor when set;
+  - `extra: [{ block: 'gokuSSJRaise', anims: ['raise'] }]` pull animations from another block of the same character;
+  - `scale: 1.5` uniform nearest-neighbour scaling for big characters (collision boxes are separate and unchanged).
+  The LoG2 characters themselves are wired in `src/art/sheetcast.ts`.
+- **Animation in game**: every Pose still resolves to one frame (walk1 / walk2 from the walk cycle, punch1 / punch2 /
+  kick from the combo strings, ko from the last ko frame ...), so `s.pose(...)`, the title, credits, intro and world
+  map work unchanged. Actors additionally play the sheet animations: the walk (or run) cycle while moving, idle with
+  blinks, each attack from the moment its pose starts (the combo finisher pose `kick` plays `punch3`), the charge
+  and fly loops, hurt, and ko held on its last frame. `spriteAnims(set)` exposes a set's animations.
+- **Looking at your work without a browser**: `npm run sprites:preview -- <castId|block:<blockId> ...> [--all]
+  [--blocks] [--out <dir>] [--zoom 3] [--anchors]` writes one labelled contact sheet PNG per id: the still Poses in
+  all four facings, then every animation per facing (the tinted bottom row is the ground; `--anchors` marks head
+  anchors in magenta). On the dev server `?gallery=<castId>` plays every animation, `?gallery=sheet` shows all
+  sheet-backed ids walking.
+
 ---
 
 ## 8. World layout (fixed ids — world builders create these; chapters overlay them)

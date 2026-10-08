@@ -380,7 +380,8 @@ export class WorldMapScene implements Scene {
     const bob = Math.round(Math.sin(this.t / 12) * 2);
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.beginPath(); ctx.ellipse(SCREEN_W / 2, 140, 7, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.drawImage(set.fly.up, SCREEN_W / 2 - 12, 98 + bob);
+    const flyer = set.fly.up;
+    ctx.drawImage(flyer, Math.round(SCREEN_W / 2 - flyer.width / 2), 130 - flyer.height + bob);
     if (this.t % 4 === 0) { ctx.fillStyle = '#fff8d0'; ctx.fillRect(SCREEN_W / 2 - 1 + ((this.t / 4) % 5) - 2, 132 + bob, 1, 3); }
 
     this.renderMinimap(ctx, star);

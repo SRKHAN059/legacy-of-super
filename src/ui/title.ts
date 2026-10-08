@@ -505,10 +505,12 @@ export class TitleScene implements Scene {
     this.heroes.forEach((id, i) => {
       const set = spriteSet(id);
       const bob = Math.round(Math.sin((this.t + i * 20) / 30) * 1);
-      const x = 40 + i * 40 - 12;
-      const y = 112 + bob + (i === 2 ? -2 : 0);
-      ctx.drawImage(set[i % 2 ? 'charge' : 'idle'].down, x, y);
-      if (this.t % 6 === i) { ctx.fillStyle = '#fff8c0'; ctx.fillRect(x + 4 + (this.t % 13), y + 4, 1, 2); }
+      const b = set[i % 2 ? 'charge' : 'idle'].down;
+      // Centred on the hero's slot with the feet on the cliff edge, whatever the frame size.
+      const cx = 40 + i * 40;
+      const y = 144 - b.height + bob + (i === 2 ? -2 : 0);
+      ctx.drawImage(b, Math.round(cx - b.width / 2), y);
+      if (this.t % 6 === i) { ctx.fillStyle = '#fff8c0'; ctx.fillRect(cx - 8 + (this.t % 13), y + 4, 1, 2); }
     });
   }
 

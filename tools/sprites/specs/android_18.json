@@ -1,0 +1,154 @@
+{
+  "sheet": "android_18.png",
+  "blocks": [
+    {
+      "id": "android18",
+      "name": "Android 18",
+      "origin": [0, 32],
+      "cell": 32,
+      "shadow": "outline",
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 8,
+          "loop": true
+        },
+        "punch1": {
+          "frames": [6, 7, 8, 9],
+          "fps": 12,
+          "loop": false
+        },
+        "punch2": {
+          "frames": [10, 11, 12, 13],
+          "fps": 12,
+          "loop": false
+        },
+        "punch3": {
+          "frames": [14, 15, 16, 17],
+          "fps": 12,
+          "loop": false
+        },
+        "kick": {
+          "frames": [14, 15, 16, 17],
+          "fps": 12,
+          "loop": false
+        },
+        "blast": {
+          "frames": [18, 19, 20],
+          "fps": 10,
+          "loop": false
+        },
+        "charge": {
+          "frames": {
+            "down": [24],
+            "left": [24],
+            "right": [24],
+            "up": [21]
+          },
+          "fps": 1,
+          "loop": true
+        },
+        "hurt": {
+          "frames": {
+            "down": [21],
+            "left": [21],
+            "right": [21],
+            "up": [22]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "ko": {
+          "frames": {
+            "down": [21],
+            "left": [21],
+            "right": [21],
+            "up": [22]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "raise": {
+          "frames": [18],
+          "fps": 1,
+          "loop": false
+        },
+        "fly": {
+          "frames": [25, 26, 27, 28],
+          "fps": 8,
+          "loop": true
+        },
+        "guard": {
+          "frames": {
+            "down": [22, 23],
+            "left": [22, 23],
+            "right": [22, 23],
+            "up": [23, 24]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "reel": {
+          "frames": {
+            "down": [29, 30, 31, 32]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "startled": {
+          "frames": {
+            "left": [29, 30, 31, 32],
+            "right": [29, 30, 31, 32]
+          },
+          "fps": 6,
+          "loop": false,
+          "remap": {
+            "#7b6342": "#845218",
+            "#9c9c00": "#e7a542",
+            "#cebd42": "#ffd642",
+            "#c69452": "#ce8463",
+            "#dead63": "#e79c84",
+            "#f7c673": "#ffbdad",
+            "#f7dead": "#ffbdbd"
+          }
+        }
+      },
+      "palette": {
+        "hair": ["#845218", "#e7a542", "#ffd642", "#ffff7b", "#ffffff"],
+        "skin": ["#a56b31", "#ad7b39", "#ce8463", "#e79c84", "#ffbdad", "#ffbdbd"],
+        "eyes": ["#007373", "#21bdff", "#c6c6c6", "#dedede"],
+        "outfit": ["#210084", "#21217b", "#3110ad", "#4221d6"],
+        "outfit2": ["#5a5a5a", "#737373", "#949494", "#adadad", "#c6c6c6", "#dedede", "#ffffff"],
+        "leggings": ["#000000"],
+        "boots": ["#7b3100", "#ad4a00", "#d66300"],
+        "emblem": ["#ad0810", "#ff1839"]
+      },
+      "notes": "Cells are on the #47ffbb/#34bc88 checkerboard; the sheet surround is #2a966c and block borders/empty cells are #237f5a - treat all four as transparent. Down/left/right rows hold cols 0-32, the up row cols 0-28; the up row has no blink cell (up col 1 empty). outfit = blue vest and skirt, outfit2 = grey striped long sleeves, leggings = black tights, emblem = the red Red Ribbon logo on the back of the vest. Order: 0 idle, 1 blink, 2-5 walk, three 4-frame melee strings with white swoosh trails (6-9 hook, 10-13 straight punch, 14-17 front kick - punch3 and kick share 14-17), 18-20 one-hand ki shot (18 hand drawn back beside the head, 19 arm thrust out pointing, 20 arm extended; same hand in both), 21 hurt recoil with eyes shut and a white hit spark, 22-23 block with both hands over the face (22 hunched with the block spark, 23 held), 24 fists-up power-up stance (charge; engine aura on top), 25-28 Superman-style flight with arms forward (4-frame hair-flutter loop, no baked shadow). The UP row is shifted for 21-24: up col 21 is a pixel copy of the idle frame, up 22 is the hurt recoil, up 23-24 the block (spark, held) - the per-facing lists account for this; there is no back-view power-up cell, so charge uses that idle copy. Cols 29-32 hold two unrelated extra actions: the down row is 'reel' (29 the col-21 recoil with a single fading spark, 30 hands over the face, 31 crouched with the hair flared up as if braced against a blast, 32 back in the fists-up stance); the left/right rows are 'startled' (29 standing wide-eyed, 30 shock marks appear, 31 steps forward reaching out with marks, 32 same step without marks). The left/right 29-32 cells were ripped under the wrong palette (olive hair, Android 17's skin, black-dot eyes); remap #7b6342->#845218, #9c9c00->#e7a542, #cebd42->#ffd642, #c69452->#ce8463, #dead63->#e79c84, #f7c673->#ffbdad, #f7dead->#ffbdbd to restore her colours (the 'startled' animation's remap does this). No knocked-down or arms-raised frames: ko reuses the hurt recoil and raise reuses the ki-shot wind-up (18, hand raised behind the head). Palette: #845218 is both the hair outline and the dark skin line; #ffffff is shared by hair highlights, eye whites, sleeves and swoosh trails; #000000 is the tights, outlines and the baked shadow. Her black tights touch the #000000 ground shadow; the block's 'outline' shadow mode keeps every black pixel bordering her boots and skirt and any black run that continues up past the shadow band, so the tights survive while the ellipse goes."
+    }
+  ]
+}

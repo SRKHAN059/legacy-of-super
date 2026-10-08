@@ -1,0 +1,247 @@
+{
+  "sheet": "goku.png",
+  "blocks": [
+    {
+      "id": "goku",
+      "name": "Goku (base form, orange gi) - playable fighter",
+      "origin": [0, 32],
+      "cell": 32,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 8,
+          "loop": true
+        },
+        "run": {
+          "frames": [6, 7, 8, 9],
+          "fps": 10,
+          "loop": true
+        },
+        "punch1": {
+          "frames": [10, 11, 12, 13],
+          "fps": 12,
+          "loop": false
+        },
+        "punch2": {
+          "frames": [14, 15, 16, 17],
+          "fps": 12,
+          "loop": false
+        },
+        "punch3": {
+          "frames": [18, 19, 20, 21],
+          "fps": 12,
+          "loop": false
+        },
+        "kick": {
+          "frames": [18, 19, 20, 21],
+          "fps": 12,
+          "loop": false
+        },
+        "teleport": {
+          "frames": [22, 23, 24, 25, 26, 27],
+          "fps": 10,
+          "loop": false
+        },
+        "teleportOut": {
+          "frames": [22, 23],
+          "fps": 10,
+          "loop": false
+        },
+        "teleportIn": {
+          "frames": [23, 24, 25, 26, 27],
+          "fps": 10,
+          "loop": false
+        },
+        "stance": {
+          "frames": [27],
+          "fps": 1,
+          "loop": false
+        },
+        "blast": {
+          "frames": [28, 29, 30],
+          "fps": 10,
+          "loop": false
+        },
+        "blastRapid": {
+          "frames": [29, 30],
+          "fps": 10,
+          "loop": true
+        },
+        "beam": {
+          "frames": [31, 32, 33],
+          "fps": 8,
+          "loop": false
+        },
+        "beamHold": {
+          "frames": [32, 33],
+          "fps": 10,
+          "loop": true
+        },
+        "beamOverhead": {
+          "frames": [34, 35, 36, 37],
+          "fps": 8,
+          "loop": false
+        },
+        "hurt": {
+          "frames": [38],
+          "fps": 1,
+          "loop": false
+        },
+        "guard": {
+          "frames": [39, 40],
+          "fps": 8,
+          "loop": false
+        },
+        "charge": {
+          "frames": [41],
+          "fps": 1,
+          "loop": true
+        },
+        "raise": {
+          "frames": [44],
+          "fps": 1,
+          "loop": false
+        },
+        "levelUp": {
+          "frames": [42, 43, 44, 45],
+          "fps": 6,
+          "loop": false
+        },
+        "cheer": {
+          "frames": [44, 45],
+          "fps": 4,
+          "loop": true
+        },
+        "swim": {
+          "frames": [46, 47, 48, 49],
+          "fps": 6,
+          "loop": true
+        },
+        "fly": {
+          "frames": {
+            "down": [50, 51, 52, 53],
+            "left": [50, 51, 52, 53],
+            "up": [50, 51, 52, 53]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "flyUpLeft": {
+          "frames": {
+            "right": [50, 51, 52, 53]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "ko": {
+          "frames": {
+            "down": [54, 55, 56, 57],
+            "left": [54, 55, 56, 57],
+            "right": [54, 55, 56, 57]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "sleep": {
+          "frames": {
+            "down": [58]
+          },
+          "fps": 1,
+          "loop": true
+        },
+        "sit": {
+          "frames": {
+            "down": [59]
+          },
+          "fps": 1,
+          "loop": true
+        },
+        "transform": {
+          "frames": {
+            "down": [60, 61, 62, 63]
+          },
+          "fps": 6,
+          "loop": false
+        },
+        "haloIdle": {
+          "frames": {
+            "down": [64, 65]
+          },
+          "fps": 2,
+          "loop": true
+        }
+      },
+      "palette": {
+        "hair": ["#000000"],
+        "skin": ["#845218", "#946329", "#a56b31", "#ad7b39", "#ce8463", "#c69452", "#e79c84", "#ffbdad"],
+        "outfit": ["#7b3100", "#ad4a00", "#d66300", "#ff7300"],
+        "outfit2": ["#210084", "#21217b", "#3110ad", "#4221d6"],
+        "boots": ["#21217b", "#3110ad", "#4221d6"],
+        "eyes": ["#5a5a5a", "#adadad", "#ffffff"]
+      },
+      "paletteShared": {
+        "#000000": "hair, every outline and the baked ground shadow",
+        "#21217b": "boots and the outfit2 undershirt/wristbands/belt (same blue ramp)",
+        "#3110ad": "boots and the outfit2 undershirt/wristbands/belt (same blue ramp)",
+        "#4221d6": "boots and the outfit2 undershirt/wristbands/belt (same blue ramp)",
+        "#ffffff": "eye whites and the white effects (swoosh trails, sparkles)"
+      },
+      "notes": "Cells are 32x32 on alternating solid checker cells #47ffbb/#34bc88; the sheet surround is #2a966c with a #237f5a border - treat all four as transparent. The RIGHT row is a pixel-exact horizontal mirror of the LEFT row in every column except the flight cells. Row lengths: down 66 cells (0-65), left/right 58 (0-57), up 54 (0-53) with up col 1 empty (no back-view blink) and up cols 54-64 empty; up col 65 is the separate gokuSickBed block. Order: 0 idle, 1 blink, 2-5 walk, 6-9 run, 10-13 / 14-17 / 18-21 the three melee strings (wind-up, hit, follow-through, recover; the third string is the kick, so punch3 and kick share 18-21), 22-27 Instant-Transmission style teleport (22 lean back, 23 sliced dematerialise frame, 24-26 re-forming with Goku-coloured fragments, 27 settles into the fighting stance), 28-30 one-hand ki blast (28 wind-up, 29/30 alternate thrusting hands - loop 29-30 for rapid fire), 31-33 Kamehameha (31 cupped hands at the hip, 32-33 two-palm thrust that flickers while the beam is held), 34-37 overhead gather-and-throw (34 arms raised overhead, 35 brought down to the chest/forehead, 36-37 are pixel-identical to 32-33), 38 hurt recoil with a white hit spark at the head, 39-40 crossed-arm X-block (39 carries a block spark, 40 is the held pose), 41 fists-clenched power-up stance (engine aura goes on top), 42-45 arms up/down level-up cheer (42-43 with sparkles, 44-45 without; 45 is near-idle), 46-49 swimming (head and arms above the waterline, hair drifting, no baked shadow), 50-53 flying (no baked shadow), 54-57 knocked out (54 gut-hit stagger, 55 thrown back arms up / sitting, 56 landing, 57 flat), 58 sitting cross-legged asleep (head bowed, eyes shut), 59 sitting cross-legged awake, 60-63 Super Saiyan transformation (60 flex, 61 hair rising brown, 62-63 golden hair - continue on goku_super_saiyan.png), 64-65 dead with halo (hair fluttering). FLIGHT IS DIAGONAL: row 0 = flying down-right toward the camera, row 1 = down-left, row 2 = up-left (back view), row 3 = up-right (back view); row 0 is the mirror of row 1 and row 3 the mirror of row 2. So 'fly' omits right: mirror the left frames for a right-facing flight (that is exactly row 0). The row-2 frames are kept as 'flyUpLeft'. The black baked ground shadow under the feet uses #000000 - the same colour as hair and outlines - so remove it by geometry (the black run under the boots in the bottom rows), never by colour. Cells with no baked shadow: 23 (dematerialised), 46-53 (swim, fly) on every row and down-row 61-65 (transform glow, halo). Right-row cells 54-57 have a few #237f5a surround pixels on their bottom pixel row (y=31): they are ripper residue, treat as transparent. Baked effects: white swoosh trails in 11-21, hit/block/level-up sparkles (#ffffff) in 38-39 and 42-43, teleport fragments 23-26, beam glow (#424242) in 33/37, SSJ golden hair colours in 62-63, halo yellows in 64-65. Palette: paletteShared (extra key) lists colours used by more than one part - #000000 is hair, every outline and the baked shadow, so base hair can only be recoloured by region; boots share the outfit2 blue ramp and their straps use the gi ramp."
+    },
+    {
+      "id": "gokuSickBed",
+      "name": "Goku lying sick in bed (heart virus) - head and shoulders on the pillow",
+      "origin": [2080, 128],
+      "cell": 32,
+      "rows": {
+        "down": 0
+      },
+      "anims": {
+        "idle": {
+          "frames": [0],
+          "fps": 1,
+          "loop": true,
+          "shadow": "keep"
+        },
+        "sick": {
+          "frames": [0],
+          "fps": 1,
+          "loop": true,
+          "shadow": "keep"
+        }
+      },
+      "palette": {
+        "hair": ["#000000"],
+        "skin": ["#845218", "#ad7b39", "#dead63", "#f7c673"],
+        "outfit": ["#7b3100", "#ad4a00", "#d66300"],
+        "outfit2": ["#21217b", "#3110ad", "#4221d6"]
+      },
+      "notes": "Single front-facing cell at up-row column 65 of the main grid (x 2080, y 128), labelled 'On bed when he's sick' on the sheet. Only the head, shoulders and collar are drawn; the eyes are shut (drawn in skin shades, so there is no eye palette) and the skin uses a paler, sickly yellow ramp than the fighter block. It is meant to be layered over a bed tile, the blanket covering the body; 'idle' and 'sick' are the same still so the block can stand alone as a cast look (it has no walk). No baked shadow, so the animation sets shadow 'keep' (the shadow finder would otherwise eat the hair edge at the bottom of the cell)."
+    }
+  ]
+}

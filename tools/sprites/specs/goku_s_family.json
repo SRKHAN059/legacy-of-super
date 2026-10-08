@@ -1,0 +1,64 @@
+{
+  "sheet": "goku_s_family.png",
+  "blocks": [
+    {
+      "id": "chichi",
+      "name": "Chi-Chi (black bun with pink ring, grey dress, orange apron, blue trousers)",
+      "origin": [0, 32],
+      "cell": [16, 32],
+      "shadow": "outline",
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "angry": { "frames": [6], "fps": 2, "loop": true },
+        "tantrum": { "frames": [6, 7, 8, 9], "fps": 6, "loop": true }
+      },
+      "palette": {
+        "hair": ["#000000", "#21217b"],
+        "skin": ["#845218", "#a56b31", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#424242", "#5a5a5a", "#737373", "#949494", "#adadad", "#c6c6c6", "#dedede"],
+        "outfit2": ["#00218c", "#2163ad", "#2184ff", "#7ba5ce"],
+        "boots": ["#7b2142", "#ce217b"],
+        "eyes": ["#ffffff"],
+        "accent": ["#7b0000", "#d61029", "#d66300", "#ff9418", "#ffd642"],
+        "jewelry": ["#107b00", "#31ad00"]
+      },
+      "notes": "Shadow: her black shoes touch the baked black shadow, so the block uses the 'outline' shadow mode, which keeps the shoes where they meet the coloured body and strips the ellipse. Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Col 6 scowling stance (back view identical to idle); cols 7 and 9 both fists shaken over her head, 8 fists down: tantrum = 6,7,8,9 with white anger flashes baked into 7-8. Black hair is #000000 like the baked shadow. The pink shoes share #7b2142/#ce217b with the hair ring; the apron/sash ramp is 'accent', green earrings 'jewelry'."
+    },
+    {
+      "id": "gohanKid",
+      "name": "Kid Gohan, NPC version (white and purple striped shirt, brown trousers, navy boots)",
+      "origin": [176, 32],
+      "cell": 32,
+      "cols": 14,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "cheer": { "frames": [6, 7, 8, 9], "fps": 6, "loop": true },
+        "lieOnStomach": { "frames": [10, 11, 12, 13], "fps": 4, "loop": true }
+      },
+      "palette": {
+        "hair": ["#000000"],
+        "skin": ["#845218", "#946329", "#a56b31", "#ad7b39", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#5a5a5a", "#737373", "#949494", "#adadad", "#c6c6c6", "#dedede", "#ffffff"],
+        "outfit2": ["#7b3100", "#ad4a00", "#d66300", "#ff7300"],
+        "boots": ["#210084", "#21217b", "#3110ad", "#4221d6"],
+        "accent": ["#ad63ad", "#e7a542", "#cea5ce", "#e7bd42", "#ffef5a"]
+      },
+      "notes": "32x32 cells. Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Cols 6-9 cheer: arms thrown up (6, 8) and down (7, 9), white shock/excitement lines in 6-7. Cols 10-13 lying on his stomach propped on his elbows, kicking his feet (11 and 13 are pixel-identical: A B C B loop); these frames have no ground shadow and sit low in the cell. Black hair is #000000 like the baked shadow. Navy boots share their ramp with the shirt stripes; collar and belt are 'accent'."
+    }
+  ]
+}

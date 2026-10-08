@@ -1,0 +1,231 @@
+{
+  "sheet": "animals.png",
+  "blocks": [
+    {
+      "id": "wolf",
+      "name": "Wolf (blue-grey wild wolf)",
+      "origin": [0, 32],
+      "cell": 32,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3],
+          "fps": 6,
+          "loop": true
+        },
+        "run": {
+          "frames": [4, 5],
+          "fps": 8,
+          "loop": true
+        },
+        "pounce": {
+          "frames": [4, 5],
+          "fps": 8,
+          "loop": false
+        }
+      },
+      "palette": {
+        "fur": ["#2163ad", "#7b63ad", "#7ba5ce", "#ada5ce", "#e7d6ff"],
+        "ears": ["#e763ad", "#ff9494", "#e79c84"],
+        "eyes": ["#e7ffff"],
+        "outline": ["#424242"]
+      },
+      "notes": "Cells are on the #47ffbb/#34bc88 checkerboard; the sheet surround is #2a966c and block borders/empty cells are #237f5a - treat all four as transparent. 6 columns of 32x32 cells at x 0-191; the up row has no blink cell (up col 1 empty). 0 standing, 1 blink, 2-3 two-beat trot (2 head low / tail up, 3 head up), 4 airborne leap fully stretched (paw pads showing on the down/up rows), 5 landing crouch. run loops 4-5 as a bounding gallop; pounce plays 4 then 5 once (its lunge attack). Down = coming toward the camera, up = moving away. The baked #000000 shadow sits under the paws and stretches out during the leap; strip it by geometry."
+    },
+    {
+      "id": "squirrel",
+      "name": "Squirrel",
+      "origin": [208, 32],
+      "cell": 16,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 10,
+          "loop": true
+        }
+      },
+      "palette": {
+        "fur": ["#845218", "#ad7b39", "#c69452"],
+        "eyes": ["#424242"]
+      },
+      "notes": "16x16 cells, 6 columns x 4 facings at x 208-303, y 32-95; the up row has no blink cell (up col 1 empty). 0 sitting upright with the tail curled up, 1 blink, 2-5 bounding hop in order: 2 lands on the fore-paws, 3 gathers, 4 launches stretched out, 5 airborne with the tail up. #424242 is the eyes and the darkest paw shading; #000000 is only the baked shadow."
+    },
+    {
+      "id": "bird",
+      "name": "Sparrow (small brown bird)",
+      "origin": [320, 32],
+      "cell": 16,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "fly": {
+          "frames": [2, 3, 4, 5],
+          "fps": 10,
+          "loop": true
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 10,
+          "loop": true
+        }
+      },
+      "palette": {
+        "feathers": ["#845218", "#a56b31", "#ad7b39", "#c69452"],
+        "beak": ["#ffb529", "#ffef5a"],
+        "eyes": ["#000000"]
+      },
+      "notes": "16x16 cells, 6 columns x 4 facings at x 320-415, y 32-95; the up row has no blink cell (up col 1 empty). 0 perched, 1 blink, 2-5 wing-beat (2 wings up, 3 wings level, 4 wings down, 5 pixel-identical to 3). It has no ground walk: walk repeats the flight loop. Down/up flight cells are seen from above with the beak pointing the way it flies. No baked ground shadow; #000000 is only the eyes, and beak covers the beak and feet."
+    },
+    {
+      "id": "cat",
+      "name": "Ginger cat",
+      "origin": [432, 32],
+      "cell": 16,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 8,
+          "loop": true
+        }
+      },
+      "palette": {
+        "fur": ["#7b3100", "#d66300", "#ff7300"],
+        "pink": ["#e7a5ad", "#ff9494"],
+        "eyes": ["#007b08", "#00ad18", "#cebdff", "#ffffff"],
+        "nose": ["#424242"]
+      },
+      "notes": "16x16 cells, 6 columns x 4 facings at x 432-527, y 32-95; the up row has no blink cell (up col 1 empty). 0 sitting, 1 blink (eyes shut), 2-5 four-beat walk with the tail held up. pink = ears, tail tip and nose highlight; #7b3100 doubles as the fur outline; #000000 is only the baked shadow."
+    },
+    {
+      "id": "butterfly",
+      "name": "Butterfly",
+      "origin": [208, 112],
+      "cell": 8,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": [0],
+          "fps": 1,
+          "loop": true
+        },
+        "fly": {
+          "frames": [1, 2, 3, 4],
+          "fps": 12,
+          "loop": true
+        },
+        "walk": {
+          "frames": [1, 2, 3, 4],
+          "fps": 12,
+          "loop": true
+        }
+      },
+      "palette": {
+        "wings": ["#ff9418", "#ffb529", "#ffd642"],
+        "body": ["#a56b31", "#c69452"]
+      },
+      "notes": "8x8 cells, 5 columns x 4 facings at x 208-247, y 112-143 (below the squirrel block). Col 0 is the resting pose (down: wings spread flat; left/right: perched side-on with the wings folded up; up: wings closed). Cols 1-4 are the flutter loop as a wing ping-pong (1 swept wide, 2 raised in a V, 3 closed, 4 pixel-identical to 2). The left and right rows are exact mirror images; down and up are seen from above. walk repeats the flight loop. No baked shadow."
+    }
+  ]
+}

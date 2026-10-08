@@ -1,0 +1,155 @@
+{
+  "sheet": "krillin.png",
+  "blocks": [
+    {
+      "id": "krillin",
+      "name": "Krillin (Cell-saga Krillin, orange turtle gi) - NPC ally fighter",
+      "origin": [0, 32],
+      "cell": 32,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 8,
+          "loop": true
+        },
+        "stance": {
+          "frames": [6],
+          "fps": 1,
+          "loop": false
+        },
+        "punch1": {
+          "frames": [6, 7],
+          "fps": 12,
+          "loop": false
+        },
+        "punch2": {
+          "frames": [6, 8, 9],
+          "fps": 12,
+          "loop": false
+        },
+        "punch3": {
+          "frames": [10, 12],
+          "fps": 12,
+          "loop": false
+        },
+        "kick": {
+          "frames": [6, 8, 9],
+          "fps": 12,
+          "loop": false
+        },
+        "combo": {
+          "frames": [6, 7, 8, 9],
+          "fps": 12,
+          "loop": false
+        },
+        "blast": {
+          "frames": [10, 11, 12],
+          "fps": 10,
+          "loop": false
+        },
+        "blastRapid": {
+          "frames": [11, 12],
+          "fps": 10,
+          "loop": true
+        },
+        "hurt": {
+          "frames": [14],
+          "fps": 1,
+          "loop": false
+        },
+        "guard": {
+          "frames": {
+            "down": [15, 13],
+            "left": [13, 15],
+            "right": [13, 15],
+            "up": [15, 13]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "charge": {
+          "frames": [16],
+          "fps": 1,
+          "loop": true
+        },
+        "levelUp": {
+          "frames": [18, 19, 20, 17],
+          "fps": 6,
+          "loop": false
+        },
+        "cheer": {
+          "frames": [20, 17],
+          "fps": 4,
+          "loop": true
+        },
+        "raise": {
+          "frames": [20],
+          "fps": 1,
+          "loop": false
+        },
+        "surprised": {
+          "frames": [17],
+          "fps": 1,
+          "loop": false
+        },
+        "fly": {
+          "frames": [21, 22, 23, 24],
+          "fps": 8,
+          "loop": true
+        },
+        "ko": {
+          "frames": {
+            "left": [25, 26, 27, 28],
+            "right": [25, 26, 27, 28]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "koHold": {
+          "frames": {
+            "left": [28],
+            "right": [28]
+          },
+          "fps": 1,
+          "loop": true
+        }
+      },
+      "palette": {
+        "skin": ["#845218", "#a56b31", "#ad7b39", "#ce8463", "#c69452", "#e79c84", "#ffbdad"],
+        "outfit": ["#7b3100", "#ad4a00", "#d66300", "#ff9418"],
+        "outfit2": ["#21217b", "#4221d6", "#2163ce"],
+        "boots": ["#21217b", "#4221d6", "#2163ce"],
+        "eyes": ["#000000", "#5a5a5a"],
+        "emblem": ["#5a5a5a", "#737373", "#949494", "#adadad"],
+        "mouth": ["#7b0000"],
+        "effects": ["#ffffff"]
+      },
+      "notes": "Cells are 32x32 on the checkerboard #47ffbb/#34bc88; the surround is #2a966c and empty cells carry a #237f5a border - treat all four as transparent. The baked ground shadow is #000000, the same colour as outlines/eyes (and hair where black), so strip it by geometry, never by colour. The RIGHT row is a pixel-exact horizontal mirror of the LEFT row in every column. Every frame of a body on the floor sits in a ko* animation, which the build strips in its 'flat' shadow mode so black hair and eye lines touching the floor survive. Krillin is bald (no hair ramp) with six forehead dots in skin #ce8463. Row lengths: down 25 (0-24), left/right 29 (0-28), up 25 with up col 1 empty (no back-view blink). Order: 0 idle, 1 blink, 2-5 walk (right step, pass, left step, pass), 6-9 the single melee string (6 wind-up with the fist cocked, 7 straight jab with a white trail, 8 swinging hook with a white arc, 9 follow-through with the arc's tail) - split into punch1 6-7 (wind-up, jab) and punch2 6, 8-9 (wind-up, hook, follow-through) so each string's second frame is its hit, 'combo' plays it whole; 10-12 one-hand ki blast (10 wind-up, 11 front palm thrust, 12 rear palm thrust - loop 11-12 for rapid fire; facing up the thrusting arm points up the screen). The sheet has NO kick and no third melee string: punch3 reuses the rear palm strike (10, 12) and kick reuses the hook string (6, 8, 9). 13-15 hurt/guard set: 14 hurt recoil (eyes shut, hit sparks); 13 and 15 are the same braced, arms-tucked block pose with and without the white spark (sparks on 13 for left/right, on 15 for down/up), so guard plays spark then held. 16 power-up stance (idle pose with extra #c69452 rim shading) - the engine draws the aura on top. 17-20 level-up cheer like Goku's 42-45: 18 fists raised beside the head with sparkles, 19 wide-eyed with sparkles, 20 fists raised, 17 wide-eyed open-mouth near-idle (also 'surprised'). 21-24 flying (no baked shadow): side rows horizontal Superman pose, down row head-first toward the camera with the boots above the head, up row from behind with dangling legs; frames differ only by a 1px hover bob. 25-28 (left/right only) knock-out: 25-26 are pixel-identical to 13-14 (hit, recoil), 27 thrown onto his backside, 28 flat on his back (koHold). Baked effects: white (#ffffff) trails in 7-9 and two-size white hit/level-up sparks in 13-15, 18-19, 25-26 (they flicker big/small). Palette overlaps: the blue ramp is shared by the undershirt, wristbands, belt and boots; #5a5a5a is used by the eyes, the back emblem and the boot laces; #7b0000 is the open mouth in the recoil frames."
+    }
+  ]
+}

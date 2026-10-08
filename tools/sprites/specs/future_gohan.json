@@ -1,0 +1,141 @@
+{
+  "sheet": "future_gohan.png",
+  "blocks": [
+    {
+      "id": "futureGohan",
+      "name": "Future Gohan (one-armed adult Gohan, Super Saiyan, orange gi) - Future Trunks' mentor, cutscene NPC",
+      "origin": [0, 32],
+      "cell": 32,
+      "rows": {
+        "down": 0,
+        "left": 1,
+        "right": 2,
+        "up": 3
+      },
+      "anims": {
+        "idle": {
+          "frames": {
+            "down": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "left": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "right": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "up": [0]
+          },
+          "fps": 5,
+          "loop": true
+        },
+        "blink": {
+          "frames": {
+            "down": [1],
+            "left": [1],
+            "right": [1]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": {
+          "frames": [2, 3, 4, 5],
+          "fps": 8,
+          "loop": true
+        },
+        "guard": {
+          "frames": {
+            "left": [6],
+            "right": [6],
+            "up": [9]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "punch1": {
+          "frames": {
+            "left": [9, 7],
+            "right": [9, 7]
+          },
+          "fps": 10,
+          "loop": false
+        },
+        "blast": {
+          "frames": {
+            "left": [9, 7],
+            "right": [9, 7]
+          },
+          "fps": 10,
+          "loop": false
+        },
+        "talk": {
+          "frames": {
+            "left": [8, 9],
+            "right": [8, 9]
+          },
+          "fps": 3,
+          "loop": true
+        },
+        "hurt": {
+          "frames": {
+            "left": [10],
+            "right": [10],
+            "up": [6, 7, 8]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "ko": {
+          "frames": {
+            "left": [10, 11, 13, 12],
+            "right": [10, 11, 13, 12]
+          },
+          "fps": 6,
+          "loop": false
+        },
+        "koHold": {
+          "frames": {
+            "left": [12],
+            "right": [12]
+          },
+          "fps": 1,
+          "loop": true
+        },
+        "takeoff": {
+          "frames": {
+            "up": [10, 11, 12]
+          },
+          "fps": 8,
+          "loop": false
+        },
+        "raise": {
+          "frames": {
+            "up": [12]
+          },
+          "fps": 1,
+          "loop": false
+        },
+        "fly": {
+          "frames": {
+            "up": [13, 14, 15, 16]
+          },
+          "fps": 8,
+          "loop": true
+        },
+        "land": {
+          "frames": {
+            "up": [17]
+          },
+          "fps": 1,
+          "loop": false
+        }
+      },
+      "palette": {
+        "hair": ["#845218", "#ad7b39", "#ada542", "#cebd42", "#ffff39", "#ffffbd", "#fffff7"],
+        "hairBase": ["#000000"],
+        "skin": ["#845218", "#a56b31", "#ad7b39", "#ce8463", "#c69452", "#e79c84", "#ffbdad"],
+        "outfit": ["#7b3100", "#ad4a00", "#d66300", "#ff7300"],
+        "outfit2": ["#210084", "#21217b", "#3110ad", "#4221d6"],
+        "boots": ["#21217b", "#3110ad", "#4221d6"],
+        "eyes": ["#007b08", "#00d629", "#c6c6c6", "#dedede", "#ffffff"],
+        "emblem": ["#424242", "#5a5a5a", "#737373", "#949494"],
+        "effects": ["#21a5ff", "#ffffff"]
+      },
+      "notes": "Cells are 32x32 on the checkerboard #47ffbb/#34bc88; the surround is #2a966c and empty cells carry a #237f5a border - treat all four as transparent. The baked ground shadow is #000000, the same colour as outlines/eyes (and hair where black), so strip it by geometry, never by colour. The RIGHT row is a pixel-exact horizontal mirror of the LEFT row in every column. Every frame of a body on the floor sits in a ko* animation, which the build strips in its 'flat' shadow mode so black hair and eye lines touching the floor survive. Future Gohan has only his right arm (empty left sleeve), so every pose is one-handed. Row lengths: down 6 (0-5), left/right 14 (0-13), up 18 with col 1 empty (no back-view blink). The down row is only idle, blink and walk; the side and back rows carry the cutscene poses, so most extras lack a down facing (the runtime falls back to idle there). Left/right: 0 idle, 1 blink, 2-5 walk, 6 forearm raised across the face (guard / shielding the eyes), 7 arm thrust straight out at shoulder height, 8 open hand lowered and held out, 9 open palm raised at the chest - 9->7 is the one-handed blast / punch thrust, 8<->9 an explaining hand gesture ('talk'); 10 struck, lurching forward with the legs kicked up behind (gold hair dimming, a blue water splash at the feet), 11 pitching forward face-first with his hair back to black (Super Saiyan lost), 12 lying face-down and still, 13 the same body landing with a blue/white puddle splash - so 'ko' runs 10, 11, 13 (splash on impact), 12 (rest) and koHold is 12. This is his death in the rain; he falls FORWARD, toward the facing direction, unlike the other fighters' backward knock-outs. Up (back view, the gi kanji emblem on the back in greys): 0 idle, 2-5 walk, 6-8 flinch with white hit sparks (7 doubled over), 9 arm brought in front of the body (back view of the face-shield pose), 10-12 take-off (crouch, fist rising, fist punched straight up overhead = raise), 13-16 flying away from the camera (no baked shadow, legs dangling, hair streaming), 17 compressed crouch touching down (land). Palette: hair = the Super Saiyan gold ramp (#845218 outline, #ad7b39 deepest shade also used for skin shading), hairBase = the black hair of the fallen frames 11-13, emblem = the back kanji greys, effects = rain splash blue (#21a5ff) and white sparks; frame 12 also uses a few #dead63/#f7c673 (dead, paler skin)."
+    }
+  ]
+}

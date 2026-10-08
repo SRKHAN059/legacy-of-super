@@ -1,0 +1,772 @@
+{
+  "sheet": "generic_npcs.png",
+  "blocks": [
+    {
+      "id": "npcYoungMan",
+      "name": "Townsman: young man (brown hair, blue jacket, green trousers)",
+      "origin": [0, 32],
+      "cell": [16, 32],
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#6b3110", "#7b6342", "#ada57b", "#ced6ad"],
+        "skin": ["#845218", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#210084", "#0039b5", "#2163ff", "#2184ff"],
+        "outfit2": ["#216342", "#107b00", "#31ad00", "#52d600"],
+        "boots": ["#424242", "#946329"],
+        "eyes": ["#000000", "#c6c6c6", "#ffffff"],
+        "accent": ["#ad0810", "#737373"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold)."
+    },
+    {
+      "id": "npcYoungManB",
+      "name": "Townsman: young man, palette B (blond, green jacket, blue jeans)",
+      "origin": [176, 32],
+      "cell": [16, 32],
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#835117", "#845218", "#e7a542", "#ffd642", "#ffef5a"],
+        "skin": ["#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#007b08", "#216342", "#31ad00", "#52d600"],
+        "outfit2": ["#00218c", "#0039b5", "#0052de", "#2184ff"],
+        "boots": ["#424242", "#946329"],
+        "eyes": ["#000000", "#c6c6c6", "#ffffff"],
+        "accent": ["#737373"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). Palette swap of npcYoungMan (identical pixels)."
+    },
+    {
+      "id": "npcYoungManC",
+      "name": "Townsman: young man, palette C (brown hair, white shirt, grey trousers)",
+      "origin": [352, 32],
+      "cell": [16, 32],
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#6b3110", "#7b6342", "#ada57b", "#ced6ad"],
+        "skin": ["#845218", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#210084", "#949494", "#dedede", "#ffffff"],
+        "outfit2": ["#424242", "#216342", "#5a5a5a", "#737373"],
+        "boots": ["#946329"],
+        "eyes": ["#000000", "#c6c6c6"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). Palette swap of npcYoungMan (identical pixels)."
+    },
+    {
+      "id": "npcGirl",
+      "name": "Townsgirl: ponytail girl (orange hair, green dress, white blouse)",
+      "origin": [528, 32],
+      "cell": [16, 32],
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#7b3100", "#ad4a00", "#d66300", "#ff9418"],
+        "skin": ["#844218", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#007b08", "#31ad00", "#52d600"],
+        "outfit2": ["#737373", "#c6c6c6"],
+        "boots": ["#ad7b39"],
+        "eyes": ["#000000", "#21bdff", "#ffffff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold)."
+    },
+    {
+      "id": "npcGirlB",
+      "name": "Townsgirl: ponytail girl, palette B (black hair, purple dress)",
+      "origin": [704, 32],
+      "cell": [16, 32],
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#000000", "#7b3100"],
+        "skin": ["#844218", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#5a007b", "#d652ff", "#de84ff"],
+        "outfit2": ["#737373", "#c6c6c6"],
+        "boots": ["#ad7b39"],
+        "eyes": ["#845218", "#ffffff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). Palette swap of npcGirl."
+    },
+    {
+      "id": "npcBoy",
+      "name": "Town boy (blond, white shirt, jeans, holding a grey toy)",
+      "origin": [880, 32],
+      "cell": [16, 32],
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#845218", "#b56339", "#e7a542", "#ffd642", "#ffef5a", "#fffff7"],
+        "skin": ["#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#949494", "#c6c6c6", "#ffffff"],
+        "outfit2": ["#00218c", "#0052de", "#4a9cff"],
+        "eyes": ["#000000", "#ada5ce", "#add6ce", "#e7ffff"],
+        "accent": ["#424242"],
+        "prop": ["#737373"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). The held toy is palette 'prop'."
+    },
+    {
+      "id": "npcBoyB",
+      "name": "Town boy, palette B (brown hair, orange shirt, grey trousers)",
+      "origin": [1056, 32],
+      "cell": [16, 32],
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#845218", "#946329", "#a56b31", "#ad7b39", "#dead63"],
+        "skin": ["#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#d66300", "#ff7300", "#ff9418"],
+        "outfit2": ["#5a5a5a", "#949494", "#c6c6c6"],
+        "eyes": ["#000000", "#ada5ce", "#add6ce", "#e7ffff"],
+        "accent": ["#424242"],
+        "prop": ["#ad4a00"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). Palette swap of npcBoy."
+    },
+    {
+      "id": "npcBobGirl",
+      "name": "Town girl with bob cut (blond, blue top, red skirt)",
+      "origin": [1232, 32],
+      "cell": [16, 32],
+      "shadow": "outline",
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#845218", "#ffb529", "#ffef5a", "#e7ffce"],
+        "skin": ["#844218", "#946329", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#00218c", "#0039b5", "#2163ff", "#21bdff"],
+        "outfit2": ["#ad0810", "#ff1839"],
+        "eyes": ["#000000", "#737373", "#c6c6c6", "#ffffff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). Shadow: black shoes, feet or a black skirt/coat underside touch the baked black shadow, so the block uses the 'outline' shadow mode, which keeps the black where it meets the coloured body and strips the ellipse."
+    },
+    {
+      "id": "npcBobGirlB",
+      "name": "Town girl with bob cut, palette B (red hair, grey top, purple skirt)",
+      "origin": [1408, 32],
+      "cell": [16, 32],
+      "shadow": "outline",
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#7b0000", "#d61029", "#ff1839", "#ff7373"],
+        "skin": ["#844218", "#946329", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#424242", "#5a5a5a", "#949494", "#c6c6c6"],
+        "outfit2": ["#5a31ff", "#4a9cff"],
+        "eyes": ["#000000", "#737373", "#ffffff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). Palette swap of npcBobGirl. Shadow: black shoes, feet or a black skirt/coat underside touch the baked black shadow, so the block uses the 'outline' shadow mode, which keeps the black where it meets the coloured body and strips the ellipse."
+    },
+    {
+      "id": "npcChild",
+      "name": "Small child (brown hair, white shirt, navy shorts)",
+      "origin": [1584, 32],
+      "cell": [16, 32],
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#6b3110", "#844218", "#a56b31", "#c69452"],
+        "skin": ["#845218", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#737373", "#949494", "#c6c6c6", "#dedede", "#ffffff"],
+        "outfit2": ["#210084", "#3110ad", "#006bff"],
+        "boots": ["#7b6342", "#dead63", "#f7dead"],
+        "eyes": ["#000000", "#424242", "#adadad", "#e7ffff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). Short sprite: head top at y~10 of the 32px cell."
+    },
+    {
+      "id": "npcChildB",
+      "name": "Small child, palette B (red shirt, blue shorts)",
+      "origin": [0, 192],
+      "cell": [16, 32],
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#6b3110", "#946329", "#dead63", "#f7dead"],
+        "skin": ["#845218", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#7b0000", "#ad0810", "#ff0000", "#d61029"],
+        "outfit2": ["#00218c", "#0052de", "#006bff"],
+        "boots": ["#7b6342"],
+        "eyes": ["#000000", "#424242", "#adadad", "#e7ffff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). Palette swap of npcChild."
+    },
+    {
+      "id": "npcLittleGirl",
+      "name": "Little girl (brown hair, red dress, blue bloomers)",
+      "origin": [176, 192],
+      "cell": [16, 32],
+      "cols": 13,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true },
+        "sweatdrop": { "frames": [10, 11, 12], "fps": 5, "loop": false }
+      },
+      "palette": {
+        "hair": ["#6b3110", "#844218", "#9c4a21", "#a56b31"],
+        "skin": ["#845218", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#7b0000", "#ad0810", "#d61029", "#ff4a4a"],
+        "outfit2": ["#21637b", "#4a9cff"],
+        "boots": ["#ad7b39"],
+        "eyes": ["#000000", "#007b08", "#00ad18", "#adadad", "#e7ffff", "#ffffff"],
+        "fx": ["#21a5ad"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). Cols 10-12 anime sweat drop (flat annoyed eyes, a teal drop slides down beside the head; palette 'fx')."
+    },
+    {
+      "id": "npcLittleGirlB",
+      "name": "Little girl, palette B (blond, pink dress)",
+      "origin": [400, 192],
+      "cell": [16, 32],
+      "cols": 13,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true },
+        "sweatdrop": { "frames": [10, 11, 12], "fps": 5, "loop": false }
+      },
+      "palette": {
+        "hair": ["#6b3110", "#946329", "#dead63", "#f7dead"],
+        "skin": ["#845218", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#8c0052", "#ff29b5", "#ff8cd6", "#ffbde7"],
+        "outfit2": ["#21637b", "#4a9cff"],
+        "boots": ["#ad7b39"],
+        "eyes": ["#000000", "#e7ffff"],
+        "fx": ["#21a5ad"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). Cols 10-12 sweat drop. Palette swap of npcLittleGirl."
+    },
+    {
+      "id": "npcDogMan",
+      "name": "Dog-headed townsman (brown fur, blue suit jacket, red tie)",
+      "origin": [624, 192],
+      "cell": [16, 32],
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "skin": ["#845218", "#ad7b39", "#dead63"],
+        "outfit": ["#00218c", "#0052de", "#2184ff"],
+        "outfit2": ["#424242", "#737373", "#adadad"],
+        "eyes": ["#000000", "#c6c6c6", "#dedede", "#ffffff"],
+        "accent": ["#ff0000", "#ff9494", "#ffbdbd"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). Fur (head and hands) is palette 'skin'; no hair part. Brown shoes reuse the fur colours."
+    },
+    {
+      "id": "npcOldMan",
+      "name": "Old man with a walking stick (white hair and beard, blue sweater)",
+      "origin": [800, 192],
+      "cell": [16, 32],
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 6, "loop": true }
+      },
+      "palette": {
+        "hair": ["#949494", "#adadad", "#dedede", "#ffffff"],
+        "skin": ["#845218", "#ad7b39", "#ce8463", "#e7a542", "#f7dead"],
+        "outfit": ["#00218c", "#0052de", "#2184ff"],
+        "outfit2": ["#5a5a5a"],
+        "boots": ["#7b6342"],
+        "eyes": ["#000000"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. The cane is drawn in every frame (brown, palette 'boots' shares it with the shoes). #5a5a5a is both the trousers and the beard outline."
+    },
+    {
+      "id": "npcOldManB",
+      "name": "Old man with a walking stick, palette B (red sweater)",
+      "origin": [912, 192],
+      "cell": [16, 32],
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 6, "loop": true }
+      },
+      "palette": {
+        "hair": ["#949494", "#adadad", "#dedede", "#ffffff"],
+        "skin": ["#845218", "#ad7b39", "#ce8463", "#e7a542", "#f7dead"],
+        "outfit": ["#7b0000", "#ad0810", "#d61029"],
+        "outfit2": ["#5a5a5a"],
+        "boots": ["#7b6342"],
+        "eyes": ["#000000"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Palette swap of npcOldMan."
+    },
+    {
+      "id": "npcOldWoman",
+      "name": "Old woman (grey bun with green ribbon, green cardigan, purple dress)",
+      "origin": [1024, 192],
+      "cell": [16, 32],
+      "shadow": "outline",
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 6, "loop": true }
+      },
+      "palette": {
+        "hair": ["#737373", "#949494", "#adadad", "#dedede"],
+        "skin": ["#845218", "#7b6342", "#946329", "#ad7b39", "#c69452", "#dead63", "#f7c673", "#f7dead"],
+        "outfit": ["#007b08", "#00ad18", "#00d629"],
+        "outfit2": ["#210084", "#3110ad", "#4221d6", "#5a31ff", "#2184ff"],
+        "boots": ["#21217b", "#a56b31"],
+        "eyes": ["#000000", "#c6c6c6", "#ffffff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. The green ribbon in the bun shares the cardigan ('outfit') colours. Shadow: black shoes, feet or a black skirt/coat underside touch the baked black shadow, so the block uses the 'outline' shadow mode, which keeps the black where it meets the coloured body and strips the ellipse."
+    },
+    {
+      "id": "npcPoliceman",
+      "name": "Policeman (blue cap and uniform)",
+      "origin": [1136, 192],
+      "cell": [16, 32],
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "hair": ["#000000"],
+        "skin": ["#946329", "#ad7b39", "#e7a542", "#f7dead"],
+        "outfit": ["#00218c", "#0052de", "#2184ff", "#7ba5ce"],
+        "boots": ["#7b6342", "#ada57b"],
+        "eyes": ["#737373", "#c6c6c6", "#ffffff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Black hair is #000000, the same colour as outlines and the baked ground shadow."
+    },
+    {
+      "id": "npcSuitMan",
+      "name": "Man in a dark suit and sunglasses holding a microphone (reporter / announcer)",
+      "origin": [1248, 192],
+      "cell": [16, 32],
+      "shadow": "outline",
+      "cols": 2,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [0], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "hair": ["#000000"],
+        "skin": ["#6b3110", "#946329", "#ad7b39", "#e7a542", "#f7dead"],
+        "outfit": ["#212142", "#21217b"],
+        "boots": ["#7b6342", "#ada57b"],
+        "eyes": ["#424242", "#ffffff"],
+        "prop": ["#737373", "#949494", "#adadad", "#c6c6c6", "#dedede"]
+      },
+      "notes": "Only cols 0 idle and 1 blink exist (up col 1 empty); he never walks on the sheet, so walk holds the idle frame. The microphone is palette 'prop'. Shadow: his black shoes and trouser hems touch the baked black shadow, so the block uses the 'outline' shadow mode, which sets the body's outline pixels aside and strips the ellipse beneath."
+    },
+    {
+      "id": "npcTough",
+      "name": "Muscular townsman (spiky brown hair, grey tank top, green trousers)",
+      "origin": [1296, 192],
+      "cell": [16, 32],
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "hair": ["#6b3110", "#844218", "#9c4a21"],
+        "skin": ["#845218", "#a56b31", "#ad7b39", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#424242", "#737373", "#949494", "#adadad", "#c6c6c6", "#dedede"],
+        "outfit2": ["#216342", "#218c5a", "#21bd7b"],
+        "eyes": ["#000000", "#cea5ad", "#ffffff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle."
+    },
+    {
+      "id": "npcToughB",
+      "name": "Muscular townsman, palette B (orange tank top, blue trousers)",
+      "origin": [1408, 192],
+      "cell": [16, 32],
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "hair": ["#6b3110", "#844218", "#9c4a21"],
+        "skin": ["#845218", "#a56b31", "#ad7b39", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#ad4a00", "#d66300", "#949494", "#ffb529", "#ffd642", "#ffef5a"],
+        "outfit2": ["#00218c", "#0039b5", "#0052de"],
+        "eyes": ["#000000", "#cea5ad", "#ffffff"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Palette swap of npcTough."
+    },
+    {
+      "id": "npcWoman",
+      "name": "Townswoman (long brown hair, teal top)",
+      "origin": [1520, 192],
+      "cell": [16, 32],
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "hair": ["#6b3110", "#845218", "#a56b31", "#dead63"],
+        "skin": ["#844218", "#ad7b39", "#ce8463", "#e79c84", "#ffbdad"],
+        "outfit": ["#007373", "#00a5a5", "#00d6d6"],
+        "outfit2": ["#216342"],
+        "eyes": ["#000000", "#adadad", "#ffffff"],
+        "accent": ["#9c4a21"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Barefoot/sandals drawn in skin colours."
+    },
+    {
+      "id": "npcNamekian",
+      "name": "Namekian villager (green skin, blue robe, red and pink sleeves, white collar)",
+      "origin": [1632, 192],
+      "cell": [16, 32],
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "skin": ["#107b00", "#31ad00", "#52d600"],
+        "outfit": ["#0039b5", "#2163ce", "#2184ff"],
+        "outfit2": ["#7b0000", "#ad0810", "#ff217b", "#ff7373"],
+        "boots": ["#7b3100", "#ad4a00"],
+        "eyes": ["#000000", "#ffffff"],
+        "accent": ["#949494", "#c6c6c6", "#dedede"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Green skin is palette 'skin'; no hair part. The white collar is 'accent'."
+    },
+    {
+      "id": "friezaSoldierA",
+      "name": "Frieza Force soldier A (yellow-green crested head, white battle armour)",
+      "origin": [0, 352],
+      "cell": [16, 32],
+      "shadow": "outline",
+      "cols": 6,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true }
+      },
+      "palette": {
+        "skin": ["#6b6b00", "#ad5a29", "#9c9c00", "#cece00"],
+        "outfit": ["#949494", "#c6c6c6", "#ffffff"],
+        "outfit2": ["#000000"],
+        "eyes": ["#007b08", "#21a542"],
+        "accent": ["#7b6342", "#ad7b39"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Head is palette 'skin' (brown head spots #ad5a29 included). The black bodysuit is #000000 like the baked shadow; its armour straps are 'accent'. Shadow: the black bodysuit legs touch the baked black shadow in several walk frames, so the block uses the 'outline' shadow mode, which keeps the legs and strips the ellipse beneath."
+    },
+    {
+      "id": "friezaSoldierB",
+      "name": "Frieza Force soldier B (cyan skin, white domed head plate with black crest, battle armour)",
+      "origin": [112, 352],
+      "cell": [16, 32],
+      "shadow": "outline",
+      "cols": 10,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "startled": { "frames": [6, 7, 8, 9], "fps": 8, "loop": false },
+        "battleStance": { "frames": [8], "fps": 2, "loop": true },
+        "hurt": { "frames": [6], "fps": 1, "loop": false },
+        "guard": { "frames": [7, 8], "fps": 8, "loop": false }
+      },
+      "palette": {
+        "skin": ["#21637b", "#00a5a5", "#21efce"],
+        "outfit": ["#949494", "#c6c6c6", "#ffffff"],
+        "outfit2": ["#000000", "#212142"],
+        "eyes": ["#007b08", "#00ad18"],
+        "accent": ["#7b6342", "#ad7b39"]
+      },
+      "notes": "Cols 0 idle, 1 blink (up col 1 is an empty cell), 2-5 walk cycle. Cols 6-9 startle into a fighting stance: 6 recoils with shock lines, 7-8 crouched guard with arms forward (7 still has shock lines), 9 upright again with a fist raised. As an enemy he reuses the recoil (6) as 'hurt' and drops into the crouched guard (7-8) as 'guard'. Shadow: in the down and up walk / startle frames the baked black shadow touches the black bodysuit legs, so the block uses the 'outline' shadow mode, which sets the body's outline pixels aside and strips the ellipse beneath."
+    },
+    {
+      "id": "npcScientist",
+      "name": "Scientist (messy brown hair, glasses, lab coat, red tie)",
+      "origin": [288, 352],
+      "cell": 32,
+      "cols": 16,
+      "rows": { "down": 0, "left": 1, "right": 2, "up": 3 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "blink": {
+          "frames": { "down": [1], "left": [1], "right": [1], "up": [0] },
+          "fps": 8,
+          "loop": false
+        },
+        "walk": { "frames": [2, 3, 4, 5], "fps": 8, "loop": true },
+        "surprised": { "frames": [6, 7], "fps": 8, "loop": false },
+        "shocked": { "frames": [6, 7, 8, 9], "fps": 6, "loop": false },
+        "handsOnHead": { "frames": [9], "fps": 2, "loop": true },
+        "holdCapsule": {
+          "frames": { "down": [10] },
+          "fps": 2,
+          "loop": true
+        },
+        "holdCapsuleBlink": {
+          "frames": { "down": [11] },
+          "fps": 8,
+          "loop": false
+        },
+        "throwCapsule": {
+          "frames": { "down": [10, 12, 13, 14, 15] },
+          "fps": 10,
+          "loop": false
+        }
+      },
+      "palette": {
+        "hair": ["#424242", "#7b6342", "#ada57b", "#ced6ad"],
+        "skin": ["#845218", "#946329", "#ad7b39", "#c69452", "#e7a542", "#f7dead"],
+        "outfit": ["#adadad", "#dedede", "#ffffff"],
+        "outfit2": ["#216342", "#21637b", "#7ba5ce", "#7bd6ff"],
+        "eyes": ["#000000", "#c6c6c6"],
+        "accent": ["#ff0000", "#ff9494"],
+        "prop": ["#210084", "#21217b", "#3110ad", "#0052de", "#5a5a5a", "#2184ff", "#d66300", "#73adff", "#dead63", "#f7c673", "#ffd642"]
+      },
+      "notes": "Cols 0 idle, 1 blink (no back blink: up col 1 is an empty cell), 2-5 walk cycle, 6-7 startle with white shock lines baked into the cell, 8-9 hands clutched to the head (col 8 still carries the fading shock lines, col 9 is the clean hold). 32x32 cells. Cols 10-15 exist only facing down: 10 holds a Capsule Corp capsule at the hip, 11 the same with a blink, 12 winds up with the capsule raised, 13-15 hurl it to the ground (white throw arc baked in, ending in a low lunge). The capsule's colours are palette 'prop'."
+    },
+    {
+      "id": "npcGuard",
+      "name": "Pale-green armoured guard with a spear (single front-facing pose)",
+      "origin": [816, 352],
+      "cell": 32,
+      "cols": 1,
+      "rows": { "down": 0 },
+      "anims": {
+        "idle": { "frames": [0], "fps": 2, "loop": true },
+        "walk": { "frames": [0], "fps": 2, "loop": true }
+      },
+      "palette": {
+        "outfit": ["#21a542", "#7bd67b", "#ceefad"],
+        "boots": ["#adadad", "#dedede"],
+        "eyes": ["#2163ce", "#21a5ce", "#21bdce", "#7befe7"],
+        "accent": ["#000000", "#424242"],
+        "prop": ["#845218", "#ad7b39", "#c69452", "#dead63", "#f7c673"]
+      },
+      "notes": "32x32 cell; only the down-facing cell exists (rows 1-3 of the block are empty, so only 'down' is mapped). Static: walk holds the idle frame. Body armour is palette 'outfit', the visor 'eyes', the spear 'prop'."
+    }
+  ]
+}
