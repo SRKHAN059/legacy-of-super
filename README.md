@@ -7,6 +7,83 @@ the browser at the GBA's 240×160 resolution.
 > Personal, non-commercial fan project, made as a model-evaluation exercise. **Not for distribution.**
 > The character sprites come from the original game's sheets (see [Credits](#credits)).
 
+## About the game
+
+Legacy of Super is a top-down action-RPG built to play exactly like *The Legacy of Goku II*. Its mechanics were
+rebuilt from the original game, including the experience table, stat growth and damage formulas taken from the
+cartridge. The story it tells is Dragon Ball Super's.
+
+**How it plays**
+- **Real-time combat** in hostile zones: a 3-hit melee combo, charged melee specials, and ki techniques (blasts,
+  beams, spreads, stuns) that cost EP. Enemies drop healing items.
+- **Transformations** on a charging gauge: Super Saiyan, Super Saiyan God, Super Saiyan Blue, Blue Kaio-ken, Super
+  Saiyan Rage, Ultimate Gohan, Golden Frieza, Ultra Instinct and more.
+- **Experience and levels to 50**, with LoG2's stat growth. Each character grows differently.
+- **A rotating party.** Switch characters at save points. Coloured, numbered level gates only open for one
+  character at a set level, so you level the whole team, as in LoG2.
+- **Story told LoG2's way:** in-engine cutscenes, portrait dialogue boxes, a narrator, a Journal of gold, silver
+  and bronze objectives, and chapter title cards.
+- **Exploration:** a Mode-7 world map you fly over across Earth, Future Earth and space; flight circles; region
+  maps; hidden items; breakable rocks; Dragon Ball hunts with the Radar.
+- **Scouter:** scan characters and enemies to read their stats and lore, and fill the database.
+
+**Playable characters**
+- **Main five:** Goku, Vegeta, Gohan, Piccolo and Future Trunks.
+- **Guests in the Tournament of Power:** Android 17 and Frieza.
+- **Story-only characters:** some episodes put you in the shoes of Cabba, Majin Buu, Master Roshi, Tien and
+  Vegito.
+- **Secret character:** Mr. Satan, unlocked in the post-game.
+
+**By the numbers**
+- A Prologue plus 14 chapters, an epilogue and a post-game.
+- About 90 maps in about 28 regions.
+- Over 90 boss fights.
+- 130+ enemy types.
+- 90+ Journal entries.
+- 39 original chiptune tracks.
+
+**Side content**
+- 25 Earth Delicacies for Whis.
+- 7 escaped Monster Island animals.
+- The Dragon Balls.
+- A Scouter database of nearly 200 entries.
+- A sparring dojo.
+- Five character trophies behind level-50 gates.
+- Post-game superbosses and an alternate ending.
+
+## The story
+
+The story runs from the peace after Majin Buu to the end of the Tournament of Power: anime episodes 1–131, plus
+the films *Battle of Gods* and *Resurrection 'F'*, which the anime retells. It is split into five acts. Each
+chapter opens with a title card, has its own gold-star objectives, and hands the next chapter the party it needs.
+
+| Act | Chapter | Story (approx. episodes) | Who you play |
+|---|---|---|---|
+| **1** | Prologue: *A Future Without Hope* | Future Trunks's ruined timeline. Goku Black attacks and Trunks escapes in the time machine (a flash-forward to ep 47) | Future Trunks |
+| | 1: *A Peaceful World* | Life after Buu: farming with Chi-Chi, Goten and Gohan's family, Mr. Satan's reward. Beerus wakes and beats Goku at King Kai's (eps 1–5) | Goku |
+| | 2: *The Destroyer's Feast* | Bulma's birthday party. Vegeta keeps Beerus happy, the Pilaf Gang crashes it, and the pudding disaster (eps 5–9) | Vegeta |
+| **2** | 3: *Battle of Gods* | Dragon Ball hunt with the Radar, the Super Saiyan God ritual, Goku vs. Beerus (eps 9–15) | Goku, Vegeta |
+| | 4: *Student of the Angel* | Training with Whis on Beerus's planet. Frieza is revived in Hell (eps 16–19) | Vegeta, Goku |
+| | 5: *Resurrection 'F'* | Frieza's 1,000 soldiers, Tagoma and Ginyu, Gohan and Piccolo hold the line (eps 20–23) | Gohan, Piccolo |
+| **3** | 6: *Golden Frieza* | Super Saiyan Blue, Golden Frieza, Earth destroyed and time rewound (eps 24–27) | Goku, Vegeta |
+| | 7: *Tournament of Destroyers* | Universe 6 vs. 7 on the Nameless Planet: Botamo, Frost, Magetta, Cabba, Hit (eps 28–41) | Goku, Vegeta, Piccolo |
+| | 8: *The Copy* | "Monaka", then the Galactic Patrol job on Potaufeu and Copy-Vegeta (eps 42–46) | Goku, Vegeta |
+| **4** | 9: *SOS from the Future* | Trunks returns, Goku Black appears, the trip to the future (eps 47–52) | Future Trunks, Goku |
+| | 10: *Gods of Universe 10* | Zamasu, Gowasu, the Zeno Button, Goku Black Rosé (eps 53–60) | Goku, Vegeta |
+| | 11: *Project Zero Mortals* | Super Saiyan Rage, the Mafuba, Fused Zamasu, Vegito Blue, the Sword of Hope (eps 61–67) | Future Trunks, Goku, Vegeta |
+| **5** | 12: *Days of Peace* | An episode hub; play at least 2 of 6: Hit's contract, Pan's first flight, Great Saiyaman, Krillin's comeback, *Whose Wish?* (Earth's core) and the baseball game (eps 68–76) | Goku, Gohan and others |
+| | 13: *Universe Survival* | The Zeno Expo (Buu vs. Basil, Gohan vs. Lavender, Goku vs. Bergamo, Goku vs. Toppo), recruiting the Universe 7 team, and Universe 6's Saiyans Caulifla and Kale (eps 77–96) | Goku, Gohan, Vegeta, Cabba, Buu |
+| | 14: *The Tournament of Power* | Three rings of relay battles: Pride Troopers, the Kamikaze Fireballs, Kefla, Dyspo, Toppo the Destroyer, and Ultra Instinct against Jiren (eps 97–131) | Goku, Vegeta, Gohan, Android 17, Frieza and others |
+| | Epilogue and post-game | The wish, the credits, then free roam: trophies, Mr. Satan, superbosses, the alternate "ZTV" ending | Everyone |
+
+The chapters follow Legacy of Goku II's rhythm:
+- a tutorial prologue
+- open hub chapters with side quests
+- forced-character relays at story peaks
+- a final gauntlet in the Cell Games' place, here the Tournament of Power
+
+See [docs/CHAPTERS.md](docs/CHAPTERS.md) for the full beat-by-beat plan.
+
 ## Quick start
 
 You need [Node.js](https://nodejs.org) 18 or newer.
